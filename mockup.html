@@ -1,0 +1,802 @@
+<style>
+  :root{
+    --blue-900:#0B2545; --blue-800:#0F2E5C; --blue-700:#123C7A;
+    --blue-600:#1656B0; --blue-500:#2E74D6; --blue-300:#7FA8E6;
+    --blue-100:#E8F0FB; --blue-50:#F4F8FE;
+    --ink:#0E1726; --ink-soft:#33415C; --grey:#5A6B85; --grey-2:#8A99B5;
+    --line:#DCE5F2; --line-soft:#EAF0F9;
+    --bg:#F1F5FC; --surface:#FFFFFF; --surface-2:#F7FAFF;
+    --good:#1E9E6A; --good-bg:#E4F5EC;
+    --warn:#C9860B; --warn-bg:#FBF1DC;
+    --bad:#D64545; --bad-bg:#FBE7E7;
+    --shadow:0 1px 2px rgba(11,37,69,.06),0 6px 20px rgba(11,37,69,.06);
+    --shadow-lg:0 12px 40px rgba(11,37,69,.16);
+    --radius:14px; --radius-sm:9px;
+    --font:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ink:#EAF1FB; --ink-soft:#C2D0E6; --grey:#9DB0CE; --grey-2:#6B7C99;
+      --line:#20304C; --line-soft:#182338;
+      --bg:#080F1C; --surface:#0E1A2E; --surface-2:#101E36;
+      --blue-100:#16294A; --blue-50:#111F38;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 22px rgba(0,0,0,.35);
+      --shadow-lg:0 16px 46px rgba(0,0,0,.55);
+      --good-bg:#0E2A20; --warn-bg:#2C2410; --bad-bg:#2C1414;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#EAF1FB; --ink-soft:#C2D0E6; --grey:#9DB0CE; --grey-2:#6B7C99;
+    --line:#20304C; --line-soft:#182338;
+    --bg:#080F1C; --surface:#0E1A2E; --surface-2:#101E36;
+    --blue-100:#16294A; --blue-50:#111F38;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 22px rgba(0,0,0,.35);
+    --shadow-lg:0 16px 46px rgba(0,0,0,.55);
+    --good-bg:#0E2A20; --warn-bg:#2C2410; --bad-bg:#2C1414;
+  }
+  :root[data-theme="light"]{
+    --ink:#0E1726; --ink-soft:#33415C; --grey:#5A6B85; --grey-2:#8A99B5;
+    --line:#DCE5F2; --line-soft:#EAF0F9;
+    --bg:#F1F5FC; --surface:#FFFFFF; --surface-2:#F7FAFF;
+    --blue-100:#E8F0FB; --blue-50:#F4F8FE;
+    --good-bg:#E4F5EC; --warn-bg:#FBF1DC; --bad-bg:#FBE7E7;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);
+    -webkit-font-smoothing:antialiased;line-height:1.45}
+  h1,h2,h3,h4{margin:0;text-wrap:balance}
+  button{font-family:inherit;cursor:pointer}
+  .num{font-variant-numeric:tabular-nums}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--grey)}
+
+  /* ===== Shell ===== */
+  .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+  .sidebar{background:linear-gradient(178deg,var(--blue-900),var(--blue-800));
+    color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+    padding:18px 14px;gap:6px}
+  .brand{display:flex;align-items:center;gap:11px;padding:6px 8px 16px}
+  .crest{width:40px;height:46px;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+  .brand-txt b{display:block;font-size:14px;letter-spacing:.02em;line-height:1.1}
+  .brand-txt span{font-size:11px;color:var(--blue-300)}
+  .navlabel{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#5f7bb0;
+    padding:14px 10px 6px}
+  .nav{display:flex;flex-direction:column;gap:3px}
+  .nav button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+    background:transparent;border:0;color:#c5d5f0;padding:10px 12px;border-radius:10px;
+    font-size:13.5px;font-weight:500;transition:.15s}
+  .nav button svg{width:19px;height:19px;flex:0 0 auto;opacity:.85}
+  .nav button:hover{background:rgba(255,255,255,.07);color:#fff}
+  .nav button.on{background:var(--blue-600);color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(22,86,176,.5)}
+  .nav button.on svg{opacity:1}
+  .side-foot{margin-top:auto;padding:12px 8px 2px;border-top:1px solid rgba(255,255,255,.09)}
+  .coach{display:flex;align-items:center;gap:10px}
+  .coach .av{width:34px;height:34px;border-radius:50%;background:var(--blue-500);
+    display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff}
+  .coach small{display:block;color:var(--blue-300);font-size:11px}
+  .coach b{font-size:13px}
+
+  .main{min-width:0;display:flex;flex-direction:column}
+  .topbar{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--surface) 88%,transparent);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+    padding:14px 26px;display:flex;align-items:center;gap:16px}
+  .topbar h1{font-size:19px;letter-spacing:-.01em}
+  .topbar .sub{color:var(--grey);font-size:12.5px;margin-top:1px}
+  .spacer{flex:1}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;display:inline-flex;
+    align-items:center;gap:7px;transition:.15s}
+  .btn:hover{border-color:var(--blue-500)}
+  .btn.primary{background:var(--blue-600);border-color:var(--blue-600);color:#fff}
+  .btn.primary:hover{background:var(--blue-700)}
+  .btn svg{width:16px;height:16px}
+  .themebtn{width:38px;height:38px;padding:0;justify-content:center;border-radius:9px}
+
+  .content{padding:24px 26px 60px;max-width:1240px;width:100%}
+  .view{display:none;animation:fade .25s ease}
+  .view.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.view.on,.sidebar{animation:none}}
+
+  /* ===== Cards / generic ===== */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow)}
+  .card-h{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;
+    align-items:center;gap:12px}
+  .card-h h3{font-size:15px}
+  .card-b{padding:18px}
+  .grid{display:grid;gap:18px}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;
+    font-size:11.5px;font-weight:600;line-height:1.6}
+  .pill.good{background:var(--good-bg);color:var(--good)}
+  .pill.warn{background:var(--warn-bg);color:var(--warn)}
+  .pill.bad{background:var(--bad-bg);color:var(--bad)}
+  .pill.blue{background:var(--blue-100);color:var(--blue-600)}
+  .tag{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--blue-100);
+    color:var(--blue-600);font-size:11px;font-weight:600}
+  .mock-note{font-size:12px;color:var(--grey-2);font-style:italic}
+
+  /* ===== Dashboard ===== */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi .k-val{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .kpi .k-lab{font-size:12px;color:var(--grey);margin-top:6px}
+  .kpi .k-ic{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:9px;
+    background:var(--blue-100);display:grid;place-items:center;color:var(--blue-600)}
+  .kpi .k-ic svg{width:18px;height:18px}
+  .two{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+  .next-match{background:linear-gradient(120deg,var(--blue-700),var(--blue-600));
+    color:#fff;border:0;border-radius:var(--radius);padding:22px;box-shadow:var(--shadow-lg);
+    display:flex;flex-direction:column;gap:16px}
+  .nm-top{display:flex;justify-content:space-between;align-items:center}
+  .nm-top .eyebrow{color:#a9c4ef}
+  .vs{display:flex;align-items:center;justify-content:center;gap:22px;padding:6px 0}
+  .vs .team{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1}
+  .vs .team small{font-size:12px;color:#cfe0f7}
+  .vs .team b{font-size:15px}
+  .vs .mid{font-size:13px;font-weight:700;color:#a9c4ef}
+  .badge-lg{width:56px;height:56px;border-radius:12px;background:rgba(255,255,255,.12);
+    display:grid;place-items:center;border:1px dashed rgba(255,255,255,.4);font-size:11px;
+    color:#cfe0f7;text-align:center;line-height:1.1}
+  .nm-meta{display:flex;gap:18px;font-size:12.5px;color:#dbe7f9;border-top:1px solid rgba(255,255,255,.16);
+    padding-top:14px}
+  .list-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .list-row:last-child{border-bottom:0}
+  .list-row .av{width:32px;height:32px;border-radius:8px;background:var(--blue-100);
+    color:var(--blue-600);display:grid;place-items:center;font-weight:700;font-size:12px}
+  .list-row .nm{flex:1;font-size:13.5px;font-weight:500}
+  .list-row .nm small{display:block;color:var(--grey);font-weight:400;font-size:11.5px}
+
+  /* ===== Tables ===== */
+  .tbl-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--grey);font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line);
+    white-space:nowrap;position:sticky;top:0;background:var(--surface)}
+  td{padding:11px 12px;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+  tbody tr{transition:.12s}
+  tbody tr:hover{background:var(--blue-50)}
+  tbody tr.sel{background:var(--blue-100)}
+  .pos{display:inline-block;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:700;
+    background:var(--surface-2);border:1px solid var(--line);color:var(--ink-soft)}
+  .foot-l{color:var(--grey);font-size:11.5px}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%}
+
+  /* ===== Player split ===== */
+  .split{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+  .prof-head{display:flex;gap:14px;align-items:center;padding:18px}
+  .prof-av{width:58px;height:58px;border-radius:14px;background:linear-gradient(135deg,var(--blue-600),var(--blue-500));
+    color:#fff;display:grid;place-items:center;font-size:22px;font-weight:800}
+  .prof-head h3{font-size:17px}
+  .prof-head .meta{color:var(--grey);font-size:12.5px;margin-top:2px}
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:10px;
+    overflow:hidden;margin:0 18px}
+  .kv div{background:var(--surface);padding:10px 12px}
+  .kv .kk{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--grey)}
+  .kv .vv{font-size:13.5px;font-weight:600;margin-top:2px}
+  .statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:18px}
+  .stat{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+  .stat b{display:block;font-size:22px;font-weight:800;letter-spacing:-.02em}
+  .stat span{font-size:11px;color:var(--grey)}
+  .months{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;padding:0 18px 18px}
+  .mo{border-radius:8px;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;border:1px solid transparent}
+  .mo.paid{background:var(--good-bg);color:var(--good)}
+  .mo.due{background:var(--bad-bg);color:var(--bad)}
+  .mo small{display:block;font-size:9px;opacity:.8;font-weight:700;letter-spacing:.04em}
+
+  /* ===== Kalendar ===== */
+  .cal-week{margin-bottom:14px}
+  .cal-week .wk-lab{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--blue-600);margin-bottom:7px;display:flex;align-items:center;gap:8px}
+  .cal-week .wk-lab::after{content:"";flex:1;height:1px;background:var(--line)}
+  .days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .day{background:var(--surface);border:1px solid var(--line);border-radius:11px;overflow:hidden;
+    min-height:132px;display:flex;flex-direction:column}
+  .day.match{border-color:var(--blue-500);box-shadow:0 0 0 1px var(--blue-500) inset}
+  .day.free{background:repeating-linear-gradient(135deg,var(--surface),var(--surface) 7px,var(--surface-2) 7px,var(--surface-2) 14px)}
+  .day-h{padding:6px 9px;background:var(--blue-900);color:#fff;display:flex;justify-content:space-between;
+    align-items:center}
+  .day.match .day-h{background:var(--blue-600)}
+  .day-h b{font-size:12px}.day-h span{font-size:10.5px;color:var(--blue-300)}
+  .slot{padding:7px 9px;font-size:11px;flex:1}
+  .slot+.slot{border-top:1px dashed var(--line)}
+  .slot .sl-lab{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-2);font-weight:700;margin-bottom:3px}
+  .slot ul{margin:0;padding-left:14px;color:var(--ink-soft);line-height:1.5}
+  .slot .free-mark{color:var(--grey-2);font-size:18px;font-weight:700}
+  .match-cell{display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:center;
+    text-align:center;padding:8px;flex:1}
+  .badge-sm{width:40px;height:40px;border-radius:9px;background:var(--blue-50);border:1px dashed var(--blue-300);
+    display:grid;place-items:center;font-size:9px;color:var(--blue-500);line-height:1;padding:3px}
+  .match-cell b{font-size:11.5px}.match-cell small{font-size:10px;color:var(--grey)}
+
+  /* ===== Mikrociklus ===== */
+  .mc-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+  .mc-tab{padding:9px 15px;border-radius:10px;border:1px solid var(--line);background:var(--surface);
+    font-size:12.5px;font-weight:600;color:var(--ink-soft);display:flex;flex-direction:column;gap:1px;min-width:96px}
+  .mc-tab small{font-size:10px;font-weight:600;color:var(--grey-2)}
+  .mc-tab.on{background:var(--blue-600);border-color:var(--blue-600);color:#fff}
+  .mc-tab.on small{color:#bcd2f4}
+  .mc-tab.comp{border-style:dashed}
+  .mc-grid{display:grid;grid-template-columns:130px repeat(3,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:720px}
+  .mc-grid>div{background:var(--surface);padding:10px 12px}
+  .mc-corner{background:var(--blue-900) !important;color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center}
+  .mc-dayhead{background:var(--blue-800) !important;color:#fff;text-align:center}
+  .mc-dayhead b{font-size:13px}.mc-dayhead small{display:block;font-size:10.5px;color:var(--blue-300)}
+  .mc-sesshead{background:var(--surface-2) !important;font-weight:700;font-size:11px;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--blue-600);display:flex;align-items:center;gap:6px}
+  .mc-sect{font-size:11.5px;color:var(--ink-soft)}
+  .mc-sect .s-lab{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--grey-2);font-weight:700}
+  .mc-sect .s-lab.a{color:var(--good)}.mc-sect .s-lab.b{color:var(--blue-500)}
+  .mc-sect .s-lab.c{color:var(--warn)}.mc-sect .s-lab.d{color:var(--grey)}
+  .mc-sect .s-lab.e{color:var(--bad)}
+  .mc-sect+.mc-sect{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+
+  /* ===== Trening ===== */
+  .tr-head{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:18px}
+  .tr-head .f{background:var(--surface);padding:12px 14px}
+  .tr-head .f .kk{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--grey)}
+  .tr-head .f .vv{font-size:14px;font-weight:700;margin-top:3px}
+  .tr-sect{margin-bottom:16px}
+  .tr-sect .sec-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .tr-sect .sec-h .n{width:26px;height:26px;border-radius:8px;background:var(--blue-600);color:#fff;
+    display:grid;place-items:center;font-weight:800;font-size:13px}
+  .tr-sect .sec-h h4{font-size:14px}
+  .tr-body{display:grid;grid-template-columns:1fr 300px;gap:14px}
+  .tr-text{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:14px;
+    font-size:13px;color:var(--ink-soft);line-height:1.6}
+  .draw{background:var(--surface);border:1px solid var(--line);border-radius:11px;overflow:hidden;
+    display:flex;flex-direction:column}
+  .draw .d-toolbar{display:flex;gap:5px;padding:7px 8px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .d-tool{width:28px;height:28px;border-radius:7px;border:1px solid var(--line);background:var(--surface-2);
+    display:grid;place-items:center;color:var(--ink-soft)}
+  .d-tool svg{width:15px;height:15px}
+  .d-tool.up{width:auto;padding:0 9px;gap:5px;font-size:11px;font-weight:600}
+
+  /* ===== Utakmica entry ===== */
+  .mt-score{display:flex;align-items:center;justify-content:center;gap:20px;padding:20px;
+    background:linear-gradient(120deg,var(--blue-700),var(--blue-600));border-radius:14px;color:#fff;margin-bottom:18px}
+  .mt-score .team{display:flex;flex-direction:column;align-items:center;gap:8px;width:150px}
+  .mt-score .team b{font-size:14px;text-align:center}
+  .mt-score .sc{font-size:44px;font-weight:800;letter-spacing:.05em;display:flex;gap:10px;align-items:center}
+  .sc-box{width:56px;height:60px;background:rgba(255,255,255,.14);border-radius:10px;display:grid;place-items:center}
+  .pitch-wrap{display:grid;grid-template-columns:280px 1fr;gap:18px}
+  .lineup .li{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--line);
+    border-radius:9px;margin-bottom:7px;background:var(--surface);font-size:12.5px}
+  .lineup .num-c{width:24px;height:24px;border-radius:6px;background:var(--blue-900);color:#fff;
+    display:grid;place-items:center;font-size:11px;font-weight:700}
+  .lineup .li .nm{flex:1;font-weight:600}
+  .chip-ic{display:inline-flex;align-items:center;gap:2px;font-size:11px}
+  .evbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .goal-log{display:flex;flex-direction:column;gap:7px}
+  .ge{display:flex;align-items:center;gap:10px;font-size:12.5px;padding:8px 11px;border-radius:9px;
+    background:var(--surface-2);border:1px solid var(--line)}
+  .ge .min{font-weight:800;color:var(--blue-600);width:34px}
+  .ge .ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:12px}
+  .ic.g{background:var(--good-bg)}.ic.a{background:var(--blue-100)}
+  .ic.y{background:var(--warn-bg)}.ic.sub{background:var(--surface)}
+  .cardico{width:11px;height:15px;border-radius:2px;display:inline-block}
+
+  /* ===== Skladiste ===== */
+  .ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+  .ex-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    box-shadow:var(--shadow);transition:.15s}
+  .ex-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--blue-300)}
+  .ex-thumb{height:120px;background:#2f7d4f;position:relative;border-bottom:1px solid var(--line)}
+  .ex-b{padding:12px 13px}
+  .ex-b h4{font-size:13.5px;margin-bottom:3px}
+  .ex-b p{margin:0;font-size:11.5px;color:var(--grey);line-height:1.4}
+  .ex-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+  .filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+  .chip{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);
+    font-size:12px;font-weight:600;color:var(--ink-soft)}
+  .chip.on{background:var(--blue-600);border-color:var(--blue-600);color:#fff}
+
+  .sec-title{display:flex;align-items:center;gap:10px;margin:2px 0 16px}
+  .sec-title h2{font-size:16px}
+  .sec-title .eyebrow{margin-left:auto}
+
+  /* mobile nav */
+  .mobtabs{display:none}
+  @media (max-width:920px){
+    .app{grid-template-columns:1fr}
+    .sidebar{display:none}
+    .two,.pitch-wrap,.tr-body,.split{grid-template-columns:1fr}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .tr-head{grid-template-columns:repeat(2,1fr)}
+    .days{grid-template-columns:1fr}
+    .content{padding:16px 14px 90px}
+    .topbar{padding:12px 16px}
+    .mobtabs{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:20;background:var(--blue-900);
+      padding:6px 4px calc(6px + env(safe-area-inset-bottom));justify-content:space-between}
+    .mobtabs button{flex:1;background:transparent;border:0;color:#8fabd8;display:flex;flex-direction:column;
+      align-items:center;gap:3px;font-size:9.5px;padding:5px 2px;border-radius:9px}
+    .mobtabs button svg{width:20px;height:20px}
+    .mobtabs button.on{color:#fff;background:var(--blue-600)}
+  }
+  @media (max-width:560px){.kpis{grid-template-columns:1fr 1fr}.months{grid-template-columns:repeat(3,1fr)}}
+</style>
+
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <svg class="crest" viewBox="0 0 40 46" aria-hidden="true">
+        <path d="M2 3 H38 V26 C38 36 30 42 20 45 C10 42 2 36 2 26 Z" fill="#fff"/>
+        <path d="M5 6 H35 V26 C35 34 28 39 20 42 C12 39 5 34 5 26 Z" fill="#1656B0"/>
+        <path d="M20 6 V42 C12 39 5 34 5 26 V6 Z" fill="#0F2E5C"/>
+        <text x="20" y="27" text-anchor="middle" fill="#fff" font-size="15" font-weight="800" font-family="Segoe UI">B</text>
+      </svg>
+      <div class="brand-txt">
+        <b>FK Brodarac</b><span>Omladinci · 2026/27</span>
+      </div>
+    </div>
+
+    <div class="navlabel">Glavni meni</div>
+    <nav class="nav" id="nav">
+      <button data-v="dash" class="on">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Pregled</button>
+      <button data-v="players">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3.6 2.5-5.5 5.5-5.5s5.5 1.9 5.5 5.5"/><path d="M16 5.2A3 3 0 0 1 16 11M18 20c0-3-1-4.7-3-5.5"/></svg>
+        Igrači</button>
+      <button data-v="cal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>
+        Kalendar aktivnosti</button>
+      <button data-v="mc">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12a8 8 0 0 1 13.7-5.6M20 12A8 8 0 0 1 6.3 17.6"/><path d="M17 3v4h-4M7 21v-4h4"/></svg>
+        Mikrociklusi</button>
+      <button data-v="train">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v14H4z"/><path d="M4 12h16M12 5v14"/><circle cx="12" cy="12" r="2.2"/></svg>
+        Koncept treninga</button>
+      <button data-v="match">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="m12 7 3 2.2-1.1 3.6h-3.8L9 9.2 12 7Z"/></svg>
+        Utakmice</button>
+      <button data-v="ex">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v13H6.5A2.5 2.5 0 0 0 4 19.5Z"/><path d="M4 19.5V6.5"/></svg>
+        Skladište vežbi</button>
+    </nav>
+
+    <div class="side-foot">
+      <div class="coach">
+        <div class="av">MT</div>
+        <div><b>Trener</b><small>FK Brodarac</small></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="vtitle">Pregled</h1>
+        <div class="sub" id="vsub">Sezona 2026/27 · Pripremni period</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Dodaj</button>
+      <button class="btn themebtn" id="theme" title="Tema" aria-label="Promeni temu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></svg>
+      </button>
+    </header>
+
+    <div class="content">
+
+      <!-- ===== DASHBOARD ===== -->
+      <section class="view on" data-view="dash">
+        <div class="kpis">
+          <div class="kpi"><div class="k-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c0-3.3 2.4-5 5.5-5s5.5 1.7 5.5 5"/></svg></div><div class="k-val num">28</div><div class="k-lab">Igrača u timu</div></div>
+          <div class="kpi"><div class="k-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 9h18M8 3v4"/></svg></div><div class="k-val num">4</div><div class="k-lab">Utakmice u planu</div></div>
+          <div class="kpi"><div class="k-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M5 8l7-5 7 5"/></svg></div><div class="k-val num">6</div><div class="k-lab">Mikrociklusa</div></div>
+          <div class="kpi"><div class="k-ic" style="background:var(--bad-bg);color:var(--bad)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v6c0 5 3.8 8 9 9 5.2-1 9-4 9-9V7Z"/></svg></div><div class="k-val num" style="color:var(--bad)">5</div><div class="k-lab">Duguju članarinu (jul)</div></div>
+        </div>
+
+        <div class="two">
+          <div class="next-match">
+            <div class="nm-top"><span class="eyebrow">Sledeća utakmica</span><span class="pill" style="background:rgba(255,255,255,.15);color:#fff">za 7 dana</span></div>
+            <div class="vs">
+              <div class="team">
+                <svg class="crest" style="width:52px;height:60px" viewBox="0 0 40 46"><path d="M2 3 H38 V26 C38 36 30 42 20 45 C10 42 2 36 2 26 Z" fill="#fff"/><path d="M5 6 H35 V26 C35 34 28 39 20 42 C12 39 5 34 5 26 Z" fill="#1656B0"/><text x="20" y="27" text-anchor="middle" fill="#fff" font-size="15" font-weight="800">B</text></svg>
+                <b>Brodarac</b><small>domaćin</small>
+              </div>
+              <div class="mid">10.07<br>17:30</div>
+              <div class="team">
+                <div class="badge-lg">grb<br>+</div>
+                <b>Prva iskra</b><small>Barič</small>
+              </div>
+            </div>
+            <div class="nm-meta"><span>📍 SC Brodarac</span><span>Prijateljska</span><span>MD priprema</span></div>
+          </div>
+
+          <div class="card">
+            <div class="card-h"><h3>Duguju članarinu</h3><span class="pill bad" style="margin-left:auto">Jul</span></div>
+            <div class="card-b" style="padding-top:6px">
+              <div class="list-row"><div class="av">AB</div><div class="nm">Aleksa Božić<small>RW · 2008</small></div><span class="pill bad">Nije plaćeno</span></div>
+              <div class="list-row"><div class="av">LN</div><div class="nm">Luka Nikolić<small>CB/RB · 2008</small></div><span class="pill bad">Nije plaćeno</span></div>
+              <div class="list-row"><div class="av">MR</div><div class="nm">Mateja Roknić<small>RW · 2008</small></div><span class="pill bad">Nije plaćeno</span></div>
+              <div class="list-row"><div class="av">JP</div><div class="nm">Jakša Pantović<small>CM/DM · 2009</small></div><span class="pill bad">Nije plaćeno</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== IGRAČI ===== -->
+      <section class="view" data-view="players">
+        <div class="split">
+          <div class="card">
+            <div class="card-h"><h3>Spisak igrača</h3><span class="pill blue" style="margin-left:auto">28 igrača</span></div>
+            <div class="tbl-wrap">
+              <table>
+                <thead><tr><th>Igrač</th><th>God.</th><th>Noga</th><th>Pozicija</th><th>Alt.</th><th>Članarina</th></tr></thead>
+                <tbody>
+                  <tr class="sel"><td><b>Jovan Nikolić</b></td><td class="num">17</td><td>Desna</td><td><span class="pos">CM</span></td><td><span class="pos">DM</span></td><td><span class="dot" style="background:var(--good)"></span></td></tr>
+                  <tr><td>Aleksa Božić</td><td class="num">17</td><td>Leva</td><td><span class="pos">RW</span></td><td>—</td><td><span class="dot" style="background:var(--bad)"></span></td></tr>
+                  <tr><td>Luka Nikolić</td><td class="num">17</td><td>Desna</td><td><span class="pos">CB</span></td><td><span class="pos">RB</span></td><td><span class="dot" style="background:var(--bad)"></span></td></tr>
+                  <tr><td>Nemanja Tomović</td><td class="num">17</td><td>Desna</td><td><span class="pos">CB</span></td><td>—</td><td><span class="dot" style="background:var(--good)"></span></td></tr>
+                  <tr><td>Stefan Karapandžić</td><td class="num">18</td><td>Leva</td><td><span class="pos">DM</span></td><td>—</td><td><span class="dot" style="background:var(--good)"></span></td></tr>
+                  <tr><td>Mihajlo Spasojević</td><td class="num">17</td><td>Leva</td><td><span class="pos">AMF</span></td><td><span class="pos">RW</span></td><td><span class="dot" style="background:var(--good)"></span></td></tr>
+                  <tr><td>Đorđe Raičević</td><td class="num">17</td><td>Desna</td><td><span class="pos">RB</span></td><td>—</td><td><span class="dot" style="background:var(--good)"></span></td></tr>
+                  <tr><td>Aleksa Jagličić</td><td class="num">18</td><td>Desna</td><td><span class="pos">LW</span></td><td><span class="pos">RW</span></td><td><span class="dot" style="background:var(--good)"></span></td></tr>
+                  <tr><td>Đorđe Jakovljević</td><td class="num">15</td><td>Leva</td><td><span class="pos">LCB</span></td><td>—</td><td><span class="dot" style="background:var(--good)"></span></td></tr>
+                  <tr><td>Jakša Pantović</td><td class="num">17</td><td>Leva</td><td><span class="pos">CM</span></td><td><span class="pos">DM</span></td><td><span class="dot" style="background:var(--bad)"></span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card" style="align-self:start">
+            <div class="prof-head">
+              <div class="prof-av">JN</div>
+              <div><h3>Jovan Nikolić</h3><div class="meta">CM / DM · 11.10.2008. (17)</div>
+                <div style="margin-top:6px;display:flex;gap:6px"><span class="tag">Desna noga</span><span class="tag">Prva postava</span></div></div>
+            </div>
+            <div class="kv">
+              <div><div class="kk">Datum rođenja</div><div class="vv">11.10.2008.</div></div>
+              <div><div class="kk">Jača noga</div><div class="vv">Desna</div></div>
+              <div><div class="kk">Pozicija</div><div class="vv">CM</div></div>
+              <div><div class="kk">Alternativna</div><div class="vv">DM</div></div>
+            </div>
+            <div class="eyebrow" style="padding:16px 18px 0">Statistika sezone</div>
+            <div class="statgrid">
+              <div class="stat"><b class="num">12</b><span>Nastupi</span></div>
+              <div class="stat"><b class="num">987</b><span>Minuti</span></div>
+              <div class="stat"><b class="num">3</b><span>Golovi</span></div>
+              <div class="stat"><b class="num">5</b><span>Asist.</span></div>
+              <div class="stat"><b class="num">2</b><span>Žuti</span></div>
+              <div class="stat"><b class="num">4</b><span>Clean sheet</span></div>
+            </div>
+            <div class="eyebrow" style="padding:4px 18px 8px">Članarina 2026</div>
+            <div class="months">
+              <div class="mo paid"><small>JUL</small>✓</div>
+              <div class="mo paid"><small>AVG</small>✓</div>
+              <div class="mo due"><small>SEP</small>✕</div>
+              <div class="mo paid"><small>OKT</small>✓</div>
+              <div class="mo paid"><small>NOV</small>✓</div>
+              <div class="mo due"><small>DEC</small>✕</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== KALENDAR AKTIVNOSTI ===== -->
+      <section class="view" data-view="cal">
+        <div class="sec-title"><h2>Plan pripremnog perioda</h2><span class="eyebrow">06.07 – 16.08 · jedan red = nedelja</span></div>
+
+        <div class="cal-week">
+          <div class="wk-lab">Nedelja 1 · 06 – 12. jul</div>
+          <div class="days">
+            <div class="day"><div class="day-h"><b>PON</b><span>06.07</span></div>
+              <div class="slot"><div class="sl-lab">Prepodne</div><ul><li>Snaga — donji ekst.</li><li>Poligoni aer. izdr.</li></ul></div>
+              <div class="slot"><div class="sl-lab">Popodne</div><ul><li>Passing drill</li><li>Build-up + press</li></ul></div></div>
+            <div class="day"><div class="day-h"><b>UTO</b><span>07.07</span></div>
+              <div class="slot"><div class="sl-lab">Prepodne</div><ul><li>Tehnika + posed</li></ul></div>
+              <div class="slot"><div class="sl-lab">Popodne</div><ul><li>Igra 8v8</li></ul></div></div>
+            <div class="day free"><div class="day-h"><b>SRE</b><span>08.07</span></div>
+              <div class="slot"><div class="sl-lab">Prepodne</div><span class="free-mark">/</span></div>
+              <div class="slot"><div class="sl-lab">Popodne</div><ul><li>Regeneracija</li></ul></div></div>
+            <div class="day"><div class="day-h"><b>ČET</b><span>09.07</span></div>
+              <div class="slot"><div class="sl-lab">Prepodne</div><ul><li>Brzina + agilnost</li></ul></div>
+              <div class="slot"><div class="sl-lab">Popodne</div><ul><li>Tranzicije</li></ul></div></div>
+            <div class="day match"><div class="day-h"><b>PET</b><span>10.07</span></div>
+              <div class="match-cell"><div class="badge-sm">grb<br>+</div><b>vs Prva iskra</b><small>17:30 · dom</small></div></div>
+            <div class="day"><div class="day-h"><b>SUB</b><span>11.07</span></div>
+              <div class="slot"><div class="sl-lab">Prepodne</div><ul><li>Analiza meča</li></ul></div>
+              <div class="slot"><div class="sl-lab">Popodne</div><span class="free-mark">/</span></div></div>
+            <div class="day free"><div class="day-h"><b>NED</b><span>12.07</span></div>
+              <div class="slot"><div class="sl-lab">Prepodne</div><span class="free-mark">/</span></div>
+              <div class="slot"><div class="sl-lab">Popodne</div><span class="free-mark">/</span></div></div>
+          </div>
+        </div>
+
+        <div class="cal-week">
+          <div class="wk-lab">Nedelja 2 · 13 – 19. jul</div>
+          <div class="days">
+            <div class="day"><div class="day-h"><b>PON</b><span>13.07</span></div>
+              <div class="slot"><div class="sl-lab">Prepodne</div><ul><li>Snaga — gornji ekst.</li></ul></div>
+              <div class="slot"><div class="sl-lab">Popodne</div><ul><li>Prekidi</li></ul></div></div>
+            <div class="day"><div class="day-h"><b>UTO</b><span>14.07</span></div>
+              <div class="slot"><div class="sl-lab">Prepodne</div><ul><li>Posed lopte</li></ul></div>
+              <div class="slot"><div class="sl-lab">Popodne</div><ul><li>Igra 11v11</li></ul></div></div>
+            <div class="day match"><div class="day-h"><b>SRE</b><span>15.07</span></div>
+              <div class="match-cell"><div class="badge-sm">grb<br>+</div><b>vs IMT</b><small>18:00 · gost</small></div></div>
+            <div class="day free"><div class="day-h"><b>ČET</b><span>16.07</span></div>
+              <div class="slot"><div class="sl-lab">Prepodne</div><span class="free-mark">/</span></div>
+              <div class="slot"><div class="sl-lab">Popodne</div><ul><li>Regeneracija</li></ul></div></div>
+            <div class="day"><div class="day-h"><b>PET</b><span>17.07</span></div>
+              <div class="slot"><div class="sl-lab">Prepodne</div><ul><li>Odbrana zone</li></ul></div>
+              <div class="slot"><div class="sl-lab">Popodne</div><ul><li>Napad — širina</li></ul></div></div>
+            <div class="day match"><div class="day-h"><b>SUB</b><span>19.07</span></div>
+              <div class="match-cell"><div class="badge-sm">grb<br>+</div><b>vs Ušće</b><small>17:00 · dom</small></div></div>
+            <div class="day free"><div class="day-h"><b>NED</b><span>20.07</span></div>
+              <div class="slot"><div class="sl-lab">Prepodne</div><span class="free-mark">/</span></div>
+              <div class="slot"><div class="sl-lab">Popodne</div><span class="free-mark">/</span></div></div>
+          </div>
+        </div>
+        <p class="mock-note">↑ Klik na dan otvara detalje / uređivanje. Grb protivnika se dodaje na „grb +" mestu (upload). Slobodan termin = „/".</p>
+      </section>
+
+      <!-- ===== MIKROCIKLUSI ===== -->
+      <section class="view" data-view="mc">
+        <div class="mc-tabs" id="mctabs">
+          <button class="mc-tab on">MC 1<small>Pripremni</small></button>
+          <button class="mc-tab">MC 2<small>Pripremni</small></button>
+          <button class="mc-tab">MC 3<small>Pripremni</small></button>
+          <button class="mc-tab">MC 4<small>Pripremni</small></button>
+          <button class="mc-tab">MC 5<small>Pripremni</small></button>
+          <button class="mc-tab comp">MC 6<small>Takmičarski</small></button>
+        </div>
+        <div class="sec-title"><h2>Mikrociklus 1 — pripremni</h2><span class="eyebrow">06.07 – 13.07 · prepodne / popodne</span></div>
+
+        <div class="tbl-wrap">
+          <div class="mc-grid">
+            <div class="mc-corner">Segment</div>
+            <div class="mc-dayhead"><b>Ponedeljak</b><small>06.07 · Prepodne</small></div>
+            <div class="mc-dayhead"><b>Ponedeljak</b><small>06.07 · Popodne</small></div>
+            <div class="mc-dayhead"><b>Utorak</b><small>07.07 · Prepodne</small></div>
+
+            <div class="mc-sesshead">Sadržaj</div>
+            <div>
+              <div class="mc-sect"><div class="s-lab a">1 · Aktivacija</div>Mobilnost + trčanje 10'</div>
+              <div class="mc-sect"><div class="s-lab b">2 · Uvodni</div>Rondo 5v2, 2 serije</div>
+              <div class="mc-sect"><div class="s-lab c">3 · Glavni</div>Snaga donji ekstremiteti 25'</div>
+              <div class="mc-sect"><div class="s-lab d">4 · Završni</div>Istezanje</div>
+              <div class="mc-sect"><div class="s-lab e">5 · Dodatno</div>Core 10'</div>
+            </div>
+            <div>
+              <div class="mc-sect"><div class="s-lab a">1 · Aktivacija</div>Aktivacija s loptom 8'</div>
+              <div class="mc-sect"><div class="s-lab b">2 · Uvodni</div>Passing drill u kvadratu</div>
+              <div class="mc-sect"><div class="s-lab c">3 · Glavni</div>Build-up 3. trećine + press</div>
+              <div class="mc-sect"><div class="s-lab d">4 · Završni</div>Igra 7v7</div>
+              <div class="mc-sect"><div class="s-lab e">5 · Dodatno</div>—</div>
+            </div>
+            <div>
+              <div class="mc-sect"><div class="s-lab a">1 · Aktivacija</div>Koordinacija — merdevine</div>
+              <div class="mc-sect"><div class="s-lab b">2 · Uvodni</div>Poses. 6v6+2</div>
+              <div class="mc-sect"><div class="s-lab c">3 · Glavni</div>Aerobna izdržljivost — poligon</div>
+              <div class="mc-sect"><div class="s-lab d">4 · Završni</div>Šut na gol</div>
+              <div class="mc-sect"><div class="s-lab e">5 · Dodatno</div>Prevencija povreda</div>
+            </div>
+          </div>
+        </div>
+        <p class="mock-note">↑ Skrol levo/desno za ostale dane nedelje. Svaki dan ima Prepodne i Popodne, a svaki termin 5 segmenata.</p>
+      </section>
+
+      <!-- ===== KONCEPT TRENINGA ===== -->
+      <section class="view" data-view="train">
+        <div class="sec-title"><h2>Koncept treninga</h2><span class="eyebrow">08.07 · Prepodne · MC1</span></div>
+        <div class="tr-head">
+          <div class="f"><div class="kk">Vreme</div><div class="vv">09:00</div></div>
+          <div class="f"><div class="kk">Trajanje</div><div class="vv">75 min</div></div>
+          <div class="f"><div class="kk">Broj igrača</div><div class="vv">24</div></div>
+          <div class="f"><div class="kk">Intenzitet</div><div class="vv"><span class="pill warn">Srednji</span></div></div>
+          <div class="f"><div class="kk">MD ±</div><div class="vv">MD-2</div></div>
+          <div class="f"><div class="kk">Cilj treninga</div><div class="vv">Presing u srednjem bloku</div></div>
+          <div class="f"><div class="kk">Rekviziti</div><div class="vv">12 kupa, 6 čunjeva, 3 gola</div></div>
+          <div class="f"><div class="kk">Napomene</div><div class="vv">2 igrača individualno</div></div>
+        </div>
+
+        <div class="tr-sect">
+          <div class="sec-h"><div class="n">1</div><h4>Aktivacija / vežbe snage</h4><span class="mock-note" style="margin-left:auto">samo tekst</span></div>
+          <div class="tr-text">Dinamička mobilnost 8' → aktivacija sa mini-bendom (gluteus, addukcija) → trčanje sa promenom pravca 2×40m. Snaga: čučanj sa tegom 3×8, iskorak 3×10.</div>
+        </div>
+
+        <div class="tr-sect">
+          <div class="sec-h"><div class="n">2</div><h4>Uvodni deo</h4><span class="mock-note" style="margin-left:auto">tekst + crtež</span></div>
+          <div class="tr-body">
+            <div class="tr-text">Rondo 6v2 u kvadratu 12×12m. Cilj: brz prenos lopte, prva lopta, trenutak pritiska. 3 serije × 3'. Progresija: ograničenje na 2 dodira.</div>
+            <div class="draw">
+              <div class="d-toolbar">
+                <div class="d-tool" title="Igrač"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3-6 7-6s7 2 7 6"/></svg></div>
+                <div class="d-tool" title="Lopta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7.5"/></svg></div>
+                <div class="d-tool" title="Kup"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 6h8l-2 12h-4z"/></svg></div>
+                <div class="d-tool" title="Strelica"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h14M13 6l6 6-6 6"/></svg></div>
+                <div class="d-tool up" title="Ubaci sliku"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15V4M8 8l4-4 4 4M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>Slika</div>
+              </div>
+              <svg viewBox="0 0 300 200" style="width:100%;display:block;background:#2f7d4f">
+                <rect x="8" y="8" width="284" height="184" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2"/>
+                <line x1="150" y1="8" x2="150" y2="192" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/>
+                <circle cx="150" cy="100" r="30" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/>
+                <circle cx="80" cy="70" r="9" fill="#1656B0" stroke="#fff" stroke-width="2"/>
+                <circle cx="80" cy="130" r="9" fill="#1656B0" stroke="#fff" stroke-width="2"/>
+                <circle cx="150" cy="55" r="9" fill="#1656B0" stroke="#fff" stroke-width="2"/>
+                <circle cx="150" cy="145" r="9" fill="#1656B0" stroke="#fff" stroke-width="2"/>
+                <circle cx="115" cy="100" r="9" fill="#D64545" stroke="#fff" stroke-width="2"/>
+                <circle cx="185" cy="100" r="9" fill="#D64545" stroke="#fff" stroke-width="2"/>
+                <path d="M92 74 L138 58" stroke="#ffd24a" stroke-width="2.4" fill="none" marker-end="url(#ar)"/>
+                <path d="M150 68 L150 132" stroke="#ffd24a" stroke-width="2.4" fill="none" stroke-dasharray="5 4"/>
+                <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#ffd24a"/></marker></defs>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="tr-sect">
+          <div class="sec-h"><div class="n">3</div><h4>Glavni deo</h4><span class="mock-note" style="margin-left:auto">tekst + crtež</span></div>
+          <div class="tr-body">
+            <div class="tr-text">Igra 8v8+3 na ½ terena sa presing okidačima. Kad se lopta ubaci u širinu — kolektivni pritisak. Uslov: povraćaj lopte za 6 sekundi. 4 serije × 4', pauza 2'.</div>
+            <div class="draw">
+              <div class="d-toolbar">
+                <div class="d-tool"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3-6 7-6s7 2 7 6"/></svg></div>
+                <div class="d-tool"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7.5"/></svg></div>
+                <div class="d-tool"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 6h8l-2 12h-4z"/></svg></div>
+                <div class="d-tool"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h14M13 6l6 6-6 6"/></svg></div>
+                <div class="d-tool up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15V4M8 8l4-4 4 4M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>Slika</div>
+              </div>
+              <svg viewBox="0 0 300 200" style="width:100%;display:block;background:#2f7d4f">
+                <rect x="8" y="8" width="284" height="184" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2"/>
+                <rect x="8" y="60" width="34" height="80" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/>
+                <rect x="258" y="60" width="34" height="80" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/>
+                <circle cx="70" cy="60" r="8" fill="#1656B0" stroke="#fff" stroke-width="2"/>
+                <circle cx="70" cy="140" r="8" fill="#1656B0" stroke="#fff" stroke-width="2"/>
+                <circle cx="120" cy="100" r="8" fill="#1656B0" stroke="#fff" stroke-width="2"/>
+                <circle cx="200" cy="70" r="8" fill="#D64545" stroke="#fff" stroke-width="2"/>
+                <circle cx="200" cy="130" r="8" fill="#D64545" stroke="#fff" stroke-width="2"/>
+                <circle cx="240" cy="100" r="8" fill="#D64545" stroke="#fff" stroke-width="2"/>
+                <path d="M128 96 L192 74" stroke="#ffd24a" stroke-width="2.4" fill="none" marker-end="url(#ar2)"/>
+                <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#ffd24a"/></marker></defs>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="tr-sect">
+          <div class="sec-h"><div class="n">4</div><h4>Završni deo</h4><span class="mock-note" style="margin-left:auto">tekst + crtež</span></div>
+          <div class="tr-text">Igra na dva mala gola 5v5, slobodno. Smirivanje + istezanje u paru 8'.</div>
+        </div>
+      </section>
+
+      <!-- ===== UTAKMICE ===== -->
+      <section class="view" data-view="match">
+        <div class="sec-title"><h2>Unos utakmice</h2><span class="eyebrow">10.07 · Prijateljska · domaćin</span></div>
+        <div class="mt-score">
+          <div class="team">
+            <svg class="crest" style="width:44px;height:50px" viewBox="0 0 40 46"><path d="M2 3 H38 V26 C38 36 30 42 20 45 C10 42 2 36 2 26 Z" fill="#fff"/><path d="M5 6 H35 V26 C35 34 28 39 20 42 C12 39 5 34 5 26 Z" fill="#1656B0"/><text x="20" y="27" text-anchor="middle" fill="#fff" font-size="15" font-weight="800">B</text></svg>
+            <b>FK Brodarac</b>
+          </div>
+          <div class="sc"><div class="sc-box num">3</div><span style="opacity:.6">:</span><div class="sc-box num">1</div></div>
+          <div class="team"><div class="badge-lg" style="width:48px;height:48px">grb +</div><b>Prva iskra Barič</b></div>
+        </div>
+
+        <div class="pitch-wrap">
+          <div class="card">
+            <div class="card-h"><h3>Prva postava</h3><span class="pill blue" style="margin-left:auto">4-3-3</span></div>
+            <div class="card-b">
+              <div class="lineup">
+                <div class="li"><div class="num-c">1</div><div class="nm">N. Đorđević</div><span class="pill good">CS</span></div>
+                <div class="li"><div class="num-c">4</div><div class="nm">L. Nikolić</div><span class="pill good">CS</span></div>
+                <div class="li"><div class="num-c">5</div><div class="nm">N. Tomović</div><span class="pill good">CS</span></div>
+                <div class="li"><div class="num-c">2</div><div class="nm">Đ. Raičević</div></div>
+                <div class="li"><div class="num-c">8</div><div class="nm">J. Nikolić</div><span class="chip-ic">⚽ 1</span></div>
+                <div class="li"><div class="num-c">6</div><div class="nm">S. Karapandžić</div><span class="cardico" style="background:var(--warn)"></span></div>
+                <div class="li"><div class="num-c">7</div><div class="nm">A. Božić</div><span class="chip-ic">⚽ 2</span></div>
+                <div class="li"><div class="num-c">10</div><div class="nm">M. Spasojević</div><span class="chip-ic">🅰 2</span></div>
+                <div class="li"><div class="num-c">11</div><div class="nm">A. Jagličić</div></div>
+              </div>
+              <p class="mock-note">+ klupa i izmene ispod. „CS" = clean sheet (auto za GK + odbranu).</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h"><h3>Događaji na meču</h3></div>
+            <div class="card-b">
+              <div class="goal-log">
+                <div class="ge"><span class="min num">14'</span><span class="ic g">⚽</span><b>Aleksa Božić</b><span style="color:var(--grey)">as. Spasojević</span></div>
+                <div class="ge"><span class="min num">31'</span><span class="ic g">⚽</span><b>Jovan Nikolić</b><span style="color:var(--grey)">as. Spasojević</span></div>
+                <div class="ge"><span class="min num">52'</span><span class="ic y"><span class="cardico" style="background:var(--warn)"></span></span><b>S. Karapandžić</b><span style="color:var(--grey)">žuti karton</span></div>
+                <div class="ge"><span class="min num">67'</span><span class="ic sub">🔄</span><b>Roknić</b><span style="color:var(--grey)">← Jagličić</span></div>
+                <div class="ge"><span class="min num">78'</span><span class="ic g">⚽</span><b>Aleksa Božić</b><span style="color:var(--grey)">as. Nikolić</span></div>
+              </div>
+              <div class="evbtns">
+                <button class="btn"><span>⚽</span> Gol</button>
+                <button class="btn"><span>🅰</span> Asistencija</button>
+                <button class="btn"><span class="cardico" style="background:var(--warn)"></span> Žuti</button>
+                <button class="btn"><span class="cardico" style="background:var(--bad)"></span> Crveni</button>
+                <button class="btn"><span>🔄</span> Izmena</button>
+              </div>
+              <p class="mock-note">Klik na igrača + minut = događaj. Golovi/asist./kartoni se automatski upisuju u statistiku igrača.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SKLADIŠTE VEŽBI ===== -->
+      <section class="view" data-view="ex">
+        <div class="sec-title"><h2>Skladište vežbi</h2><span class="eyebrow">42 vežbe u biblioteci</span></div>
+        <div class="filters">
+          <button class="chip on">Sve</button>
+          <button class="chip">Aktivacija</button>
+          <button class="chip">Uvodni</button>
+          <button class="chip">Glavni</button>
+          <button class="chip">Završni</button>
+          <button class="chip">Snaga</button>
+          <button class="chip">Presing</button>
+          <button class="chip">Posed</button>
+        </div>
+        <div class="ex-grid">
+          <div class="ex-card"><div class="ex-thumb"><svg viewBox="0 0 200 120" style="width:100%;height:100%"><rect width="200" height="120" fill="#2f7d4f"/><rect x="6" y="6" width="188" height="108" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.5"/><circle cx="60" cy="45" r="7" fill="#1656B0" stroke="#fff" stroke-width="2"/><circle cx="140" cy="45" r="7" fill="#1656B0" stroke="#fff" stroke-width="2"/><circle cx="100" cy="80" r="7" fill="#D64545" stroke="#fff" stroke-width="2"/><path d="M67 48 L133 48" stroke="#ffd24a" stroke-width="2" marker-end="url(#exa)"/><defs><marker id="exa" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7Z" fill="#ffd24a"/></marker></defs></svg></div>
+            <div class="ex-b"><h4>Rondo 6v2</h4><p>Brz prenos lopte, prva lopta pod pritiskom.</p><div class="ex-tags"><span class="tag">Uvodni</span><span class="tag">Posed</span></div></div></div>
+
+          <div class="ex-card"><div class="ex-thumb" style="background:#2f7d4f"><svg viewBox="0 0 200 120" style="width:100%;height:100%"><rect width="200" height="120" fill="#2f7d4f"/><rect x="6" y="6" width="188" height="108" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.5"/><rect x="6" y="40" width="26" height="40" fill="none" stroke="#fff" stroke-opacity=".5"/><rect x="168" y="40" width="26" height="40" fill="none" stroke="#fff" stroke-opacity=".5"/><circle cx="55" cy="60" r="7" fill="#1656B0" stroke="#fff" stroke-width="2"/><circle cx="145" cy="45" r="7" fill="#D64545" stroke="#fff" stroke-width="2"/><circle cx="145" cy="75" r="7" fill="#D64545" stroke="#fff" stroke-width="2"/></svg></div>
+            <div class="ex-b"><h4>Build-up 3. trećine</h4><p>Izlazak ispod presinga, kreiranje viška.</p><div class="ex-tags"><span class="tag">Glavni</span><span class="tag">Build-up</span></div></div></div>
+
+          <div class="ex-card"><div class="ex-thumb"><svg viewBox="0 0 200 120" style="width:100%;height:100%"><rect width="200" height="120" fill="#2f7d4f"/><rect x="6" y="6" width="188" height="108" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.5"/><path d="M40 30 h12 v12 h-12z M80 50 h12 v12 h-12z M120 70 h12 v12 h-12z" fill="#ffd24a" opacity=".85"/><path d="M46 42 L86 62 L126 82" stroke="#fff" stroke-width="2" fill="none" stroke-dasharray="5 4"/></svg></div>
+            <div class="ex-b"><h4>Poligon aer. izdržljivost</h4><p>Kontinuirano opterećenje sa loptom, 4×4'.</p><div class="ex-tags"><span class="tag">Glavni</span><span class="tag">Fizika</span></div></div></div>
+
+          <div class="ex-card"><div class="ex-thumb" style="background:#2f7d4f;display:grid;place-items:center"><svg viewBox="0 0 200 120" style="width:100%;height:100%"><rect width="200" height="120" fill="#2f7d4f"/><rect x="6" y="6" width="188" height="108" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.5"/><circle cx="100" cy="60" r="26" fill="none" stroke="#fff" stroke-opacity=".5"/><circle cx="70" cy="60" r="7" fill="#1656B0" stroke="#fff" stroke-width="2"/><circle cx="130" cy="60" r="7" fill="#D64545" stroke="#fff" stroke-width="2"/><path d="M77 60 L123 60" stroke="#ffd24a" stroke-width="2.2"/></svg></div>
+            <div class="ex-b"><h4>Presing okidači 8v8+3</h4><p>Kolektivni pritisak na ubacivanje u širinu.</p><div class="ex-tags"><span class="tag">Glavni</span><span class="tag">Presing</span></div></div></div>
+        </div>
+        <p class="mock-note" style="margin-top:16px">Svaka vežba: naziv, opis, skica (crtež ili slika), rekviziti, trajanje. „Ubaci u trening" jednim klikom.</p>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- mobile bottom nav -->
+<nav class="mobtabs" id="mobnav">
+  <button data-v="dash" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Pregled</button>
+  <button data-v="players"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3.6 2.5-5.5 5.5-5.5s5.5 1.9 5.5 5.5"/></svg>Igrači</button>
+  <button data-v="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>Kalendar</button>
+  <button data-v="mc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12a8 8 0 0 1 13.7-5.6M20 12A8 8 0 0 1 6.3 17.6"/><path d="M17 3v4h-4M7 21v-4h4"/></svg>MC</button>
+  <button data-v="train"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v14H4z"/><path d="M4 12h16M12 5v14"/></svg>Trening</button>
+  <button data-v="match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="m12 7 3 2.2-1.1 3.6h-3.8L9 9.2 12 7Z"/></svg>Meč</button>
+  <button data-v="ex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v13H6.5A2.5 2.5 0 0 0 4 19.5Z"/></svg>Vežbe</button>
+</nav>
+
+<script>
+  const titles={dash:['Pregled','Sezona 2026/27 · Pripremni period'],
+    players:['Igrači','28 igrača · profili, statistika i članarina'],
+    cal:['Kalendar aktivnosti','06.07 – 16.08 · plan po danima'],
+    mc:['Mikrociklusi','5 pripremnih + 1 takmičarski'],
+    train:['Koncept treninga','Jedan trening — detaljno'],
+    match:['Utakmice','Unos i statistika mečeva'],
+    ex:['Skladište vežbi','Biblioteka vežbi za treninge']};
+  function show(v){
+    document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.dataset.view===v));
+    document.querySelectorAll('#nav button,#mobnav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+    document.getElementById('vtitle').textContent=titles[v][0];
+    document.getElementById('vsub').textContent=titles[v][1];
+    document.querySelector('.content').scrollTo?.(0,0);
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('#nav button,#mobnav button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.v)));
+  // mc tabs
+  const mcNames=['Mikrociklus 1 — pripremni','Mikrociklus 2 — pripremni','Mikrociklus 3 — pripremni','Mikrociklus 4 — pripremni','Mikrociklus 5 — pripremni','Mikrociklus 6 — takmičarski'];
+  document.querySelectorAll('#mctabs button').forEach((b,i)=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#mctabs button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.querySelector('[data-view="mc"] .sec-title h2').textContent=mcNames[i];
+  }));
+  // exercise filter chips (visual only)
+  document.querySelectorAll('.filters .chip').forEach(c=>c.addEventListener('click',()=>{
+    document.querySelectorAll('.filters .chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+  }));
+  // theme
+  const root=document.documentElement, tb=document.getElementById('theme');
+  tb.addEventListener('click',()=>{
+    const dark=!(root.getAttribute('data-theme')==='dark' ||
+      (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme:dark)').matches));
+    root.setAttribute('data-theme',dark?'dark':'light');
+  });
+</script>
