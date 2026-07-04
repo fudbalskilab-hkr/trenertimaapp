@@ -6,7 +6,7 @@ export default function Dashboard({ setView }) {
   const { players, matches, microcycles, fees, team } = useStore()
 
   const curMonth = 'jul'
-  const dueNames = players.filter(p => !(fees[p.id] && fees[p.id][curMonth]))
+  const dueNames = players.filter(p => !p.exempt && !(fees[p.id] && fees[p.id][curMonth]))
   const next = matches.find(m => m.gf === null) || matches[0]
 
   return (
@@ -26,19 +26,9 @@ export default function Dashboard({ setView }) {
               <span className="pill" style={{ background: 'rgba(255,255,255,.15)', color: '#fff' }}>{next.comp}</span>
             </div>
             <div className="vs">
-              <div className="team">
-                <Crest size={52} url={next.home ? '' : next.crest} />
-                <b>{next.home ? team.name.replace('FK ', '') : next.opp}</b>
-                <small>{next.home ? 'domaćin' : 'gost'}</small>
-              </div>
+              <TeamBadge brodarac={next.home} team={team} opp={next.opp} crest={next.crest} side={next.home ? 'domaćin' : 'gost'} />
               <div className="mid">{fmtDate(next.date)}<br />{next.time}</div>
-              <div className="team">
-                {next.home
-                  ? (next.crest ? <Crest size={52} url={next.crest} /> : <div className="badge-lg">grb<br />+</div>)
-                  : <Crest size={52} />}
-                <b>{next.home ? next.opp : team.name.replace('FK ', '')}</b>
-                <small>{next.home ? 'gost' : 'domaćin'}</small>
-              </div>
+              <TeamBadge brodarac={!next.home} team={team} opp={next.opp} crest={next.crest} side={next.home ? 'gost' : 'domaćin'} />
             </div>
             <div className="nm-meta">
               <span>📍 {next.home ? 'SC Brodarac' : 'Gostovanje'}</span>
@@ -64,6 +54,18 @@ export default function Dashboard({ setView }) {
         </div>
       </div>
     </section>
+  )
+}
+
+function TeamBadge({ brodarac, team, opp, crest, side }) {
+  return (
+    <div className="team">
+      {brodarac
+        ? <Crest size={52} url={team.logo} />
+        : (crest ? <Crest size={52} url={crest} /> : <div className="badge-lg">grb<br />+</div>)}
+      <b>{brodarac ? team.name.replace('FK ', '') : opp}</b>
+      <small>{side}</small>
+    </div>
   )
 }
 

@@ -7,7 +7,7 @@ import * as seed from './seed'
   load/save -> Firestore, uz auth i deljivi read-only link.
 */
 
-const KEY = 'trenertima_v1'
+const KEY = 'trenertima_v2'
 
 function initialState() {
   return {
@@ -48,6 +48,9 @@ export function StoreProvider({ children }) {
     update,
     resetAll: () => setState(initialState()),
 
+    // Tim (ime trenera, grb kluba)
+    updateTeam: (patch) => setState(s => ({ ...s, team: { ...s.team, ...patch } })),
+
     // Igrači
     addPlayer: (p) => setState(s => ({ ...s, players: [...s.players, { ...p, id: 'p' + Date.now() }] })),
     updatePlayer: (id, patch) => setState(s => ({
@@ -70,6 +73,12 @@ export function StoreProvider({ children }) {
     setCalendarCell: (wi, di, part, value) => setState(s => {
       const cal = s.calendar.map((w, i) => i !== wi ? w : {
         ...w, days: w.days.map((d, j) => j !== di ? d : { ...d, [part]: value }),
+      })
+      return { ...s, calendar: cal }
+    }),
+    setDayIntensity: (wi, di, level) => setState(s => {
+      const cal = s.calendar.map((w, i) => i !== wi ? w : {
+        ...w, days: w.days.map((d, j) => j !== di ? d : { ...d, intensity: level }),
       })
       return { ...s, calendar: cal }
     }),

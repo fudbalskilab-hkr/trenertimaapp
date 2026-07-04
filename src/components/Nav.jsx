@@ -1,5 +1,6 @@
+import { useRef } from 'react'
 import { Icon, Crest } from './Icons'
-import { useStore } from '../data/store'
+import { useStore, initials } from '../data/store'
 
 export const NAV = [
   { id: 'dash', label: 'Pregled', icon: Icon.dash, short: 'Pregled' },
@@ -12,11 +13,20 @@ export const NAV = [
 ]
 
 export function Sidebar({ view, setView }) {
-  const { team } = useStore()
+  const { team, updateTeam } = useStore()
+  const logoRef = useRef()
+  function uploadLogo(e) {
+    const file = e.target.files[0]; if (!file) return
+    const r = new FileReader(); r.onload = () => updateTeam({ logo: r.result }); r.readAsDataURL(file)
+  }
   return (
     <aside className="sidebar">
       <div className="brand">
-        <Crest size={40} />
+        <button onClick={() => logoRef.current.click()} title="Postavi grb kluba"
+          style={{ background: 'transparent', border: 0, padding: 0, cursor: 'pointer', lineHeight: 0 }}>
+          <Crest size={40} url={team.logo} />
+        </button>
+        <input ref={logoRef} type="file" accept="image/*" hidden onChange={uploadLogo} />
         <div className="brand-txt">
           <b>{team.name}</b>
           <span>{team.category} · {team.season}</span>
@@ -35,8 +45,8 @@ export function Sidebar({ view, setView }) {
       </nav>
       <div className="side-foot">
         <div className="coach">
-          <div className="av">MT</div>
-          <div><b>Trener</b><small>{team.name}</small></div>
+          <div className="av">{initials(team.coach || 'Trener')}</div>
+          <div><b>{team.coach || 'Trener'}</b><small>Trener · {team.name}</small></div>
         </div>
       </div>
     </aside>

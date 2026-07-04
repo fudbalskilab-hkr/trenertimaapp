@@ -1,42 +1,72 @@
-import { useState, useEffect } from 'react'
-import { useStore, ageFrom, initials, computeStats } from '../data/store'
+import { useState, useEffect, useMemo } from 'react'
+import { useStore, ageFrom, initials, computeStats, fmtDate } from '../data/store'
 import { FEE_MONTHS } from '../data/seed'
 import { Icon } from '../components/Icons'
 
+const SORTS = [
+  { key: 'dob', label: 'Najmlađi → najstariji' },
+  { key: 'dobOld', label: 'Najstariji → najmlađi' },
+  { key: 'minutes', label: 'Najviše minuta' },
+  { key: 'apps', label: 'Najviše nastupa' },
+  { key: 'name', label: 'Ime (A–Š)' },
+]
+
 export default function Players({ addSignal }) {
   const store = useStore()
-  const { players, fees, matches } = store
+  const { players, matches } = store
   const [selId, setSelId] = useState(players[0]?.id)
   const [adding, setAdding] = useState(false)
+  const [sort, setSort] = useState('dob')
 
   useEffect(() => { if (addSignal) setAdding(true) }, [addSignal])
 
+  const rows = useMemo(() => {
+    const withStats = players.map(p => ({ ...p, _st: computeStats(p.id, matches) }))
+    const byDob = (a, b) => {
+      if (!a.dob && !b.dob) return 0
+      if (!a.dob) return 1
+      if (!b.dob) return -1
+      return a.dob < b.dob ? 1 : -1 // veći datum (mlađi) prvi
+    }
+    const arr = [...withStats]
+    if (sort === 'dob') arr.sort(byDob)
+    else if (sort === 'dobOld') arr.sort((a, b) => -byDob(a, b))
+    else if (sort === 'minutes') arr.sort((a, b) => b._st.minutes - a._st.minutes)
+    else if (sort === 'apps') arr.sort((a, b) => b._st.apps - a._st.apps)
+    else if (sort === 'name') arr.sort((a, b) => a.name.localeCompare(b.name, 'sr'))
+    return arr
+  }, [players, matches, sort])
+
   const sel = players.find(p => p.id === selId) || players[0]
-  const curMonth = 'jul'
 
   return (
     <section className="split">
       <div className="card">
-        <div className="card-h"><h3>Spisak igrača</h3><span className="pill blue" style={{ marginLeft: 'auto' }}>{players.length} igrača</span></div>
+        <div className="card-h">
+          <h3>Spisak igrača</h3>
+          <select className="input" style={{ width: 'auto', marginLeft: 'auto', padding: '6px 10px', fontSize: 12.5 }}
+            value={sort} onChange={e => setSort(e.target.value)} title="Poredak">
+            {SORTS.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+          </select>
+        </div>
         <div className="tbl-wrap">
           <table>
             <thead>
-              <tr><th>Igrač</th><th>God.</th><th>Noga</th><th>Poz.</th><th>Alt.</th><th>Član. ({curMonth})</th></tr>
+              <tr><th>Igrač</th><th>Datum rođenja</th><th>Noga</th><th>Poz.</th><th>Alt.</th>
+                {(sort === 'minutes' || sort === 'apps') && <th>{sort === 'minutes' ? 'Min.' : 'Nast.'}</th>}
+              </tr>
             </thead>
             <tbody>
-              {players.map(p => {
-                const paid = fees[p.id] && fees[p.id][curMonth]
-                return (
-                  <tr key={p.id} className={p.id === sel?.id ? 'sel' : ''} onClick={() => setSelId(p.id)}>
-                    <td><b>{p.name}</b></td>
-                    <td className="num">{ageFrom(p.dob) ?? '—'}</td>
-                    <td style={{ textTransform: 'capitalize' }}>{p.foot || '—'}</td>
-                    <td>{p.pos ? <span className="pos">{p.pos}</span> : '—'}</td>
-                    <td>{p.alt ? <span className="pos">{p.alt}</span> : '—'}</td>
-                    <td><span className="dot" style={{ background: paid ? 'var(--good)' : 'var(--bad)' }} /></td>
-                  </tr>
-                )
-              })}
+              {rows.map(p => (
+                <tr key={p.id} className={p.id === sel?.id ? 'sel' : ''} onClick={() => setSelId(p.id)}>
+                  <td><b>{p.name}</b></td>
+                  <td className="num">{p.dob ? fmtDate(p.dob) + p.dob.slice(0, 4) + '.' : '—'}</td>
+                  <td style={{ textTransform: 'capitalize' }}>{p.foot || '—'}</td>
+                  <td>{p.pos ? <span className="pos">{p.pos}</span> : '—'}</td>
+                  <td>{p.alt ? <span className="pos">{p.alt}</span> : '—'}</td>
+                  {(sort === 'minutes' || sort === 'apps') && <td className="num"><b>{sort === 'minutes' ? p._st.minutes : p._st.apps}</b></td>}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -52,6 +82,7 @@ function Profile({ player, store, matches }) {
   const st = computeStats(player.id, matches)
   const fee = store.fees[player.id] || {}
   const age = ageFrom(player.dob)
+  const exempt = !!player.exempt
   return (
     <div className="card" style={{ alignSelf: 'start' }}>
       <div className="prof-head">
@@ -87,17 +118,28 @@ function Profile({ player, store, matches }) {
         <Stat n={st.cs} l="Clean sheet" />
       </div>
 
-      <div className="eyebrow" style={{ padding: '4px 18px 8px' }}>Članarina — klik za promenu</div>
-      <div className="months">
-        {FEE_MONTHS.slice(0, 6).map(m => {
-          const paid = fee[m]
-          return (
-            <button key={m} className={'mo ' + (paid ? 'paid' : 'due')} onClick={() => store.toggleFee(player.id, m)}>
-              <small>{m.toUpperCase()}</small>{paid ? '✓' : '✕'}
-            </button>
-          )
-        })}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '4px 18px 8px', gap: 8 }}>
+        <span className="eyebrow">Članarina 2026</span>
+        <button className={'pill ' + (exempt ? 'bad' : 'good')} style={{ marginLeft: 'auto', cursor: 'pointer', border: 0 }}
+          onClick={() => store.updatePlayer(player.id, { exempt: !exempt })}
+          title="Da li igrač plaća članarinu">
+          {exempt ? 'Ne plaća' : 'Plaća'}
+        </button>
       </div>
+      {exempt ? (
+        <div className="empty" style={{ margin: '0 18px 18px', padding: 18 }}>Igrač je označen da <b>ne plaća</b> članarinu.</div>
+      ) : (
+        <div className="months">
+          {FEE_MONTHS.slice(0, 6).map(m => {
+            const paid = fee[m]
+            return (
+              <button key={m} className={'mo ' + (paid ? 'paid' : 'due')} onClick={() => store.toggleFee(player.id, m)}>
+                <small>{m.toUpperCase()}</small>{paid ? '✓' : '✕'}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

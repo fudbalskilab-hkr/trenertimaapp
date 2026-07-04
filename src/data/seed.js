@@ -6,7 +6,19 @@ export const TEAM = {
   category: 'Omladinci',
   season: '2026/27',
   period: 'Pripremni period',
+  coach: 'Aleksa Bojković',
+  logo: '', // grb kluba (upload) — dok je prazno, koristi se placeholder
 }
+
+// Intenzitet dana (bojenje kalendara)
+export const INTENSITY = [
+  { key: 'match', label: 'Utakmica / udarni', pct: '', color: '#D64545' },
+  { key: '80', label: 'Udarni 80%', pct: '80%', color: '#E8862B' },
+  { key: '50', label: 'Srednji 50%', pct: '50%', color: '#E4B62B' },
+  { key: '30', label: 'Lagan 30%', pct: '30%', color: '#2FA36B' },
+  { key: 'free', label: 'Slobodan dan', pct: '', color: '#2E74D6' },
+]
+export const intensityColor = (k) => (INTENSITY.find(i => i.key === k) || {}).color || 'transparent'
 
 let _id = 1
 const uid = () => 'p' + (_id++)
@@ -65,38 +77,63 @@ function week(startISO, cells) {
     dt.setDate(dt.getDate() + i)
     const iso = dt.toISOString().slice(0, 10)
     const c = cells[i] || {}
-    return { day: d, date: iso, am: c.am ?? '/', pm: c.pm ?? '/', matchId: c.matchId || null }
+    const isFree = !c.matchId && !c.am && !c.pm
+    return {
+      day: d, date: iso, am: c.am ?? '/', pm: c.pm ?? '/', matchId: c.matchId || null,
+      intensity: c.intensity ?? (c.matchId ? 'match' : (isFree ? 'free' : null)),
+    }
   })
   return { start: startISO, days }
 }
 
 export const CALENDAR = [
   week('2026-07-06', [
-    { am: 'Snaga — donji ekst.\nPoligoni aer. izdr.', pm: 'Passing drill\nBuild-up + press' },
-    { am: 'Tehnika + posed', pm: 'Igra 8v8' },
-    { am: '/', pm: 'Regeneracija' },
-    { am: 'Brzina + agilnost', pm: 'Tranzicije' },
+    { am: 'Snaga — donji ekst.\nPoligoni aer. izdr.', pm: 'Passing drill\nBuild-up + press', intensity: '80' },
+    { am: 'Tehnika + posed', pm: 'Igra 8v8', intensity: '50' },
+    { am: 'Regeneracija', intensity: '30' },
+    { am: 'Brzina + agilnost', pm: 'Tranzicije', intensity: '50' },
     { matchId: 'm1' },
-    { am: 'Analiza meča', pm: '/' },
-    { am: '/', pm: '/' },
+    { am: 'Analiza meča', intensity: '30' },
+    {},
   ]),
   week('2026-07-13', [
-    { am: 'Snaga — gornji ekst.', pm: 'Prekidi' },
-    { am: 'Posed lopte', pm: 'Igra 11v11' },
+    { am: 'Snaga — gornji ekst.', pm: 'Prekidi', intensity: '80' },
+    { am: 'Posed lopte', pm: 'Igra 11v11', intensity: '50' },
     { matchId: 'm2' },
-    { am: '/', pm: 'Regeneracija' },
-    { am: 'Odbrana zone', pm: 'Napad — širina' },
+    { am: 'Regeneracija', intensity: '30' },
+    { am: 'Odbrana zone', pm: 'Napad — širina', intensity: '50' },
     { matchId: 'm3' },
-    { am: '/', pm: '/' },
+    {},
   ]),
   week('2026-07-20', [
-    { am: 'Snaga', pm: 'Presing' },
-    { am: 'Tranzicije', pm: 'Igra' },
+    { am: 'Snaga', pm: 'Presing', intensity: '80' },
+    { am: 'Tranzicije', pm: 'Igra', intensity: '50' },
     { matchId: 'm4' },
-    { am: '/', pm: '/' },
-    { am: '/', pm: '/' },
-    { am: '/', pm: '/' },
-    { am: '/', pm: '/' },
+    { am: 'Regeneracija', intensity: '30' },
+    { am: 'Taktika', pm: 'Šut', intensity: '50' },
+    { am: 'Igra', intensity: '80' },
+    {},
+  ]),
+  week('2026-07-27', [
+    { am: 'Snaga', pm: 'Posed', intensity: '80' },
+    { am: 'Tehnika', pm: 'Tranzicije', intensity: '50' },
+    { am: 'Regeneracija', intensity: '30' },
+    { am: 'Presing', pm: 'Igra', intensity: '50' },
+    {}, {}, {},
+  ]),
+  week('2026-08-03', [
+    { am: 'Snaga', pm: 'Build-up', intensity: '80' },
+    { am: 'Posed', pm: 'Igra 11v11', intensity: '50' },
+    { am: 'Regeneracija', intensity: '30' },
+    { am: 'Prekidi', pm: 'Napad', intensity: '50' },
+    {}, {}, {},
+  ]),
+  week('2026-08-10', [
+    { am: 'Aktivacija', pm: 'Taktika', intensity: '50' },
+    { am: 'Šut', pm: 'Igra', intensity: '50' },
+    { am: 'Regeneracija', intensity: '30' },
+    { am: 'Priprema za sezonu', intensity: '80' },
+    {}, {}, {},
   ]),
 ]
 

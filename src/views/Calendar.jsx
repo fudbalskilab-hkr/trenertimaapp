@@ -1,23 +1,33 @@
 import { useState, useRef } from 'react'
 import { useStore, fmtDate } from '../data/store'
+import { INTENSITY, intensityColor } from '../data/seed'
 import { Icon } from '../components/Icons'
 
 const MONTHS_SR = ['januar', 'februar', 'mart', 'april', 'maj', 'jun', 'jul', 'avgust', 'septembar', 'oktobar', 'novembar', 'decembar']
+const CYCLE = [null, 'match', '80', '50', '30', 'free']
 
 function weekLabel(w, i) {
   const s = new Date(w.start)
   const e = new Date(w.start); e.setDate(e.getDate() + 6)
-  return `Nedelja ${i + 1} · ${s.getDate()}. – ${e.getDate()}. ${MONTHS_SR[e.getMonth()]}`
+  const mm = s.getMonth() === e.getMonth() ? MONTHS_SR[e.getMonth()] : `${MONTHS_SR[s.getMonth()]}/${MONTHS_SR[e.getMonth()]}`
+  return `Nedelja ${i + 1} · ${s.getDate()}. – ${e.getDate()}. ${mm}`
 }
 
 export default function Calendar() {
   const store = useStore()
   const { calendar, matches } = store
-  const [edit, setEdit] = useState(null) // {wi,di,part,value,day}
+  const [edit, setEdit] = useState(null)
 
   return (
     <section>
       <div className="sec-title"><h2>Plan pripremnog perioda</h2><span className="eyebrow">06.07 – 16.08 · jedan red = nedelja</span></div>
+
+      <div className="int-legend">
+        {INTENSITY.map(i => (
+          <span className="li2" key={i.key}><span className="sw" style={{ background: i.color }} />{i.label}</span>
+        ))}
+        <span className="li2" style={{ marginLeft: 'auto', color: 'var(--grey-2)', fontStyle: 'italic' }}>klik na kvadratić u danu = promeni intenzitet</span>
+      </div>
 
       {calendar.map((w, wi) => (
         <div className="cal-week" key={w.start}>
@@ -26,8 +36,20 @@ export default function Calendar() {
             {w.days.map((d, di) => {
               const match = d.matchId ? matches.find(m => m.id === d.matchId) : null
               return (
-                <div className={'day' + (match ? ' match' : '') + (!match && d.am === '/' && d.pm === '/' ? ' free' : '')} key={di}>
-                  <div className="day-h"><b>{d.day.toUpperCase()}</b><span>{fmtDate(d.date)}</span></div>
+                <div className={'day' + (match ? ' match' : '')} key={di}>
+                  <div className="int-stripe" style={{ background: intensityColor(d.intensity) }} />
+                  <div className="day-h">
+                    <b>{d.day.toUpperCase()}</b>
+                    <span className="dt">{fmtDate(d.date)}</span>
+                    {!match && (
+                      <button className="int-swatch" style={{ background: intensityColor(d.intensity) || 'rgba(255,255,255,.15)' }}
+                        title={'Intenzitet: ' + (INTENSITY.find(x => x.key === d.intensity)?.label || 'nije označen')}
+                        onClick={() => {
+                          const cur = CYCLE.indexOf(d.intensity)
+                          store.setDayIntensity(wi, di, CYCLE[(cur + 1) % CYCLE.length])
+                        }} />
+                    )}
+                  </div>
                   {match ? (
                     <MatchCell match={match} store={store} />
                   ) : (
@@ -42,7 +64,7 @@ export default function Calendar() {
           </div>
         </div>
       ))}
-      <p className="mock-note">Klik na termin (Prepodne / Popodne) da upišeš aktivnost. Slobodan termin = „/". Kod utakmice klikni „grb +" da dodaš grb protivnika.</p>
+      <p className="mock-note">Klik na termin (Prepodne / Popodne) da upišeš aktivnost (staje ~2 reda). Klik na obojeni kvadratić u zaglavlju dana da označiš intenzitet. Kod utakmice klikni „grb +" da dodaš grb protivnika.</p>
 
       {edit && <EditSlot data={edit} onClose={() => setEdit(null)}
         onSave={(v) => { store.setCalendarCell(edit.wi, edit.di, edit.part, v.trim() || '/'); setEdit(null) }} />}

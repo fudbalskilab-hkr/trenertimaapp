@@ -38,7 +38,7 @@ export default function Training() {
       {SECTIONS.slice(0, 4).map((sec, i) => (
         <div className="tr-sect" key={sec}>
           <div className="sec-h">
-            <div className="n">{i + 1}</div><h4>{sec}</h4>
+            <div className="n" style={{ background: ['#1E9E6A', '#2E74D6', '#C9860B', '#5A6B85'][i] }}>{i + 1}</div><h4>{sec}</h4>
             <span className="mock-note" style={{ marginLeft: 'auto' }}>{DRAW_SECTIONS.includes(sec) ? 'tekst + crtež' : 'samo tekst'}</span>
           </div>
           {DRAW_SECTIONS.includes(sec) ? (
