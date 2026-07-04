@@ -19,6 +19,7 @@ export const Icon = {
   cone: () => <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 6h8l-2 12h-4z"/></svg>,
   arrow: () => <svg viewBox="0 0 24 24" {...S}><path d="M4 12h14M13 6l6 6-6 6"/></svg>,
   trash: () => <svg viewBox="0 0 24 24" {...S}><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>,
+  edit: () => <svg viewBox="0 0 24 24" {...S}><path d="M4 20h4L18.5 9.5a2 2 0 0 0-2.8-2.8L5 17.2V20z"/><path d="M13.5 6.5l4 4"/></svg>,
   close: () => <svg viewBox="0 0 24 24" {...S}><path d="M6 6l12 12M18 6L6 18"/></svg>,
 }
 

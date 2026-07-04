@@ -16,6 +16,7 @@ export default function Exercises({ addOpen, onCloseAdd }) {
   const { exercises } = store
   const [filter, setFilter] = useState('Sve')
   const [detail, setDetail] = useState(null)   // vežba za pregled
+  const [editing, setEditing] = useState(null) // vežba za izmenu
 
   const shown = exercises.filter(e => filter === 'Sve' || e.section === filter || (e.tags || []).includes(filter))
 
@@ -52,13 +53,18 @@ export default function Exercises({ addOpen, onCloseAdd }) {
       )}
       <p className="mock-note" style={{ marginTop: 16 }}>Klikni na vežbu za pregled i detalje. „Dodaj" (gore desno) za novu vežbu. Interaktivni editor terena stiže kasnije.</p>
 
-      {detail && <Detail ex={detail} store={store} onClose={() => setDetail(null)} />}
-      {addOpen && <AddExercise onClose={onCloseAdd} onSave={e => { store.addExercise(e); onCloseAdd() }} />}
+      {detail && <Detail ex={detail} store={store} onClose={() => setDetail(null)} onEdit={() => { setEditing(detail); setDetail(null) }} />}
+      {addOpen && <ExerciseForm title="Nova vežba" submitLabel="Sačuvaj"
+        initial={{ name: '', desc: '', section: 'Uvodni deo', tags: '', image: '' }}
+        onClose={onCloseAdd} onSave={e => { store.addExercise(e); onCloseAdd() }} />}
+      {editing && <ExerciseForm title="Izmeni vežbu" submitLabel="Sačuvaj izmene"
+        initial={editing}
+        onClose={() => setEditing(null)} onSave={e => { store.updateExercise(editing.id, e); setEditing(null) }} />}
     </section>
   )
 }
 
-function Detail({ ex, store, onClose }) {
+function Detail({ ex, store, onClose, onEdit }) {
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
@@ -75,6 +81,7 @@ function Detail({ ex, store, onClose }) {
         </div>
         <div className="modal-f">
           <button className="btn ghost" onClick={() => { if (confirm(`Obrisati vežbu „${ex.name}"?`)) { store.removeExercise(ex.id); onClose() } }}><Icon.trash /> Obriši</button>
+          <button className="btn" onClick={onEdit}><Icon.edit /> Izmeni</button>
           <button className="btn primary" onClick={onClose}>Zatvori</button>
         </div>
       </div>
@@ -82,8 +89,11 @@ function Detail({ ex, store, onClose }) {
   )
 }
 
-function AddExercise({ onClose, onSave }) {
-  const [f, setF] = useState({ name: '', desc: '', section: 'Uvodni deo', tags: '', image: '' })
+function ExerciseForm({ title, submitLabel, initial, onClose, onSave }) {
+  const [f, setF] = useState({
+    name: initial.name || '', desc: initial.desc || '', section: initial.section || 'Uvodni deo',
+    tags: Array.isArray(initial.tags) ? initial.tags.join(', ') : (initial.tags || ''), image: initial.image || '',
+  })
   const fileRef = useRef()
   const set = (k, v) => setF(s => ({ ...s, [k]: v }))
   function upload(e) {
@@ -93,7 +103,7 @@ function AddExercise({ onClose, onSave }) {
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-h"><h3>Nova vežba</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-h"><h3>{title}</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
         <div className="modal-b">
           <div className="field"><label>Naziv</label><input className="input" value={f.name} autoFocus onChange={e => set('name', e.target.value)} placeholder="npr. Rondo 6v2" /></div>
           <div className="field"><label>Opis</label><textarea className="input" rows={2} value={f.desc} onChange={e => set('desc', e.target.value)} /></div>
@@ -108,7 +118,7 @@ function AddExercise({ onClose, onSave }) {
           </div>
         </div>
         <div className="modal-f"><button className="btn ghost" onClick={onClose}>Otkaži</button>
-          <button className="btn primary" disabled={!f.name.trim()} onClick={() => onSave({ ...f, tags: f.tags.split(',').map(t => t.trim()).filter(Boolean) })}>Sačuvaj</button></div>
+          <button className="btn primary" disabled={!f.name.trim()} onClick={() => onSave({ ...f, tags: f.tags.split(',').map(t => t.trim()).filter(Boolean) })}>{submitLabel}</button></div>
       </div>
     </div>
   )

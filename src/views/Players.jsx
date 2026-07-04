@@ -16,6 +16,7 @@ export default function Players({ addOpen, onCloseAdd }) {
   const { players, matches } = store
   const [selId, setSelId] = useState(players[0]?.id)
   const [sort, setSort] = useState('dob')
+  const [editing, setEditing] = useState(null)
 
   const rows = useMemo(() => {
     const withStats = players.map(p => ({ ...p, _st: computeStats(p.id, matches) }))
@@ -69,13 +70,18 @@ export default function Players({ addOpen, onCloseAdd }) {
         </div>
       </div>
 
-      {sel && <Profile key={sel.id} player={sel} store={store} matches={matches} />}
-      {addOpen && <AddPlayer onClose={onCloseAdd} onSave={(p) => { store.addPlayer(p); onCloseAdd() }} />}
+      {sel && <Profile key={sel.id} player={sel} store={store} matches={matches} onEdit={() => setEditing(sel)} />}
+      {addOpen && <PlayerForm title="Novi igrač" submitLabel="Sačuvaj"
+        initial={{ name: '', number: '', dob: '', foot: 'desna', pos: '', alt: '', hw: '' }}
+        onClose={onCloseAdd} onSave={(p) => { store.addPlayer(p); onCloseAdd() }} />}
+      {editing && <PlayerForm title="Izmeni igrača" submitLabel="Sačuvaj izmene"
+        initial={editing}
+        onClose={() => setEditing(null)} onSave={(p) => { store.updatePlayer(editing.id, p); setEditing(null) }} />}
     </section>
   )
 }
 
-function Profile({ player, store, matches }) {
+function Profile({ player, store, matches, onEdit }) {
   const st = computeStats(player.id, matches)
   const fee = store.fees[player.id] || {}
   const age = ageFrom(player.dob)
@@ -101,10 +107,13 @@ function Profile({ player, store, matches }) {
             {player.hw && <span className="tag">{player.hw} cm/kg</span>}
           </div>
         </div>
-        <button className="btn ghost sm" style={{ marginLeft: 'auto' }} title="Obriši igrača"
-          onClick={() => { if (confirm(`Obrisati igrača ${player.name}?`)) store.removePlayer(player.id) }}>
-          <Icon.trash />
-        </button>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+          <button className="btn ghost sm" title="Izmeni igrača" onClick={onEdit}><Icon.edit /></button>
+          <button className="btn ghost sm" title="Obriši igrača"
+            onClick={() => { if (confirm(`Obrisati igrača ${player.name}?`)) store.removePlayer(player.id) }}>
+            <Icon.trash />
+          </button>
+        </div>
       </div>
 
       <div className="kv">
@@ -154,15 +163,24 @@ function Stat({ n, l }) {
   return <div className="stat"><b className="num">{n}</b><span>{l}</span></div>
 }
 
-function AddPlayer({ onClose, onSave }) {
-  const [f, setF] = useState({ name: '', dob: '', foot: 'desna', pos: '', alt: '', hw: '' })
+function PlayerForm({ title, submitLabel, initial, onClose, onSave }) {
+  const [f, setF] = useState({
+    name: initial.name || '', number: initial.number ?? '', dob: initial.dob || '',
+    foot: initial.foot || 'desna', pos: initial.pos || '', alt: initial.alt || '', hw: initial.hw || '',
+  })
   const set = (k, v) => setF(s => ({ ...s, [k]: v }))
+  function save() {
+    onSave({ ...f, number: f.number === '' ? undefined : Number(f.number) })
+  }
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-h"><h3>Novi igrač</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-h"><h3>{title}</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
         <div className="modal-b">
-          <div className="field"><label>Ime i prezime</label><input className="input" value={f.name} onChange={e => set('name', e.target.value)} placeholder="npr. Marko Marković" autoFocus /></div>
+          <div className="row2" style={{ gridTemplateColumns: '1fr 90px' }}>
+            <div className="field"><label>Ime i prezime</label><input className="input" value={f.name} onChange={e => set('name', e.target.value)} placeholder="npr. Marko Marković" autoFocus /></div>
+            <div className="field"><label>Broj dresa</label><input className="input" inputMode="numeric" value={f.number} onChange={e => set('number', e.target.value)} placeholder="9" /></div>
+          </div>
           <div className="row2">
             <div className="field"><label>Datum rođenja</label><input className="input" type="date" value={f.dob} onChange={e => set('dob', e.target.value)} /></div>
             <div className="field"><label>Jača noga</label>
@@ -179,7 +197,7 @@ function AddPlayer({ onClose, onSave }) {
         </div>
         <div className="modal-f">
           <button className="btn ghost" onClick={onClose}>Otkaži</button>
-          <button className="btn primary" disabled={!f.name.trim()} onClick={() => onSave(f)}>Sačuvaj</button>
+          <button className="btn primary" disabled={!f.name.trim()} onClick={save}>{submitLabel}</button>
         </div>
       </div>
     </div>

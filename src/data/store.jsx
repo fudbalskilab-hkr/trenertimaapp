@@ -103,6 +103,7 @@ export function StoreProvider({ children }) {
 
     // Vežbe
     addExercise: (e) => setState(s => ({ ...s, exercises: [...s.exercises, { ...e, id: 'e' + Date.now() }] })),
+    updateExercise: (id, patch) => setState(s => ({ ...s, exercises: s.exercises.map(e => e.id === id ? { ...e, ...patch } : e) })),
     removeExercise: (id) => setState(s => ({ ...s, exercises: s.exercises.filter(e => e.id !== id) })),
   }
 
