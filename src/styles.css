@@ -325,8 +325,9 @@ tbody tr.sel{background:var(--blue-100)}
 /* Formacija (drag&drop) */
 .form-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .form-formations{display:flex;gap:6px;flex-wrap:wrap}
-.form-wrap{display:grid;grid-template-columns:1fr 232px;gap:16px;align-items:start}
-.pitch-field{position:relative;aspect-ratio:68/100;border-radius:14px;overflow:hidden;
+.form-wrap{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+.pitch-field{position:relative;height:clamp(330px,54vh,500px);aspect-ratio:68/100;width:auto;
+  border-radius:14px;overflow:hidden;
   background:linear-gradient(#2f8a52,#2a7d4a);border:2px solid #24693e;
   background-image:repeating-linear-gradient(0deg,#2f8a52,#2f8a52 8%,#2c824d 8%,#2c824d 16%)}
 .field-lines{position:absolute;inset:0;width:100%;height:100%}
@@ -431,7 +432,7 @@ tbody tr.sel{background:var(--blue-100)}
   .sidebar{display:none}
   .two,.pitch-wrap,.tr-body,.split,.match-cols,.form-wrap{grid-template-columns:1fr}
   .cmp-row{grid-template-columns:84px 1fr auto;gap:8px}
-  .pitch-field{max-width:420px;margin:0 auto}
+  .pitch-field{height:auto;width:100%;max-width:340px;margin:0 auto}
   .kpis{grid-template-columns:repeat(2,1fr)}
   .tr-head{grid-template-columns:repeat(2,1fr)}
   .days{grid-template-columns:1fr}

@@ -5,11 +5,6 @@ import { Icon } from '../components/Icons'
 import Pitch from '../components/Pitch'
 
 const DRAW_SECTIONS = ['Uvodni deo', 'Glavni deo', 'Završni deo']
-const DEMO_PITCH = {
-  'Uvodni deo': { markers: [{ x: 80, y: 70 }, { x: 80, y: 130 }, { x: 150, y: 55 }, { x: 150, y: 145 }, { x: 115, y: 100, team: 'away' }, { x: 185, y: 100, team: 'away' }], arrows: [{ x1: 92, y1: 74, x2: 138, y2: 58 }] },
-  'Glavni deo': { boxes: true, markers: [{ x: 70, y: 60 }, { x: 70, y: 140 }, { x: 120, y: 100 }, { x: 200, y: 70, team: 'away' }, { x: 200, y: 130, team: 'away' }, { x: 240, y: 100, team: 'away' }], arrows: [{ x1: 128, y1: 96, x2: 192, y2: 74 }] },
-  'Završni deo': { markers: [{ x: 100, y: 70 }, { x: 200, y: 130, team: 'away' }], arrows: [] },
-}
 
 export default function Training() {
   const store = useStore()
@@ -72,7 +67,6 @@ function DrawBox({ t, sec, store }) {
     r.onload = () => store.updateTraining(t.id, { drawings: { ...(t.drawings || {}), [sec]: r.result } })
     r.readAsDataURL(file)
   }
-  const demo = DEMO_PITCH[sec] || {}
   return (
     <div className="draw">
       <div className="d-toolbar">
@@ -86,7 +80,7 @@ function DrawBox({ t, sec, store }) {
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={upload} />
       {img
         ? <img src={img} alt="skica" style={{ width: '100%', display: 'block' }} />
-        : <Pitch markers={demo.markers} arrows={demo.arrows} boxes={demo.boxes} />}
+        : <Pitch schema height={190} />}
     </div>
   )
 }
