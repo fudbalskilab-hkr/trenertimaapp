@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore, ageFrom, initials, computeStats, fmtDate } from '../data/store'
-import { FEE_MONTHS } from '../data/seed'
+import { FEE_MONTHS, posGroup, POS_COLORS } from '../data/seed'
 import { Icon } from '../components/Icons'
 
 const SORTS = [
@@ -11,12 +11,55 @@ const SORTS = [
   { key: 'name', label: 'Ime (A–Š)' },
 ]
 
+// kolone koje se biraju (name je uvek tu)
+const COLUMNS = [
+  { key: 'number', label: 'Broj dresa' },
+  { key: 'dob', label: 'Datum rođenja' },
+  { key: 'age', label: 'Godine' },
+  { key: 'foot', label: 'Jača noga' },
+  { key: 'pos', label: 'Pozicija' },
+  { key: 'alt', label: 'Alternativna' },
+  { key: 'hw', label: 'Visina/težina' },
+  { key: 'apps', label: 'Nastupi' },
+  { key: 'minutes', label: 'Minuti' },
+  { key: 'goals', label: 'Golovi' },
+  { key: 'fee', label: 'Članarina (jul)' },
+]
+const DEFAULT_COLS = ['number', 'dob', 'foot', 'pos', 'alt']
+function loadCols() {
+  try { const r = localStorage.getItem('trenertima_pcols'); if (r) return JSON.parse(r) } catch (e) {}
+  return DEFAULT_COLS
+}
+
+function numCol(key) { return ['number', 'age', 'apps', 'minutes', 'goals'].includes(key) }
+function cellValue(key, p, fees) {
+  switch (key) {
+    case 'number': return p.number ?? '—'
+    case 'dob': return p.dob ? fmtDate(p.dob) + p.dob.slice(0, 4) + '.' : '—'
+    case 'age': return ageFrom(p.dob) ?? '—'
+    case 'foot': return <span style={{ textTransform: 'capitalize' }}>{p.foot || '—'}</span>
+    case 'pos': return p.pos ? <span className="pos">{p.pos}</span> : '—'
+    case 'alt': return p.alt ? <span className="pos">{p.alt}</span> : '—'
+    case 'hw': return p.hw || '—'
+    case 'apps': return p._st?.apps ?? 0
+    case 'minutes': return p._st?.minutes ?? 0
+    case 'goals': return p._st?.goals ?? 0
+    case 'fee': { const paid = fees[p.id] && fees[p.id].jul; return <span className="dot" style={{ background: paid ? 'var(--good)' : 'var(--bad)' }} /> }
+    default: return '—'
+  }
+}
+
 export default function Players({ addOpen, onCloseAdd }) {
   const store = useStore()
-  const { players, matches } = store
+  const { players, matches, fees } = store
   const [selId, setSelId] = useState(players[0]?.id)
   const [sort, setSort] = useState('dob')
   const [editing, setEditing] = useState(null)
+  const [cols, setCols] = useState(loadCols)
+  const [colMenu, setColMenu] = useState(false)
+  useEffect(() => { try { localStorage.setItem('trenertima_pcols', JSON.stringify(cols)) } catch (e) {} }, [cols])
+  const toggleCol = (k) => setCols(c => c.includes(k) ? c.filter(x => x !== k) : [...c, k])
+  const visible = COLUMNS.filter(c => cols.includes(c.key))
 
   const rows = useMemo(() => {
     const withStats = players.map(p => ({ ...p, _st: computeStats(p.id, matches) }))
@@ -42,29 +85,47 @@ export default function Players({ addOpen, onCloseAdd }) {
       <div className="card">
         <div className="card-h">
           <h3>Spisak igrača</h3>
+          <span className="pill blue">{players.length} igrača</span>
           <select className="input" style={{ width: 'auto', marginLeft: 'auto', padding: '6px 10px', fontSize: 12.5 }}
             value={sort} onChange={e => setSort(e.target.value)} title="Poredak">
             {SORTS.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
           </select>
+          <div className="dropwrap">
+            <button className="btn sm" onClick={() => setColMenu(v => !v)}>Kolone ▾</button>
+            {colMenu && (
+              <div className="dropmenu" onMouseLeave={() => setColMenu(false)}>
+                {COLUMNS.map(c => (
+                  <label key={c.key}><input type="checkbox" checked={cols.includes(c.key)} onChange={() => toggleCol(c.key)} />{c.label}</label>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <div style={{ padding: '10px 14px 0' }}>
+          <div className="poslegend">
+            <span className="li2"><span className="sw" style={{ background: POS_COLORS.gk }} />Golman</span>
+            <span className="li2"><span className="sw" style={{ background: POS_COLORS.def }} />Odbrana</span>
+            <span className="li2"><span className="sw" style={{ background: POS_COLORS.mid }} />Vezni</span>
+            <span className="li2"><span className="sw" style={{ background: POS_COLORS.att }} />Napad</span>
+          </div>
         </div>
         <div className="tbl-wrap">
           <table>
             <thead>
-              <tr><th>Igrač</th><th>Datum rođenja</th><th>Noga</th><th>Poz.</th><th>Alt.</th>
-                {(sort === 'minutes' || sort === 'apps') && <th>{sort === 'minutes' ? 'Min.' : 'Nast.'}</th>}
-              </tr>
+              <tr><th>#</th><th>Igrač</th>{visible.map(c => <th key={c.key}>{c.label}</th>)}</tr>
             </thead>
             <tbody>
-              {rows.map(p => (
-                <tr key={p.id} className={p.id === sel?.id ? 'sel' : ''} onClick={() => setSelId(p.id)}>
-                  <td><b>{p.name}</b></td>
-                  <td className="num">{p.dob ? fmtDate(p.dob) + p.dob.slice(0, 4) + '.' : '—'}</td>
-                  <td style={{ textTransform: 'capitalize' }}>{p.foot || '—'}</td>
-                  <td>{p.pos ? <span className="pos">{p.pos}</span> : '—'}</td>
-                  <td>{p.alt ? <span className="pos">{p.alt}</span> : '—'}</td>
-                  {(sort === 'minutes' || sort === 'apps') && <td className="num"><b>{sort === 'minutes' ? p._st.minutes : p._st.apps}</b></td>}
-                </tr>
-              ))}
+              {rows.map((p, i) => {
+                const g = posGroup(p.pos)
+                return (
+                  <tr key={p.id} className={(p.id === sel?.id ? 'sel ' : '') + (g ? 'pg-' + g : '')}
+                    style={g ? { '--pgc': POS_COLORS[g] } : undefined} onClick={() => setSelId(p.id)}>
+                    <td className="rownum">{i + 1}</td>
+                    <td><b>{p.name}</b></td>
+                    {visible.map(c => <td key={c.key} className={numCol(c.key) ? 'num' : ''}>{cellValue(c.key, p, fees)}</td>)}
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

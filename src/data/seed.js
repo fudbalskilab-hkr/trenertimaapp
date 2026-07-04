@@ -10,15 +10,31 @@ export const TEAM = {
   logo: '', // grb kluba (upload) — dok je prazno, koristi se placeholder
 }
 
-// Intenzitet dana (bojenje kalendara)
+// Intenzitet dana (bojenje kalendara i mikrociklusa)
 export const INTENSITY = [
-  { key: 'match', label: 'Utakmica / udarni', pct: '', color: '#D64545' },
-  { key: '80', label: 'Udarni 80%', pct: '80%', color: '#E8862B' },
-  { key: '50', label: 'Srednji 50%', pct: '50%', color: '#E4B62B' },
-  { key: '30', label: 'Lagan 30%', pct: '30%', color: '#2FA36B' },
-  { key: 'free', label: 'Slobodan dan', pct: '', color: '#2E74D6' },
+  { key: 'match', label: 'Utakmica / udarni (90–100%)', pct: '90–100%', color: '#D64545' },
+  { key: '80', label: 'Visok intenzitet (80%)', pct: '80%', color: '#E8862B' },
+  { key: '50', label: 'Srednji intenzitet (50%)', pct: '50%', color: '#E4B62B' },
+  { key: '30', label: 'Nizak intenzitet (30%)', pct: '30%', color: '#2FA36B' },
+  { key: 'regen', label: 'Regeneracija', pct: '', color: '#2E74D6' },
+  { key: 'free', label: 'Slobodan dan', pct: '', color: '#8FBEEF' },
 ]
 export const intensityColor = (k) => (INTENSITY.find(i => i.key === k) || {}).color || 'transparent'
+
+// Grupa pozicije (za bojenje): gk / def / mid / att
+const DEF = ['CB', 'LCB', 'RCB', 'CCB', 'LB', 'RB', 'LWB', 'RWB', 'WB', 'DF', 'D']
+const MID = ['DM', 'CM', 'LCM', 'RCM', 'LM', 'RM', 'AMF', 'AM', 'CAM', 'MF', 'M']
+const ATT = ['LW', 'RW', 'ST', 'CF', 'FW', 'SS', 'W']
+export function posGroup(pos) {
+  if (!pos) return null
+  const p = pos.split(/[\/,\s]+/)[0].toUpperCase().trim()
+  if (p === 'GK') return 'gk'
+  if (DEF.includes(p)) return 'def'
+  if (MID.includes(p)) return 'mid'
+  if (ATT.includes(p)) return 'att'
+  return null
+}
+export const POS_COLORS = { gk: '#E4B62B', def: '#2E74D6', mid: '#1E9E6A', att: '#D64545' }
 
 let _id = 1
 const uid = () => 'p' + (_id++)

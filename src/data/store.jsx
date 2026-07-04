@@ -49,6 +49,13 @@ export function StoreProvider({ children }) {
     ...state,
     update,
     resetAll: () => setState(initialState()),
+    // Izvoz / uvoz / brisanje (backup dok nema Firebase)
+    exportData: () => JSON.stringify(state, null, 2),
+    importData: (json) => { const obj = typeof json === 'string' ? JSON.parse(json) : json; setState({ ...initialState(), ...obj }) },
+    clearAll: () => setState({
+      team: { ...seed.TEAM }, league: { ...seed.LEAGUE }, players: [], fees: {}, matches: [],
+      calendar: seed.CALENDAR, microcycles: [], trainings: [], exercises: [], gps: {},
+    }),
 
     // Tim (ime trenera, grb kluba) i liga
     updateTeam: (patch) => setState(s => ({ ...s, team: { ...s.team, ...patch } })),
@@ -90,10 +97,32 @@ export function StoreProvider({ children }) {
       })
       return { ...s, calendar: cal }
     }),
+    // zameni sadržaj dva dana (drag&drop pri promeni termina); čuva datum/naziv dana na mestu
+    swapCalendarDays: (a, b) => setState(s => {
+      const cal = s.calendar.map(w => ({ ...w, days: w.days.slice() }))
+      const A = cal[a.wi].days[a.di], B = cal[b.wi].days[b.di]
+      const swap = { am: 1, pm: 1, matchId: 1, intensity: 1 }
+      const na = { ...A }, nb = { ...B }
+      Object.keys(swap).forEach(k => { na[k] = B[k]; nb[k] = A[k] })
+      cal[a.wi].days[a.di] = na; cal[b.wi].days[b.di] = nb
+      return { ...s, calendar: cal }
+    }),
 
     // Mikrociklusi
     updateMicrocycle: (id, patch) => setState(s => ({
       ...s, microcycles: s.microcycles.map(m => m.id === id ? { ...m, ...patch } : m),
+    })),
+    addMicrocycle: () => setState(s => {
+      const nextN = (s.microcycles.reduce((mx, m) => Math.max(mx, m.n || 0), 0)) + 1
+      const mc = { id: 'mc' + Date.now(), n: nextN, type: 'Pripremni', range: '', sessions: [], dayMeta: {} }
+      return { ...s, microcycles: [...s.microcycles, mc] }
+    }),
+    removeMicrocycle: (id) => setState(s => ({ ...s, microcycles: s.microcycles.filter(m => m.id !== id) })),
+    // po danu: intenzitet i „samo jedan trening"
+    setMcDay: (mcId, day, patch) => setState(s => ({
+      ...s, microcycles: s.microcycles.map(m => m.id !== mcId ? m : {
+        ...m, dayMeta: { ...(m.dayMeta || {}), [day]: { ...((m.dayMeta || {})[day] || {}), ...patch } },
+      }),
     })),
 
     // Treninzi

@@ -14,6 +14,8 @@ export const Icon = {
   team: () => <svg viewBox="0 0 24 24" {...S}><circle cx="9" cy="8" r="3"/><path d="M3.5 19c0-3.3 2.4-5 5.5-5s5.5 1.7 5.5 5"/></svg>,
   shield: () => <svg viewBox="0 0 24 24" {...S}><path d="M12 2 3 7v6c0 5 3.8 8 9 9 5.2-1 9-4 9-9V7Z"/></svg>,
   upload: () => <svg viewBox="0 0 24 24" {...S}><path d="M12 15V4M8 8l4-4 4 4M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>,
+  download: () => <svg viewBox="0 0 24 24" {...S}><path d="M12 4v11M8 11l4 4 4-4M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>,
+  gear: () => <svg viewBox="0 0 24 24" {...S}><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 2H9.8L9.4 4.5a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.5h4.4l.4-2.5a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12Z"/></svg>,
   player: () => <svg viewBox="0 0 24 24" {...S}><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3-6 7-6s7 2 7 6"/></svg>,
   ball: () => <svg viewBox="0 0 24 24" {...S}><circle cx="12" cy="12" r="7.5"/></svg>,
   cone: () => <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 6h8l-2 12h-4z"/></svg>,

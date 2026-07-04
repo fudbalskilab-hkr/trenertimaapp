@@ -13,9 +13,20 @@ export default function Dashboard({ setView }) {
   // sledeća prvenstvena je glavna; ako je nema, sledeća bilo koja
   const next = upcoming.find(m => m.kind === 'league') || upcoming[0]
   const isLeague = next?.kind === 'league'
+  const firstLeague = matches.filter(m => m.kind === 'league').sort((a, b) => (a.date < b.date ? -1 : 1))[0]
 
   return (
     <section>
+      {firstLeague && (
+        <div className="season-box">
+          <span className="sb-ic">🏆</span>
+          <div className="sb-txt">
+            <b>Početak sezone — {firstLeague.comp.replace('Omladinska liga · ', '') || '1. kolo'}</b>
+            <span>{firstLeague.league ? '' : ''}vs {firstLeague.opp} · {fmtDate(firstLeague.date)}{firstLeague.date?.slice(0, 4)} · {firstLeague.home ? 'domaćin' : 'gost'}</span>
+          </div>
+          <button className="btn sm" onClick={() => setView('match')}>Detalji</button>
+        </div>
+      )}
       <div className="kpis">
         <Kpi icon={<Icon.team />} val={players.length} lab="Igrača u timu" />
         <Kpi icon={<Icon.cal />} val={upcoming.length} lab="Utakmica u planu" />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Sidebar, MobileNav } from './components/Nav'
 import { Icon } from './components/Icons'
 import { useStore } from './data/store'
@@ -27,6 +27,7 @@ export default function App() {
   const store = useStore()
   const [view, _setView] = useState('dash')
   const [adding, setAdding] = useState(false)
+  const [dataMenu, setDataMenu] = useState(false)
   const setView = (v) => { setAdding(false); _setView(v) }
 
   const [title, subFn] = TITLES[view]
@@ -73,6 +74,9 @@ export default function App() {
               <Icon.plus /> Dodaj
             </button>
           )}
+          <button className="btn themebtn" onClick={() => setDataMenu(true)} title="Podaci / backup" aria-label="Podaci">
+            <Icon.gear />
+          </button>
           <button className="btn themebtn" onClick={toggleTheme} title="Promeni temu" aria-label="Promeni temu">
             <Icon.moon />
           </button>
@@ -82,6 +86,43 @@ export default function App() {
         </div>
       </div>
       <MobileNav view={view} setView={setView} />
+      {dataMenu && <DataMenu store={store} onClose={() => setDataMenu(false)} />}
+    </div>
+  )
+}
+
+function DataMenu({ store, onClose }) {
+  const fileRef = useRef()
+  function exportBackup() {
+    const blob = new Blob([store.exportData()], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'trenertima-backup.json'; a.click()
+    URL.revokeObjectURL(url)
+  }
+  function importBackup(e) {
+    const file = e.target.files[0]; if (!file) return
+    const r = new FileReader()
+    r.onload = () => { try { store.importData(String(r.result)); alert('Podaci su uvezeni.'); onClose() } catch (err) { alert('Greška: fajl nije ispravan backup.') } }
+    r.readAsText(file)
+  }
+  function clearAll() {
+    if (!confirm('Obrisati SVE podatke na OVOM uređaju? (izvezi backup pre ovoga)')) return
+    if (!confirm('Sigurno? Ovo se ne može vratiti bez backup fajla.')) return
+    store.clearAll(); onClose()
+  }
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+        <div className="modal-h"><h3>Podaci i backup</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-b" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <button className="btn primary" onClick={exportBackup} style={{ justifyContent: 'center' }}><Icon.download /> Izvoz (skini backup fajl)</button>
+          <button className="btn" onClick={() => fileRef.current.click()} style={{ justifyContent: 'center' }}><Icon.upload /> Uvoz (učitaj backup)</button>
+          <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={importBackup} />
+          <button className="btn" onClick={clearAll} style={{ justifyContent: 'center', color: 'var(--bad)', borderColor: 'var(--bad)' }}><Icon.trash /> Obriši sve (ovaj uređaj)</button>
+          <p className="mock-note" style={{ margin: '4px 0 0' }}>Podaci se čuvaju u ovom pregledaču. „Izvoz" pravi fajl koji čuvaš/šalješ. „Obriši sve" briše samo na ovom uređaju. (Prava zajednička baza dolazi sa Firebase.)</p>
+        </div>
+      </div>
     </div>
   )
 }

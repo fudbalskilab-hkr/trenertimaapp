@@ -4,7 +4,8 @@ import { INTENSITY, intensityColor } from '../data/seed'
 import { Icon } from '../components/Icons'
 
 const MONTHS_SR = ['januar', 'februar', 'mart', 'april', 'maj', 'jun', 'jul', 'avgust', 'septembar', 'oktobar', 'novembar', 'decembar']
-const CYCLE = [null, 'match', '80', '50', '30', 'free']
+const CYCLE = [null, 'match', '80', '50', '30', 'regen', 'free']
+const tint = k => { const c = intensityColor(k); return c === 'transparent' ? 'var(--surface)' : `color-mix(in srgb, ${c} 16%, var(--surface))` }
 
 function weekLabel(w, i) {
   const s = new Date(w.start)
@@ -17,6 +18,7 @@ export default function Calendar() {
   const store = useStore()
   const { calendar, matches } = store
   const [edit, setEdit] = useState(null)
+  const drag = useRef(null)
 
   return (
     <section>
@@ -26,8 +28,8 @@ export default function Calendar() {
         {INTENSITY.map(i => (
           <span className="li2" key={i.key}><span className="sw" style={{ background: i.color }} />{i.label}</span>
         ))}
-        <span className="li2" style={{ marginLeft: 'auto', color: 'var(--grey-2)', fontStyle: 'italic' }}>klik na kvadratić u danu = promeni intenzitet</span>
       </div>
+      <p className="mock-note" style={{ margin: '-6px 0 14px' }}>Klik na kvadratić u danu = intenzitet (cela ćelija se oboji). Prevuci zaglavlje dana na drugi dan da zameniš termine (npr. kad se pomeri utakmica).</p>
 
       {calendar.map((w, wi) => (
         <div className="cal-week" key={w.start}>
@@ -36,18 +38,18 @@ export default function Calendar() {
             {w.days.map((d, di) => {
               const match = d.matchId ? matches.find(m => m.id === d.matchId) : null
               return (
-                <div className={'day' + (match ? ' match' : '')} key={di}>
-                  <div className="int-stripe" style={{ background: intensityColor(d.intensity) }} />
-                  <div className="day-h">
+                <div className={'day' + (match ? ' match' : '')} key={di} style={{ background: tint(d.intensity) }}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={() => { if (drag.current) { store.swapCalendarDays(drag.current, { wi, di }); drag.current = null } }}>
+                  <div className="day-h" draggable
+                    onDragStart={() => { drag.current = { wi, di } }}
+                    title="Prevuci da zameniš dan" style={{ cursor: 'grab' }}>
                     <b>{d.day.toUpperCase()}</b>
                     <span className="dt">{fmtDate(d.date)}</span>
                     {!match && (
                       <button className="int-swatch" style={{ background: intensityColor(d.intensity) || 'rgba(255,255,255,.15)' }}
                         title={'Intenzitet: ' + (INTENSITY.find(x => x.key === d.intensity)?.label || 'nije označen')}
-                        onClick={() => {
-                          const cur = CYCLE.indexOf(d.intensity)
-                          store.setDayIntensity(wi, di, CYCLE[(cur + 1) % CYCLE.length])
-                        }} />
+                        onClick={() => { const cur = CYCLE.indexOf(d.intensity); store.setDayIntensity(wi, di, CYCLE[(cur + 1) % CYCLE.length]) }} />
                     )}
                   </div>
                   {match ? (
@@ -64,7 +66,6 @@ export default function Calendar() {
           </div>
         </div>
       ))}
-      <p className="mock-note">Klik na termin (Prepodne / Popodne) da upišeš aktivnost (staje ~2 reda). Klik na obojeni kvadratić u zaglavlju dana da označiš intenzitet. Kod utakmice klikni „grb +" da dodaš grb protivnika.</p>
 
       {edit && <EditSlot data={edit} onClose={() => setEdit(null)}
         onSave={(v) => { store.setCalendarCell(edit.wi, edit.di, edit.part, v.trim() || '/'); setEdit(null) }} />}
@@ -86,9 +87,7 @@ function MatchCell({ match, store }) {
   const fileRef = useRef()
   function upload(e) {
     const file = e.target.files[0]; if (!file) return
-    const r = new FileReader()
-    r.onload = () => store.updateMatch(match.id, { crest: r.result })
-    r.readAsDataURL(file)
+    const r = new FileReader(); r.onload = () => store.updateMatch(match.id, { crest: r.result }); r.readAsDataURL(file)
   }
   return (
     <div className="match-cell">
