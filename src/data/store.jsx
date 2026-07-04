@@ -7,7 +7,7 @@ import * as seed from './seed'
   load/save -> Firestore, uz auth i deljivi read-only link.
 */
 
-const KEY = 'trenertima_v3'
+const KEY = 'trenertima_v4'
 
 function initialState() {
   return {
@@ -157,11 +157,14 @@ export function computeStats(playerId, matches) {
     const events = m.events || []
     const subIn = events.find(e => e.type === 'sub' && e.inId === playerId)
     const subOut = events.find(e => e.type === 'sub' && e.outId === playerId)
-    const played = inLineup || !!subIn
+    const manualMin = (m.minutes || {})[playerId]
+    const hasManual = manualMin != null && manualMin !== ''
+    const played = inLineup || !!subIn || (hasManual && Number(manualMin) > 0)
     if (played) st.apps++
 
-    // procena minuta (pretpostavka: meč traje 90')
-    if (inLineup) st.minutes += subOut ? Number(subOut.minute) || MATCH_LEN : MATCH_LEN
+    // minuti: ručni unos ima prednost; inače procena (meč = 90')
+    if (hasManual) st.minutes += Number(manualMin) || 0
+    else if (inLineup) st.minutes += subOut ? Number(subOut.minute) || MATCH_LEN : MATCH_LEN
     else if (subIn) st.minutes += Math.max(0, MATCH_LEN - (Number(subIn.minute) || 0))
 
     for (const e of events) {

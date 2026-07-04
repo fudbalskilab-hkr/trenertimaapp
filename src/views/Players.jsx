@@ -11,14 +11,11 @@ const SORTS = [
   { key: 'name', label: 'Ime (A–Š)' },
 ]
 
-export default function Players({ addSignal }) {
+export default function Players({ addOpen, onCloseAdd }) {
   const store = useStore()
   const { players, matches } = store
   const [selId, setSelId] = useState(players[0]?.id)
-  const [adding, setAdding] = useState(false)
   const [sort, setSort] = useState('dob')
-
-  useEffect(() => { if (addSignal) setAdding(true) }, [addSignal])
 
   const rows = useMemo(() => {
     const withStats = players.map(p => ({ ...p, _st: computeStats(p.id, matches) }))
@@ -73,7 +70,7 @@ export default function Players({ addSignal }) {
       </div>
 
       {sel && <Profile key={sel.id} player={sel} store={store} matches={matches} />}
-      {adding && <AddPlayer onClose={() => setAdding(false)} onSave={(p) => { store.addPlayer(p); setAdding(false) }} />}
+      {addOpen && <AddPlayer onClose={onCloseAdd} onSave={(p) => { store.addPlayer(p); onCloseAdd() }} />}
     </section>
   )
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
 import { GPS_METRICS } from '../data/seed'
 import { Icon } from '../components/Icons'
@@ -18,6 +18,7 @@ export default function GPS() {
   const [mode, setMode] = useState('last')
   const [sel, setSel] = useState([])
   const [entry, setEntry] = useState(null)
+  const [importOpen, setImportOpen] = useState(false)
 
   const metricMeta = GPS_METRICS.find(m => m.key === metric)
   const gpsMatches = matches.filter(m => gps[m.id] && Object.keys(gps[m.id]).length)
@@ -58,7 +59,8 @@ export default function GPS() {
   return (
     <section>
       <div className="sec-title"><h2>Catapult GPS — fizičke performanse</h2>
-        <button className="btn primary sm" style={{ marginLeft: 'auto' }} onClick={() => setEntry({ matchId: lastMatch?.id })}><Icon.plus /> Unesi GPS</button>
+        <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={() => setImportOpen(true)}><Icon.upload /> Uvezi CSV</button>
+        <button className="btn primary sm" onClick={() => setEntry({ matchId: lastMatch?.id })}><Icon.plus /> Unesi ručno</button>
       </div>
 
       {/* metrika */}
@@ -176,7 +178,113 @@ export default function GPS() {
 
       {entry && <GpsEntry matches={gpsMatches} players={gpsPlayers} gps={gps} initial={entry} onClose={() => setEntry(null)}
         onSave={(mid, pid, metrics) => { store.setGps(mid, pid, metrics); setEntry(null) }} />}
+      {importOpen && <GpsImport allMatches={matches} players={players} store={store} onClose={() => setImportOpen(false)} />}
     </section>
+  )
+}
+
+// ===== CSV uvoz (Catapult export) =====
+const HEADER_RULES = [
+  ['name', h => /player|athlete|name|ime|prezime/.test(h)],
+  ['td', h => /total\s*dist|ukupn.*dist|(^|[^a-z])td([^a-z]|$)/.test(h)],
+  ['hsr', h => /hsr|high\s*speed/.test(h)],
+  ['sprintDist', h => /sprint.*dist/.test(h)],
+  ['sprints', h => /sprint/.test(h)],
+  ['topSpeed', h => /max\s*vel|top\s*speed|max\s*speed|top\s*brzina|maks/.test(h)],
+  ['acc', h => /accel|ubrz|(^|[^a-z])acc([^a-z]|$)/.test(h)],
+  ['dcc', h => /decel|koč|koc|(^|[^a-z])dcc([^a-z]|$)|(^|[^a-z])dec([^a-z]|$)/.test(h)],
+]
+function detectDelim(line) { return (line.split(';').length > line.split(',').length) ? ';' : ',' }
+function splitLine(line, d) { return line.split(d).map(c => c.trim().replace(/^"|"$/g, '')) }
+function norm(s) { return (s || '').toLowerCase().replace(/\s+/g, ' ').trim() }
+function nameMatch(csvName, playerName) {
+  const a = norm(csvName), b = norm(playerName)
+  if (!a || !b) return false
+  if (a === b) return true
+  const at = a.split(' '), bt = b.split(' ')
+  const short = at.length <= bt.length ? at : bt, long = at.length <= bt.length ? b : a
+  return short.every(t => t.length > 1 && long.includes(t))
+}
+
+function GpsImport({ allMatches, players, store, onClose }) {
+  const [mid, setMid] = useState(allMatches[0]?.id)
+  const [result, setResult] = useState(null)
+  const fileRef = useRef()
+
+  function handleFile(e) {
+    const file = e.target.files[0]; if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const text = String(reader.result).replace(/\r/g, '')
+        const lines = text.split('\n').filter(l => l.trim())
+        if (lines.length < 2) { setResult({ error: 'Fajl je prazan ili nema redova.' }); return }
+        const d = detectDelim(lines[0])
+        const headers = splitLine(lines[0], d)
+        // mapiraj kolone -> metrike
+        const colMap = {}
+        headers.forEach((h, i) => {
+          const hn = norm(h)
+          for (const [key, test] of HEADER_RULES) {
+            if (colMap[key] == null && test(hn)) { colMap[key] = i; break }
+          }
+        })
+        if (colMap.name == null) { setResult({ error: 'Nije prepoznata kolona sa imenom igrača.' }); return }
+        let matched = 0; const unknown = []
+        const foundMetrics = Object.keys(colMap).filter(k => k !== 'name')
+        lines.slice(1).forEach(line => {
+          const cells = splitLine(line, d)
+          const csvName = cells[colMap.name]
+          if (!csvName) return
+          const p = players.find(pp => nameMatch(csvName, pp.name))
+          if (!p) { unknown.push(csvName); return }
+          const metrics = {}
+          foundMetrics.forEach(k => {
+            const raw = cells[colMap[k]]
+            if (raw != null && raw !== '') {
+              let s = String(raw).replace(/\s/g, '')
+              if (d === ';') s = s.replace(/\./g, '').replace(',', '.') // EU format: . hiljade, , decimala
+              const num = parseFloat(s)
+              if (!isNaN(num)) metrics[k] = num
+            }
+          })
+          if (Object.keys(metrics).length) { store.setGps(mid, p.id, metrics); matched++ }
+        })
+        setResult({ matched, unknown, metrics: foundMetrics })
+      } catch (err) {
+        setResult({ error: 'Greška pri čitanju fajla: ' + err.message })
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-h"><h3>Uvoz GPS podataka (CSV)</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-b">
+          <div className="field"><label>Za koju utakmicu</label>
+            <select className="input" value={mid} onChange={e => { setMid(e.target.value); setResult(null) }}>
+              {allMatches.map(m => <option key={m.id} value={m.id}>vs {m.opp} ({fmtDate(m.date)})</option>)}
+            </select></div>
+          <button className="btn primary" onClick={() => fileRef.current.click()} style={{ width: '100%', justifyContent: 'center' }}><Icon.upload /> Izaberi CSV fajl</button>
+          <input ref={fileRef} type="file" accept=".csv,text/csv,text/plain" hidden onChange={handleFile} />
+          {result && (
+            <div style={{ marginTop: 14 }}>
+              {result.error
+                ? <div className="pill bad" style={{ display: 'block', padding: 10 }}>{result.error}</div>
+                : <>
+                  <div className="pill good" style={{ display: 'inline-block' }}>Uvezeno za {result.matched} igrača</div>
+                  <p className="mock-note" style={{ marginTop: 8 }}>Prepoznate metrike: {result.metrics.map(k => (GPS_METRICS.find(m => m.key === k) || {}).short).join(', ') || '—'}</p>
+                  {result.unknown?.length > 0 && <p className="mock-note">Nije prepoznato {result.unknown.length}: {result.unknown.slice(0, 5).join(', ')}{result.unknown.length > 5 ? '…' : ''} (proveri da se imena poklapaju sa spiskom igrača)</p>}
+                </>}
+            </div>
+          )}
+          <p className="mock-note" style={{ marginTop: 14 }}>Izvezi izveštaj iz Catapult-a (OpenField) kao CSV pa ga ubaci ovde — kolone (Player, Total Distance, HSR, Sprints, Max Velocity, Accel, Decel…) se prepoznaju automatski. Direktna veza sa uređajem uživo nije moguća iz web aplikacije.</p>
+        </div>
+        <div className="modal-f"><button className="btn primary" onClick={onClose}>Gotovo</button></div>
+      </div>
+    </div>
   )
 }
 

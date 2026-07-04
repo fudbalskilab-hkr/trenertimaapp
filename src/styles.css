@@ -201,17 +201,17 @@ tbody tr.sel{background:var(--blue-100)}
 .cal-week .wk-lab::after{content:"";flex:1;height:1px;background:var(--line)}
 .days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
 .day{background:var(--surface);border:1px solid var(--line);border-radius:11px;overflow:hidden;
-  min-height:184px;display:flex;flex-direction:column;position:relative}
+  min-height:222px;display:flex;flex-direction:column;position:relative}
 .day .int-stripe{height:5px;flex:0 0 auto}
 .day.match{border-color:var(--blue-500);box-shadow:0 0 0 1px var(--blue-500) inset}
 .day-h{padding:6px 9px;background:var(--blue-900);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:6px}
 .day.match .day-h{background:var(--blue-600)}
 .day-h b{font-size:12px}.day-h .dt{font-size:10.5px;color:var(--blue-300)}
 .int-swatch{width:18px;height:18px;border-radius:5px;border:2px solid rgba(255,255,255,.5);cursor:pointer;flex:0 0 auto;padding:0}
-.slot{padding:7px 9px;font-size:11px;flex:1;min-height:64px}
+.slot{padding:8px 9px;font-size:11px;flex:1;min-height:82px}
 .slot+.slot{border-top:1px dashed var(--line)}
 .slot .sl-lab{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-2);font-weight:700;margin-bottom:3px}
-.slot ul{margin:0;padding-left:14px;color:var(--ink-soft);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.slot ul{margin:0;padding-left:14px;color:var(--ink-soft);line-height:1.45;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .slot .free-mark{color:var(--grey-2);font-size:18px;font-weight:700}
 .int-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;padding:11px 14px;background:var(--surface);
   border:1px solid var(--line);border-radius:11px;font-size:12px}

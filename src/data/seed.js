@@ -161,11 +161,11 @@ export const CALENDAR = [
   week('2026-07-13', [
     { am: 'Snaga — gornji ekst.', pm: 'Prekidi', intensity: '80' },
     { am: 'Posed lopte', pm: 'Igra 11v11', intensity: '50' },
-    { matchId: 'm2' },
+    { matchId: 'm2' },                                              // 15.07 vs IMT
     { am: 'Regeneracija', intensity: '30' },
     { am: 'Odbrana zone', pm: 'Napad — širina', intensity: '50' },
-    { matchId: 'm3' },
-    {},
+    { am: 'Aktivacija', intensity: '30' },
+    { matchId: 'm3' },                                              // 19.07 vs Ušće
   ]),
   week('2026-07-20', [
     { am: 'Snaga', pm: 'Presing', intensity: '80' },

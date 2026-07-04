@@ -16,6 +16,7 @@ export default function Matches() {
   const { matches, players, team } = store
   const [activeId, setActiveId] = useState(matches[0]?.id)
   const [addEv, setAddEv] = useState(null)
+  const [editMeta, setEditMeta] = useState(false)
   const crestRef = useRef()
 
   const m = matches.find(x => x.id === activeId) || matches[0]
@@ -70,6 +71,7 @@ export default function Matches() {
           </div>
           <span className="status">{m.gf === null && m.ga === null ? 'Nije odigrano' : 'Završeno'}</span>
           <div className="rm-meta">{fmtDate(m.date)}{m.date?.slice(0, 4)} · {m.time}<br />{m.comp} · {m.home ? 'domaćin' : 'gost'}</div>
+          <button className="btn sm" style={{ background: 'rgba(255,255,255,.16)', border: 0, color: '#fff' }} onClick={() => setEditMeta(true)}>Izmeni podatke</button>
         </div>
 
         <div className="report-side">
@@ -91,6 +93,10 @@ export default function Matches() {
         <div className="card-h"><h3>Postava i formacija</h3></div>
         <div className="card-b"><FormationBoard match={m} players={players} store={store} /></div>
       </div>
+
+      {/* Minutaža i učinak */}
+      <MinutesCard m={m} players={players} store={store} />
+
 
       <div>
         {/* Tok meča */}
@@ -124,7 +130,74 @@ export default function Matches() {
       </div>
 
       {addEv && <AddEvent type={addEv} players={players} lineup={lineup} onClose={() => setAddEv(null)} onSave={addEvent} />}
+      {editMeta && <EditMatchMeta m={m} onClose={() => setEditMeta(false)} onSave={patch => { store.updateMatch(m.id, patch); setEditMeta(false) }} />}
     </section>
+  )
+}
+
+function MinutesCard({ m, players, store }) {
+  const lineup = m.lineup || []
+  const events = m.events || []
+  const minutes = m.minutes || {}
+  // igrači koji su učestvovali: postava + ušli kao izmena + oni sa unetim minutima
+  const involved = players.filter(p =>
+    lineup.includes(p.id) ||
+    events.some(e => (e.type === 'sub' && e.inId === p.id) || e.playerId === p.id) ||
+    minutes[p.id] != null)
+  const cnt = (pid, type) => events.filter(e => e.playerId === pid && e.type === type).length
+  const setMin = (pid, v) => store.updateMatch(m.id, { minutes: { ...minutes, [pid]: v === '' ? undefined : Math.max(0, Math.min(120, parseInt(v) || 0)) } })
+  const fill90 = () => { const nm = { ...minutes }; lineup.forEach(pid => { if (nm[pid] == null) nm[pid] = 90 }); store.updateMatch(m.id, { minutes: nm }) }
+
+  return (
+    <div className="card" style={{ marginBottom: 18 }}>
+      <div className="card-h"><h3>Minutaža i učinak</h3>
+        <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={fill90}>Postavi 90′ startnima</button></div>
+      <div className="tbl-wrap">
+        <table>
+          <thead><tr><th>Igrač</th><th>Minuti</th><th>⚽</th><th>🅰</th><th>🟨</th><th>🟥</th></tr></thead>
+          <tbody>
+            {involved.length === 0 && <tr><td colSpan={6} style={{ cursor: 'default' }}><div className="empty" style={{ padding: 18 }}>Postavi prvu postavu (gore) pa se igrači pojave ovde.</div></td></tr>}
+            {involved.map(p => (
+              <tr key={p.id} style={{ cursor: 'default' }}>
+                <td><b>{p.name}</b> {p.pos && <span className="pos">{p.pos}</span>}</td>
+                <td><input className="input" style={{ width: 74, padding: '5px 8px' }} inputMode="numeric"
+                  value={minutes[p.id] ?? ''} onChange={e => setMin(p.id, e.target.value)} placeholder="—" /></td>
+                <td className="num">{cnt(p.id, 'goal') || ''}</td>
+                <td className="num">{cnt(p.id, 'assist') || ''}</td>
+                <td className="num">{cnt(p.id, 'yellow') || ''}</td>
+                <td className="num">{cnt(p.id, 'red') || ''}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="card-b" style={{ paddingTop: 12 }}><p className="mock-note" style={{ margin: 0 }}>Minute upisuješ ručno (ili „Postavi 90′"). Golovi/asist./kartoni dolaze iz „Tok meča" i sabiraju se u statistiku igrača.</p></div>
+    </div>
+  )
+}
+
+function EditMatchMeta({ m, onClose, onSave }) {
+  const [f, setF] = useState({ opp: m.opp, date: m.date, time: m.time, comp: m.comp, home: m.home, kind: m.kind || 'friendly' })
+  const set = (k, v) => setF(s => ({ ...s, [k]: v }))
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-h"><h3>Izmeni podatke utakmice</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-b">
+          <div className="field"><label>Protivnik</label><input className="input" value={f.opp} autoFocus onChange={e => set('opp', e.target.value)} /></div>
+          <div className="row2">
+            <div className="field"><label>Datum</label><input className="input" type="date" value={f.date} onChange={e => set('date', e.target.value)} /></div>
+            <div className="field"><label>Vreme</label><input className="input" value={f.time} onChange={e => set('time', e.target.value)} placeholder="17:00" /></div>
+          </div>
+          <div className="field"><label>Takmičenje</label><input className="input" value={f.comp} onChange={e => set('comp', e.target.value)} placeholder="Prijateljska / Omladinska liga · 1. kolo" /></div>
+          <div className="row2">
+            <div className="field"><label>Mesto</label><select className="input" value={f.home ? '1' : '0'} onChange={e => set('home', e.target.value === '1')}><option value="1">Domaćin</option><option value="0">Gost</option></select></div>
+            <div className="field"><label>Tip</label><select className="input" value={f.kind} onChange={e => set('kind', e.target.value)}><option value="friendly">Prijateljska</option><option value="league">Prvenstvena</option></select></div>
+          </div>
+        </div>
+        <div className="modal-f"><button className="btn ghost" onClick={onClose}>Otkaži</button><button className="btn primary" onClick={() => onSave(f)}>Sačuvaj</button></div>
+      </div>
+    </div>
   )
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useStore } from '../data/store'
 import { SECTIONS } from '../data/seed'
 import { Icon } from '../components/Icons'
@@ -11,12 +11,11 @@ const DEMO = [
   { markers: [{ x: 80, y: 60 }, { x: 160, y: 90, team: 'away' }], arrows: [{ x1: 88, y1: 62, x2: 152, y2: 88, dash: true }] },
 ]
 
-export default function Exercises({ addSignal }) {
+export default function Exercises({ addOpen, onCloseAdd }) {
   const store = useStore()
   const { exercises } = store
   const [filter, setFilter] = useState('Sve')
-  const [adding, setAdding] = useState(false)
-  useEffect(() => { if (addSignal) setAdding(true) }, [addSignal])
+  const [detail, setDetail] = useState(null)   // vežba za pregled
 
   const shown = exercises.filter(e => filter === 'Sve' || e.section === filter || (e.tags || []).includes(filter))
 
@@ -30,34 +29,56 @@ export default function Exercises({ addSignal }) {
       </div>
 
       {shown.length === 0 ? (
-        <div className="card"><div className="empty">Nema vežbi za ovaj filter.</div></div>
+        <div className="card"><div className="empty">Nema vežbi za ovaj filter. Klikni „Dodaj" gore desno da uneseš vežbu.</div></div>
       ) : (
         <div className="ex-grid">
           {shown.map((e, i) => (
-            <div className="ex-card" key={e.id}>
+            <button className="ex-card" key={e.id} onClick={() => setDetail(e)} style={{ border: 0, padding: 0, textAlign: 'left', cursor: 'pointer', font: 'inherit' }}>
               <div className="ex-thumb">
                 {e.image ? <img src={e.image} alt={e.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <Pitch {...DEMO[i % DEMO.length]} height={120} />}
               </div>
               <div className="ex-b">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <h4 style={{ flex: 1 }}>{e.name}</h4>
-                  <button className="btn ghost sm" title="Obriši" onClick={() => store.removeExercise(e.id)}><Icon.trash /></button>
-                </div>
+                <h4>{e.name}</h4>
                 <p>{e.desc}</p>
                 <div className="ex-tags">
                   {e.section && <span className="tag">{e.section}</span>}
                   {(e.tags || []).map(t => <span className="tag" key={t}>{t}</span>)}
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}
-      <p className="mock-note" style={{ marginTop: 16 }}>Svaka vežba: naziv, opis, skica (crtež ili slika), tema/sekcija. Interaktivni editor terena stiže u sledećoj fazi.</p>
+      <p className="mock-note" style={{ marginTop: 16 }}>Klikni na vežbu za pregled i detalje. „Dodaj" (gore desno) za novu vežbu. Interaktivni editor terena stiže kasnije.</p>
 
-      {adding && <AddExercise onClose={() => setAdding(false)} onSave={e => { store.addExercise(e); setAdding(false) }} />}
+      {detail && <Detail ex={detail} store={store} onClose={() => setDetail(null)} />}
+      {addOpen && <AddExercise onClose={onCloseAdd} onSave={e => { store.addExercise(e); onCloseAdd() }} />}
     </section>
+  )
+}
+
+function Detail({ ex, store, onClose }) {
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-h"><h3>{ex.name}</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-b">
+          <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid var(--line)', marginBottom: 14 }}>
+            {ex.image ? <img src={ex.image} alt={ex.name} style={{ width: '100%', display: 'block' }} /> : <Pitch schema height={200} />}
+          </div>
+          {ex.desc && <p style={{ margin: '0 0 12px', fontSize: 13.5, color: 'var(--ink-soft)', lineHeight: 1.6 }}>{ex.desc}</p>}
+          <div className="ex-tags">
+            {ex.section && <span className="tag">{ex.section}</span>}
+            {(ex.tags || []).map(t => <span className="tag" key={t}>{t}</span>)}
+          </div>
+        </div>
+        <div className="modal-f">
+          <button className="btn ghost" onClick={() => { if (confirm(`Obrisati vežbu „${ex.name}"?`)) { store.removeExercise(ex.id); onClose() } }}><Icon.trash /> Obriši</button>
+          <button className="btn primary" onClick={onClose}>Zatvori</button>
+        </div>
+      </div>
+    </div>
   )
 }
 

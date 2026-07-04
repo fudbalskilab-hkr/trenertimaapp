@@ -25,8 +25,9 @@ const TITLES = {
 
 export default function App() {
   const store = useStore()
-  const [view, setView] = useState('dash')
-  const [addSignal, setAddSignal] = useState(0)
+  const [view, _setView] = useState('dash')
+  const [adding, setAdding] = useState(false)
+  const setView = (v) => { setAdding(false); _setView(v) }
 
   const [title, subFn] = TITLES[view]
   const sub = subFn(store)
@@ -48,13 +49,13 @@ export default function App() {
 
   const views = {
     dash: <Dashboard setView={setView} />,
-    players: <Players addSignal={addSignal} />,
+    players: <Players addOpen={adding} onCloseAdd={() => setAdding(false)} />,
     cal: <Calendar />,
     mc: <Microcycles />,
     train: <Training />,
     match: <Matches />,
     gps: <GPS />,
-    ex: <Exercises addSignal={addSignal} />,
+    ex: <Exercises addOpen={adding} onCloseAdd={() => setAdding(false)} />,
   }
 
   return (
@@ -68,7 +69,7 @@ export default function App() {
           </div>
           <div className="spacer" />
           {canAdd && (
-            <button className="btn primary" onClick={() => setAddSignal(x => x + 1)}>
+            <button className="btn primary" onClick={() => setAdding(true)}>
               <Icon.plus /> Dodaj
             </button>
           )}
