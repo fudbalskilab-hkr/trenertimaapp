@@ -56,16 +56,78 @@ export const PLAYERS = [
   { id: uid(), name: 'Viktor Ocokoljić',    foot: '',      dob: '',           pos: '',    alt: '',    hw: '' },
 ]
 
+// Podrazumevani brojevi dresova + prazna slika (može upload u profilu)
+PLAYERS.forEach((p, i) => { p.number = i + 1; p.photo = '' })
+
 // Meseci članarine (sezona kreće u julu)
 export const FEE_MONTHS = ['jul', 'avg', 'sep', 'okt', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'maj', 'jun']
 
-// Utakmice (Kalendar aktivnosti)
-export const MATCHES = [
-  { id: 'm1', date: '2026-07-10', time: '17:30', opp: 'Prva iskra Barič', home: true,  comp: 'Prijateljska', crest: '', gf: null, ga: null, events: [], lineup: [] },
-  { id: 'm2', date: '2026-07-15', time: '18:00', opp: 'IMT',             home: false, comp: 'Prijateljska', crest: '', gf: null, ga: null, events: [], lineup: [] },
-  { id: 'm3', date: '2026-07-19', time: '17:00', opp: 'Ušće',            home: true,  comp: 'Prijateljska', crest: '', gf: null, ga: null, events: [], lineup: [] },
-  { id: 'm4', date: '2026-07-22', time: '17:00', opp: 'Grafičar',        home: false, comp: 'Prijateljska', crest: '', gf: null, ga: null, events: [], lineup: [] },
+// Liga (prvenstvo)
+export const LEAGUE = { name: 'Omladinska liga Srbije', logo: '' }
+
+const squad = PLAYERS.slice(0, 14).map(p => p.id)
+
+function pastMatch(id, date, opp, home, gf, ga, scorers, assists) {
+  const lineup = squad.slice(0, 11)
+  const events = []
+  scorers.forEach((si, k) => {
+    const min = 15 + k * 14
+    events.push({ id: id + 'g' + k, type: 'goal', playerId: squad[si], minute: min })
+    if (assists[k] != null) events.push({ id: id + 'a' + k, type: 'assist', playerId: squad[assists[k]], minute: min })
+  })
+  return { id, date, time: '17:00', opp, home, comp: 'Prijateljska', kind: 'friendly', crest: '', gf, ga, events, lineup, formation: '4-3-3', positions: {} }
+}
+
+// Odigrane (jun) — daju statistiku, GPS i „poslednjih 5"
+const PAST = [
+  pastMatch('p1', '2026-06-07', 'Radnički', true,  2, 1, [4, 6], [7, null]),
+  pastMatch('p2', '2026-06-14', 'Čukarički omladinci', false, 1, 1, [1], [10]),
+  pastMatch('p3', '2026-06-18', 'Voždovac', true,  3, 0, [6, 4, 10], [null, 7, 6]),
+  pastMatch('p4', '2026-06-25', 'Zemun', false, 0, 2, [], []),
+  pastMatch('p5', '2026-06-28', 'Sinđelić', true,  2, 2, [4, 1], [6, 7]),
 ]
+
+// Predstojeće prijateljske (jul) + prvenstvo (avgust)
+export const MATCHES = [
+  ...PAST,
+  { id: 'm1', date: '2026-07-10', time: '17:30', opp: 'Prva iskra Barič', home: true,  comp: 'Prijateljska', kind: 'friendly', crest: '', gf: null, ga: null, events: [], lineup: [], formation: '4-3-3', positions: {} },
+  { id: 'm2', date: '2026-07-15', time: '18:00', opp: 'IMT',              home: false, comp: 'Prijateljska', kind: 'friendly', crest: '', gf: null, ga: null, events: [], lineup: [], formation: '4-3-3', positions: {} },
+  { id: 'm3', date: '2026-07-19', time: '17:00', opp: 'Ušće',             home: true,  comp: 'Prijateljska', kind: 'friendly', crest: '', gf: null, ga: null, events: [], lineup: [], formation: '4-3-3', positions: {} },
+  { id: 'm4', date: '2026-07-22', time: '17:00', opp: 'Grafičar',         home: false, comp: 'Prijateljska', kind: 'friendly', crest: '', gf: null, ga: null, events: [], lineup: [], formation: '4-3-3', positions: {} },
+  { id: 'l1', date: '2026-08-16', time: '11:00', opp: 'Partizan',         home: false, comp: 'Omladinska liga · 1. kolo', kind: 'league', crest: '', gf: null, ga: null, events: [], lineup: [], formation: '4-3-3', positions: {} },
+  { id: 'l2', date: '2026-08-23', time: '11:00', opp: 'Crvena zvezda',    home: true,  comp: 'Omladinska liga · 2. kolo', kind: 'league', crest: '', gf: null, ga: null, events: [], lineup: [], formation: '4-3-3', positions: {} },
+]
+
+// Catapult GPS metrike
+export const GPS_METRICS = [
+  { key: 'td', label: 'Total distance', unit: 'm', short: 'TD' },
+  { key: 'hsr', label: 'HSR (visok intenzitet)', unit: 'm', short: 'HSR' },
+  { key: 'sprints', label: 'Broj sprinteva', unit: '', short: 'Sprints' },
+  { key: 'sprintDist', label: 'Sprint distance', unit: 'm', short: 'Sprint dist.' },
+  { key: 'topSpeed', label: 'Top speed', unit: 'km/h', short: 'Top speed' },
+  { key: 'acc', label: 'Ubrzanja (ACC)', unit: '', short: 'ACC' },
+  { key: 'dcc', label: 'Kočenja (DCC)', unit: '', short: 'DCC' },
+]
+
+function gpsFor(pi, mi) {
+  const r = (base, span, s) => base + ((pi * s + mi * 7 + 3) % span)
+  return {
+    td: r(8600, 2800, 37),
+    hsr: r(460, 640, 17),
+    sprints: r(11, 18, 5),
+    sprintDist: r(130, 240, 11),
+    topSpeed: +(28 + ((pi * 3 + mi * 5) % 75) / 10).toFixed(1),
+    acc: r(16, 22, 13),
+    dcc: r(15, 20, 9),
+  }
+}
+
+// GPS podaci: matchId -> playerId -> metrike (samo za odigrane)
+export const GPS = {}
+PAST.forEach((m, mi) => {
+  GPS[m.id] = {}
+  squad.forEach((pid, pi) => { GPS[m.id][pid] = gpsFor(pi, mi) })
+})
 
 const DAYS = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned']
 

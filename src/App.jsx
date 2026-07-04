@@ -9,6 +9,7 @@ import Calendar from './views/Calendar'
 import Microcycles from './views/Microcycles'
 import Training from './views/Training'
 import Matches from './views/Matches'
+import GPS from './views/GPS'
 import Exercises from './views/Exercises'
 
 const TITLES = {
@@ -17,7 +18,8 @@ const TITLES = {
   cal: ['Kalendar aktivnosti', () => '06.07 – 16.08 · plan po danima'],
   mc: ['Mikrociklusi', () => '5 pripremnih + 1 takmičarski'],
   train: ['Koncept treninga', () => 'Jedan trening — detaljno'],
-  match: ['Utakmice', () => 'Unos i statistika mečeva'],
+  match: ['Utakmice', () => 'Unos, formacija i statistika mečeva'],
+  gps: ['Catapult GPS', () => 'Fizičke performanse i poređenje igrača'],
   ex: ['Skladište vežbi', s => `${s.exercises.length} vežbi u biblioteci`],
 }
 
@@ -51,6 +53,7 @@ export default function App() {
     mc: <Microcycles />,
     train: <Training />,
     match: <Matches />,
+    gps: <GPS />,
     ex: <Exercises addSignal={addSignal} />,
   }
 

@@ -3,37 +3,47 @@ import { Icon, Crest } from '../components/Icons'
 import { FEE_MONTHS } from '../data/seed'
 
 export default function Dashboard({ setView }) {
-  const { players, matches, microcycles, fees, team } = useStore()
+  const { players, matches, microcycles, fees, team, league } = useStore()
 
   const curMonth = 'jul'
   const dueNames = players.filter(p => !p.exempt && !(fees[p.id] && fees[p.id][curMonth]))
-  const next = matches.find(m => m.gf === null) || matches[0]
+
+  const upcoming = matches.filter(m => m.gf === null && m.ga === null)
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+  // sledeća prvenstvena je glavna; ako je nema, sledeća bilo koja
+  const next = upcoming.find(m => m.kind === 'league') || upcoming[0]
+  const isLeague = next?.kind === 'league'
 
   return (
     <section>
       <div className="kpis">
         <Kpi icon={<Icon.team />} val={players.length} lab="Igrača u timu" />
-        <Kpi icon={<Icon.cal />} val={matches.length} lab="Utakmica u planu" />
+        <Kpi icon={<Icon.cal />} val={upcoming.length} lab="Utakmica u planu" />
         <Kpi icon={<Icon.mc />} val={microcycles.length} lab="Mikrociklusa" />
         <Kpi icon={<Icon.shield />} val={dueNames.length} lab={`Duguju članarinu (${curMonth})`} bad />
       </div>
 
       <div className="two">
         {next && (
-          <button className="next-match" onClick={() => setView('match')} style={{ textAlign: 'left', cursor: 'pointer' }}>
+          <button className={'next-match' + (isLeague ? ' league' : '')} onClick={() => setView('match')} style={{ textAlign: 'left', cursor: 'pointer' }}>
             <div className="nm-top">
-              <span className="eyebrow">Sledeća utakmica</span>
-              <span className="pill" style={{ background: 'rgba(255,255,255,.15)', color: '#fff' }}>{next.comp}</span>
+              <span className="eyebrow">{isLeague ? 'Sledeća prvenstvena utakmica' : 'Sledeća utakmica'}</span>
+              {isLeague && (
+                <span className="league-badge">
+                  {league.logo ? <img src={league.logo} alt="liga" /> : <span className="ll-ph">liga</span>}
+                  {league.name}
+                </span>
+              )}
             </div>
             <div className="vs">
-              <TeamBadge brodarac={next.home} team={team} opp={next.opp} crest={next.crest} side={next.home ? 'domaćin' : 'gost'} />
-              <div className="mid">{fmtDate(next.date)}<br />{next.time}</div>
-              <TeamBadge brodarac={!next.home} team={team} opp={next.opp} crest={next.crest} side={next.home ? 'gost' : 'domaćin'} />
+              <TeamBadge brodarac={next.home} team={team} opp={next.opp} crest={next.crest} side={next.home ? 'domaćin' : 'gost'} big />
+              <div className="mid"><span className="vs-x">{fmtDate(next.date)}{next.date?.slice(0, 4)}</span><br />{next.time}<br /><span style={{ fontSize: 22, color: '#fff', fontWeight: 800 }}>VS</span></div>
+              <TeamBadge brodarac={!next.home} team={team} opp={next.opp} crest={next.crest} side={next.home ? 'gost' : 'domaćin'} big />
             </div>
             <div className="nm-meta">
               <span>📍 {next.home ? 'SC Brodarac' : 'Gostovanje'}</span>
               <span>{next.comp}</span>
-              <span>Klik za unos rezultata →</span>
+              <span>Klik za detalje →</span>
             </div>
           </button>
         )}
@@ -57,12 +67,13 @@ export default function Dashboard({ setView }) {
   )
 }
 
-function TeamBadge({ brodarac, team, opp, crest, side }) {
+function TeamBadge({ brodarac, team, opp, crest, side, big }) {
+  const sz = big ? 72 : 52
   return (
     <div className="team">
       {brodarac
-        ? <Crest size={52} url={team.logo} />
-        : (crest ? <Crest size={52} url={crest} /> : <div className="badge-lg">grb<br />+</div>)}
+        ? <Crest size={sz} url={team.logo} />
+        : (crest ? <Crest size={sz} url={crest} /> : <div className="badge-lg" style={big ? { width: 72, height: 72 } : undefined}>grb<br />+</div>)}
       <b>{brodarac ? team.name.replace('FK ', '') : opp}</b>
       <small>{side}</small>
     </div>

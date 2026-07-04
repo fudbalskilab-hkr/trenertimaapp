@@ -7,11 +7,12 @@ import * as seed from './seed'
   load/save -> Firestore, uz auth i deljivi read-only link.
 */
 
-const KEY = 'trenertima_v2'
+const KEY = 'trenertima_v3'
 
 function initialState() {
   return {
     team: seed.TEAM,
+    league: seed.LEAGUE,
     players: seed.PLAYERS,
     fees: {},                 // { [playerId]: { jul:true, avg:false, ... } }
     matches: seed.MATCHES,
@@ -19,6 +20,7 @@ function initialState() {
     microcycles: seed.MICROCYCLES,
     trainings: seed.TRAININGS,
     exercises: seed.EXERCISES,
+    gps: seed.GPS,            // { [matchId]: { [playerId]: {...metrike} } }
   }
 }
 
@@ -48,8 +50,14 @@ export function StoreProvider({ children }) {
     update,
     resetAll: () => setState(initialState()),
 
-    // Tim (ime trenera, grb kluba)
+    // Tim (ime trenera, grb kluba) i liga
     updateTeam: (patch) => setState(s => ({ ...s, team: { ...s.team, ...patch } })),
+    updateLeague: (patch) => setState(s => ({ ...s, league: { ...s.league, ...patch } })),
+
+    // GPS (Catapult) — unos/izmena metrika za igrača na meču
+    setGps: (matchId, playerId, metrics) => setState(s => ({
+      ...s, gps: { ...s.gps, [matchId]: { ...(s.gps[matchId] || {}), [playerId]: metrics } },
+    })),
 
     // Igrači
     addPlayer: (p) => setState(s => ({ ...s, players: [...s.players, { ...p, id: 'p' + Date.now() }] })),

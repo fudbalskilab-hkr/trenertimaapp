@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore, ageFrom, initials, computeStats, fmtDate } from '../data/store'
 import { FEE_MONTHS } from '../data/seed'
 import { Icon } from '../components/Icons'
@@ -83,10 +83,19 @@ function Profile({ player, store, matches }) {
   const fee = store.fees[player.id] || {}
   const age = ageFrom(player.dob)
   const exempt = !!player.exempt
+  const photoRef = useRef()
+  function uploadPhoto(e) {
+    const file = e.target.files[0]; if (!file) return
+    const r = new FileReader(); r.onload = () => store.updatePlayer(player.id, { photo: r.result }); r.readAsDataURL(file)
+  }
   return (
     <div className="card" style={{ alignSelf: 'start' }}>
       <div className="prof-head">
-        <div className="prof-av">{initials(player.name)}</div>
+        <button className="prof-av" onClick={() => photoRef.current.click()} title="Postavi sliku igrača"
+          style={{ border: 0, cursor: 'pointer', overflow: 'hidden', padding: 0, backgroundImage: player.photo ? `url(${player.photo})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          {!player.photo && initials(player.name)}
+        </button>
+        <input ref={photoRef} type="file" accept="image/*" hidden onChange={uploadPhoto} />
         <div>
           <h3>{player.name}</h3>
           <div className="meta">{[player.pos, player.alt].filter(Boolean).join(' / ') || 'bez pozicije'} · {player.dob || 'nepoznat datum'}{age != null ? ` (${age})` : ''}</div>

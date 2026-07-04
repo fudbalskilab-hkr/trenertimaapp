@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
 import { Icon, Crest } from '../components/Icons'
+import FormationBoard from '../components/FormationBoard'
 
 const EVENT_TYPES = [
   { type: 'goal', label: 'Gol' },
@@ -85,7 +86,13 @@ export default function Matches() {
         </div>
       </div>
 
-      <div className="match-cols">
+      {/* Postava i formacija */}
+      <div className="card" style={{ marginBottom: 18 }}>
+        <div className="card-h"><h3>Postava i formacija</h3></div>
+        <div className="card-b"><FormationBoard match={m} players={players} store={store} /></div>
+      </div>
+
+      <div>
         {/* Tok meča */}
         <div className="card">
           <div className="card-h"><h3>Tok meča</h3><span className="pill blue" style={{ marginLeft: 'auto' }}>{events.length} događaja</span></div>
@@ -111,27 +118,7 @@ export default function Matches() {
                 </div>
               ))}
             </div>
-            <p className="mock-note" style={{ marginTop: 12 }}>Golovi, asistencije i kartoni se automatski sabiraju u statistiku igrača.</p>
-          </div>
-        </div>
-
-        {/* Postava */}
-        <div className="card">
-          <div className="card-h"><h3>Prva postava</h3><span className="pill blue" style={{ marginLeft: 'auto' }}>{lineup.length}/11</span></div>
-          <div className="card-b" style={{ maxHeight: 520, overflow: 'auto' }}>
-            <div className="lineup-chips">
-              {players.map(p => {
-                const on = lineup.includes(p.id)
-                return (
-                  <button key={p.id} className={'pchip' + (on ? ' on' : '')} onClick={() => toggleLineup(p.id)}>
-                    {on && <span style={{ fontWeight: 800 }}>✓</span>}
-                    <span>{shortName(p.name)}</span>
-                    {p.pos && <span className="pc-pos">{p.pos}</span>}
-                  </button>
-                )
-              })}
-            </div>
-            <p className="mock-note" style={{ marginTop: 12 }}>Klik na igrača = u prvoj postavi. Clean sheet ide postavi kad je primljeno 0 golova.</p>
+            <p className="mock-note" style={{ marginTop: 12 }}>Golovi, asistencije i kartoni se automatski sabiraju u statistiku igrača. Clean sheet ide postavi kad je primljeno 0 golova.</p>
           </div>
         </div>
       </div>
