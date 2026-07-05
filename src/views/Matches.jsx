@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
 import { Icon, Crest } from '../components/Icons'
 import FormationBoard from '../components/FormationBoard'
+import { shrinkImage } from '../utils/img'
 
 const EVENT_TYPES = [
   { type: 'goal', label: 'Gol' },
@@ -34,22 +35,26 @@ export default function Matches() {
   const removeEvent = id => store.updateMatch(m.id, { events: (m.events || []).filter(e => e.id !== id) })
   function uploadCrest(e) {
     const file = e.target.files[0]; if (!file) return
-    const r = new FileReader(); r.onload = () => store.updateMatch(m.id, { crest: r.result }); r.readAsDataURL(file)
+    shrinkImage(file, 256).then(url => store.updateMatch(m.id, { crest: url }))
   }
 
-  const events = [...(m.events || [])].sort((a, b) => (a.minute || 0) - (b.minute || 0))
-  const lineup = m.lineup || []
+  const events = [...((m && m.events) || [])].sort((a, b) => (a.minute || 0) - (b.minute || 0))
+  const lineup = (m && m.lineup) || []
   const ourGoals = events.filter(e => e.type === 'goal')
 
   return (
     <section>
       <div className="mc-tabs">
         {matches.map(x => (
-          <button key={x.id} className={'mc-tab' + (x.id === activeId ? ' on' : '')} onClick={() => setActiveId(x.id)}>
-            vs {x.opp}<small>{fmtDate(x.date)} · {x.home ? 'dom' : 'gost'}</small>
+          <button key={x.id} className={'mc-tab' + (x.id === activeId ? ' on' : '') + (x.kind === 'league' ? ' comp' : '')} onClick={() => setActiveId(x.id)}>
+            vs {x.opp}<small>{x.date ? fmtDate(x.date) + ' · ' : ''}{x.home ? 'dom' : 'gost'}</small>
           </button>
         ))}
+        <button className="btn primary sm" onClick={() => setActiveId(store.addMatch())}><Icon.plus /> Nova utakmica</button>
       </div>
+      {matches.length === 0 && <div className="card"><div className="empty">Nema utakmica. Klikni „+ Nova utakmica".</div></div>}
+      {m && <>
+
 
       {/* Izveštaj / rezultat */}
       <div className="report">
@@ -130,7 +135,10 @@ export default function Matches() {
       </div>
 
       {addEv && <AddEvent type={addEv} players={players} lineup={lineup} onClose={() => setAddEv(null)} onSave={addEvent} />}
-      {editMeta && <EditMatchMeta m={m} onClose={() => setEditMeta(false)} onSave={patch => { store.updateMatch(m.id, patch); setEditMeta(false) }} />}
+      {editMeta && <EditMatchMeta m={m} onClose={() => setEditMeta(false)}
+        onSave={patch => { store.updateMatch(m.id, patch); setEditMeta(false) }}
+        onDelete={() => { if (confirm(`Obrisati utakmicu vs ${m.opp}?`)) { store.removeMatch(m.id); setEditMeta(false); setActiveId(matches.find(x => x.id !== m.id)?.id) } }} />}
+      </>}
     </section>
   )
 }
@@ -176,7 +184,7 @@ function MinutesCard({ m, players, store }) {
   )
 }
 
-function EditMatchMeta({ m, onClose, onSave }) {
+function EditMatchMeta({ m, onClose, onSave, onDelete }) {
   const [f, setF] = useState({ opp: m.opp, date: m.date, time: m.time, comp: m.comp, home: m.home, kind: m.kind || 'friendly' })
   const set = (k, v) => setF(s => ({ ...s, [k]: v }))
   return (
@@ -195,7 +203,11 @@ function EditMatchMeta({ m, onClose, onSave }) {
             <div className="field"><label>Tip</label><select className="input" value={f.kind} onChange={e => set('kind', e.target.value)}><option value="friendly">Prijateljska</option><option value="league">Prvenstvena</option></select></div>
           </div>
         </div>
-        <div className="modal-f"><button className="btn ghost" onClick={onClose}>Otkaži</button><button className="btn primary" onClick={() => onSave(f)}>Sačuvaj</button></div>
+        <div className="modal-f">
+          <button className="btn ghost" style={{ color: 'var(--bad)', marginRight: 'auto' }} onClick={onDelete}><Icon.trash /> Obriši</button>
+          <button className="btn ghost" onClick={onClose}>Otkaži</button>
+          <button className="btn primary" onClick={() => onSave(f)}>Sačuvaj</button>
+        </div>
       </div>
     </div>
   )

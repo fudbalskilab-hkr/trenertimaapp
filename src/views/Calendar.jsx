@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useStore, fmtDate } from '../data/store'
 import { INTENSITY, intensityColor } from '../data/seed'
 import { Icon } from '../components/Icons'
+import { shrinkImage } from '../utils/img'
 
 const MONTHS_SR = ['januar', 'februar', 'mart', 'april', 'maj', 'jun', 'jul', 'avgust', 'septembar', 'oktobar', 'novembar', 'decembar']
 const CYCLE = [null, 'match', '80', '50', '30', 'regen', 'free']
@@ -87,7 +88,7 @@ function MatchCell({ match, store }) {
   const fileRef = useRef()
   function upload(e) {
     const file = e.target.files[0]; if (!file) return
-    const r = new FileReader(); r.onload = () => store.updateMatch(match.id, { crest: r.result }); r.readAsDataURL(file)
+    shrinkImage(file, 256).then(url => store.updateMatch(match.id, { crest: url }))
   }
   return (
     <div className="match-cell">

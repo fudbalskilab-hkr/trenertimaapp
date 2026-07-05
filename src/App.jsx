@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Sidebar, MobileNav } from './components/Nav'
 import { Icon } from './components/Icons'
 import { useStore } from './data/store'
+import { useAuth } from './auth'
 
 import Dashboard from './views/Dashboard'
 import Players from './views/Players'
@@ -69,6 +70,10 @@ export default function App() {
             <div className="sub">{sub}</div>
           </div>
           <div className="spacer" />
+          <span className="cloud-dot" title={store.cloud === 'online' ? 'Podaci se čuvaju u cloud-u' : store.cloud === 'offline' ? 'Nema veze — čuva se lokalno' : 'Povezivanje…'}>
+            <span className="d" style={{ background: store.cloud === 'online' ? 'var(--good)' : store.cloud === 'offline' ? 'var(--bad)' : 'var(--warn)' }} />
+            {store.cloud === 'online' ? 'Cloud' : store.cloud === 'offline' ? 'Offline' : '…'}
+          </span>
           {canAdd && (
             <button className="btn primary" onClick={() => setAdding(true)}>
               <Icon.plus /> Dodaj
@@ -93,6 +98,7 @@ export default function App() {
 
 function DataMenu({ store, onClose }) {
   const fileRef = useRef()
+  const authCtx = useAuth()
   function exportBackup() {
     const blob = new Blob([store.exportData()], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -107,7 +113,7 @@ function DataMenu({ store, onClose }) {
     r.readAsText(file)
   }
   function clearAll() {
-    if (!confirm('Obrisati SVE podatke na OVOM uređaju? (izvezi backup pre ovoga)')) return
+    if (!confirm('Obrisati SVE podatke (i u cloud-u)? Izvezi backup pre ovoga.')) return
     if (!confirm('Sigurno? Ovo se ne može vratiti bez backup fajla.')) return
     store.clearAll(); onClose()
   }
@@ -119,8 +125,14 @@ function DataMenu({ store, onClose }) {
           <button className="btn primary" onClick={exportBackup} style={{ justifyContent: 'center' }}><Icon.download /> Izvoz (skini backup fajl)</button>
           <button className="btn" onClick={() => fileRef.current.click()} style={{ justifyContent: 'center' }}><Icon.upload /> Uvoz (učitaj backup)</button>
           <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={importBackup} />
-          <button className="btn" onClick={clearAll} style={{ justifyContent: 'center', color: 'var(--bad)', borderColor: 'var(--bad)' }}><Icon.trash /> Obriši sve (ovaj uređaj)</button>
-          <p className="mock-note" style={{ margin: '4px 0 0' }}>Podaci se čuvaju u ovom pregledaču. „Izvoz" pravi fajl koji čuvaš/šalješ. „Obriši sve" briše samo na ovom uređaju. (Prava zajednička baza dolazi sa Firebase.)</p>
+          <button className="btn" onClick={clearAll} style={{ justifyContent: 'center', color: 'var(--bad)', borderColor: 'var(--bad)' }}><Icon.trash /> Obriši sve podatke</button>
+          <p className="mock-note" style={{ margin: '4px 0 0' }}>Podaci se čuvaju u cloud-u (Firebase) i sinhronizuju na svim prijavljenim uređajima. „Izvoz" pravi lokalni backup fajl. „Obriši sve" briše i u cloud-u.</p>
+          {authCtx && (
+            <div style={{ marginTop: 8, paddingTop: 12, borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ flex: 1, fontSize: 12, color: 'var(--grey)' }}>Prijavljen: <b style={{ color: 'var(--ink)' }}>{authCtx.user.email}</b></div>
+              <button className="btn sm" onClick={() => { authCtx.logout(); onClose() }}>Odjavi se</button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { useStore, fmtDate } from '../data/store'
 import { SECTIONS } from '../data/seed'
 import { Icon } from '../components/Icons'
 import Pitch from '../components/Pitch'
+import { shrinkImage } from '../utils/img'
 
 const DRAW_SECTIONS = ['Uvodni deo', 'Glavni deo', 'Završni deo']
 
@@ -63,9 +64,7 @@ function DrawBox({ t, sec, store }) {
   const img = (t.drawings || {})[sec]
   function upload(e) {
     const file = e.target.files[0]; if (!file) return
-    const r = new FileReader()
-    r.onload = () => store.updateTraining(t.id, { drawings: { ...(t.drawings || {}), [sec]: r.result } })
-    r.readAsDataURL(file)
+    shrinkImage(file, 700).then(url => store.updateTraining(t.id, { drawings: { ...(t.drawings || {}), [sec]: url } }))
   }
   return (
     <div className="draw">

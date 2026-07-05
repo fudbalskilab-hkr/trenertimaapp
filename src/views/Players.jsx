@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useStore, ageFrom, initials, computeStats, fmtDate } from '../data/store'
 import { FEE_MONTHS, posGroup, POS_COLORS } from '../data/seed'
 import { Icon } from '../components/Icons'
+import { shrinkImage } from '../utils/img'
 
 const SORTS = [
   { key: 'dob', label: 'Najmlađi → najstariji' },
@@ -150,7 +151,7 @@ function Profile({ player, store, matches, onEdit }) {
   const photoRef = useRef()
   function uploadPhoto(e) {
     const file = e.target.files[0]; if (!file) return
-    const r = new FileReader(); r.onload = () => store.updatePlayer(player.id, { photo: r.result }); r.readAsDataURL(file)
+    shrinkImage(file, 320).then(url => store.updatePlayer(player.id, { photo: url }))
   }
   return (
     <div className="card" style={{ alignSelf: 'start' }}>

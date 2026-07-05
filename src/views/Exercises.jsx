@@ -3,6 +3,7 @@ import { useStore } from '../data/store'
 import { SECTIONS } from '../data/seed'
 import { Icon } from '../components/Icons'
 import Pitch from '../components/Pitch'
+import { shrinkImage } from '../utils/img'
 
 const FILTERS = ['Sve', ...SECTIONS.slice(0, 4), 'Snaga', 'Presing', 'Posed', 'Build-up', 'Fizika']
 const DEMO = [
@@ -98,7 +99,7 @@ function ExerciseForm({ title, submitLabel, initial, onClose, onSave }) {
   const set = (k, v) => setF(s => ({ ...s, [k]: v }))
   function upload(e) {
     const file = e.target.files[0]; if (!file) return
-    const r = new FileReader(); r.onload = () => set('image', r.result); r.readAsDataURL(file)
+    shrinkImage(file, 640).then(url => set('image', url))
   }
   return (
     <div className="overlay" onClick={onClose}>

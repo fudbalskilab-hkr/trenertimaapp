@@ -1,5 +1,9 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { doc, onSnapshot, setDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 import * as seed from './seed'
+
+const CLOUD_DOC = ['app', 'main'] // Firestore: kolekcija "app", dokument "main"
 
 /*
   Sloj za podatke. Trenutno: localStorage.
@@ -36,9 +40,48 @@ const StoreCtx = createContext(null)
 
 export function StoreProvider({ children }) {
   const [state, setState] = useState(load)
+  const [cloud, setCloud] = useState('connecting') // connecting | online | offline
 
+  const stateRef = useRef(state); stateRef.current = state
+  const remoteJson = useRef(null)   // poslednji JSON viđen u/za cloud (sprečava petlju)
+  const saveTimer = useRef(null)
+
+  // lokalni keš (radi i offline)
   useEffect(() => {
     try { localStorage.setItem(KEY, JSON.stringify(state)) } catch (e) { /* ignore */ }
+  }, [state])
+
+  // Firestore: učitaj + prati promene u realnom vremenu
+  useEffect(() => {
+    const ref = doc(db, CLOUD_DOC[0], CLOUD_DOC[1])
+    const unsub = onSnapshot(ref, snap => {
+      setCloud('online')
+      if (snap.exists() && snap.data().json) {
+        const json = snap.data().json
+        if (json !== remoteJson.current) {
+          remoteJson.current = json
+          try { setState(s => ({ ...initialState(), ...JSON.parse(json) })) } catch (e) { /* ignore */ }
+        }
+      } else {
+        // cloud je prazan → zasej ga trenutnim (lokalnim) podacima
+        const json = JSON.stringify(stateRef.current)
+        remoteJson.current = json
+        setDoc(ref, { json, updatedAt: Date.now() }).catch(() => {})
+      }
+    }, () => setCloud('offline'))
+    return unsub
+  }, [])
+
+  // Sačuvaj promene u cloud (debounce), osim ako je to upravo ono što smo primili
+  useEffect(() => {
+    const json = JSON.stringify(state)
+    if (saveTimer.current) clearTimeout(saveTimer.current) // otkaži prethodni zakazani upis
+    if (json === remoteJson.current) return                // ništa novo (to je već u cloud-u)
+    remoteJson.current = json
+    saveTimer.current = setTimeout(() => {
+      setDoc(doc(db, CLOUD_DOC[0], CLOUD_DOC[1]), { json, updatedAt: Date.now() })
+        .then(() => setCloud('online')).catch(() => setCloud('offline'))
+    }, 700)
   }, [state])
 
   const update = useCallback((patch) => {
@@ -47,6 +90,7 @@ export function StoreProvider({ children }) {
 
   const api = {
     ...state,
+    cloud,
     update,
     resetAll: () => setState(initialState()),
     // Izvoz / uvoz / brisanje (backup dok nema Firebase)
@@ -80,6 +124,15 @@ export function StoreProvider({ children }) {
     }),
 
     // Utakmice
+    addMatch: () => {
+      const id = 'm' + Date.now()
+      setState(s => ({ ...s, matches: [...s.matches, {
+        id, date: '', time: '17:00', opp: 'Novi protivnik', home: true, comp: 'Prijateljska',
+        kind: 'friendly', crest: '', gf: null, ga: null, events: [], lineup: [], formation: '4-3-3', positions: {}, minutes: {},
+      }] }))
+      return id
+    },
+    removeMatch: (id) => setState(s => ({ ...s, matches: s.matches.filter(m => m.id !== id) })),
     updateMatch: (id, patch) => setState(s => ({
       ...s, matches: s.matches.map(m => m.id === id ? { ...m, ...patch } : m),
     })),

@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { Icon, Crest } from './Icons'
 import { useStore, initials } from '../data/store'
+import { shrinkImage } from '../utils/img'
 
 export const NAV = [
   { id: 'dash', label: 'Pregled', icon: Icon.dash, short: 'Pregled' },
@@ -18,7 +19,7 @@ export function Sidebar({ view, setView }) {
   const logoRef = useRef()
   function uploadLogo(e) {
     const file = e.target.files[0]; if (!file) return
-    const r = new FileReader(); r.onload = () => updateTeam({ logo: r.result }); r.readAsDataURL(file)
+    shrinkImage(file, 256).then(url => updateTeam({ logo: url }))
   }
   return (
     <aside className="sidebar">
