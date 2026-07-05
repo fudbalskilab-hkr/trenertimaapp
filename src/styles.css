@@ -58,7 +58,7 @@ input,textarea,select{font-family:inherit}
   color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
   padding:18px 14px;gap:6px}
 .brand{display:flex;align-items:center;gap:11px;padding:6px 8px 16px}
-.crest{flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+.crest{flex:0 0 auto}
 .brand-txt b{display:block;font-size:14px;letter-spacing:.02em;line-height:1.1}
 .brand-txt span{font-size:11px;color:var(--blue-300)}
 .navlabel{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#5f7bb0;padding:14px 10px 6px}

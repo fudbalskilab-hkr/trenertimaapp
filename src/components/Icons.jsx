@@ -28,15 +28,10 @@ export const Icon = {
 import brodaracLogo from '../assets/brodarac.png'
 
 export function Crest({ size = 40, url = '' }) {
-  // uploadovan grb (npr. protivnik) -> kvadratno, cover, bela pločica
+  // uploadovan grb (npr. protivnik)
   if (url) return <img className="crest" src={url} alt="grb"
-    style={{ width: size, height: size, borderRadius: Math.round(size * 0.2), objectFit: 'cover', background: '#fff' }} />
-  // podrazumevani grb kluba (FK Brodarac) na beloj zaobljenoj pločici — lepo iskače i na tamnoj i na svetloj pozadini
-  const pad = Math.max(3, Math.round(size * 0.1))
-  return (
-    <span className="crest" style={{ display: 'inline-flex', background: '#fff', borderRadius: Math.round(size * 0.22),
-      padding: pad, boxShadow: '0 2px 5px rgba(0,0,0,.18)' }}>
-      <img src={brodaracLogo} alt="grb FK Brodarac" style={{ height: size, width: 'auto', objectFit: 'contain', display: 'block' }} />
-    </span>
-  )
+    style={{ width: size, height: size, borderRadius: Math.round(size * 0.18), objectFit: 'contain' }} />
+  // podrazumevani grb kluba (FK Brodarac) — providan, bez ičega okolo
+  return <img className="crest" src={brodaracLogo} alt="grb FK Brodarac"
+    style={{ height: size * 1.15, width: 'auto', objectFit: 'contain', display: 'block' }} />
 }
