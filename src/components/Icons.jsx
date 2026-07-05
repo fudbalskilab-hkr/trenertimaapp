@@ -25,15 +25,11 @@ export const Icon = {
   close: () => <svg viewBox="0 0 24 24" {...S}><path d="M6 6l12 12M18 6L6 18"/></svg>,
 }
 
+import brodaracLogo from '../assets/brodarac.png'
+
 export function Crest({ size = 40, url = '' }) {
+  // uploadovan grb (npr. protivnik) -> kvadratno, cover
   if (url) return <img className="crest" src={url} alt="grb" style={{ width: size, height: size, borderRadius: 8, objectFit: 'cover' }} />
-  const w = size, h = size * 46 / 40
-  return (
-    <svg className="crest" viewBox="0 0 40 46" style={{ width: w, height: h }} aria-hidden="true">
-      <path d="M2 3 H38 V26 C38 36 30 42 20 45 C10 42 2 36 2 26 Z" fill="#fff"/>
-      <path d="M5 6 H35 V26 C35 34 28 39 20 42 C12 39 5 34 5 26 Z" fill="#1656B0"/>
-      <path d="M20 6 V42 C12 39 5 34 5 26 V6 Z" fill="#0F2E5C"/>
-      <text x="20" y="27" textAnchor="middle" fill="#fff" fontSize="15" fontWeight="800" fontFamily="Segoe UI, Arial">B</text>
-    </svg>
-  )
+  // podrazumevani grb kluba (FK Brodarac), providna pozadina, očuvan odnos stranica
+  return <img className="crest" src={brodaracLogo} alt="grb FK Brodarac" style={{ width: 'auto', height: size * 1.18, maxWidth: size * 1.1, objectFit: 'contain' }} />
 }
