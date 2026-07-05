@@ -15,20 +15,11 @@ export const NAV = [
 ]
 
 export function Sidebar({ view, setView }) {
-  const { team, updateTeam } = useStore()
-  const logoRef = useRef()
-  function uploadLogo(e) {
-    const file = e.target.files[0]; if (!file) return
-    shrinkImage(file, 256).then(url => updateTeam({ logo: url }))
-  }
+  const { team } = useStore()
   return (
     <aside className="sidebar">
       <div className="brand">
-        <button onClick={() => logoRef.current.click()} title="Postavi grb kluba"
-          style={{ background: 'transparent', border: 0, padding: 0, cursor: 'pointer', lineHeight: 0 }}>
-          <Crest size={40} url={team.logo} />
-        </button>
-        <input ref={logoRef} type="file" accept="image/*" hidden onChange={uploadLogo} />
+        <Crest size={40} />
         <div className="brand-txt">
           <b>{team.name}</b>
           <span>{team.category} · {team.season}</span>

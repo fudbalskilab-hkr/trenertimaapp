@@ -83,7 +83,7 @@ function TeamBadge({ brodarac, team, opp, crest, side, big }) {
   return (
     <div className="team">
       {brodarac
-        ? <Crest size={sz} url={team.logo} />
+        ? <Crest size={sz} />
         : (crest ? <Crest size={sz} url={crest} /> : <div className="badge-lg" style={big ? { width: 72, height: 72 } : undefined}>grb<br />+</div>)}
       <b>{brodarac ? team.name.replace('FK ', '') : opp}</b>
       <small>{side}</small>

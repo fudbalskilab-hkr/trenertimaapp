@@ -88,7 +88,7 @@ function MatchCell({ match, store }) {
   const fileRef = useRef()
   function upload(e) {
     const file = e.target.files[0]; if (!file) return
-    shrinkImage(file, 256).then(url => store.updateMatch(match.id, { crest: url }))
+    shrinkImage(file, 256, true).then(url => store.updateMatch(match.id, { crest: url }))
   }
   return (
     <div className="match-cell">

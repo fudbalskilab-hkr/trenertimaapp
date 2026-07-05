@@ -35,7 +35,7 @@ export default function Matches() {
   const removeEvent = id => store.updateMatch(m.id, { events: (m.events || []).filter(e => e.id !== id) })
   function uploadCrest(e) {
     const file = e.target.files[0]; if (!file) return
-    shrinkImage(file, 256).then(url => store.updateMatch(m.id, { crest: url }))
+    shrinkImage(file, 256, true).then(url => store.updateMatch(m.id, { crest: url }))
   }
 
   const events = [...((m && m.events) || [])].sort((a, b) => (a.minute || 0) - (b.minute || 0))
@@ -59,7 +59,7 @@ export default function Matches() {
       {/* Izveštaj / rezultat */}
       <div className="report">
         <div className="report-side">
-          <Crest size={54} url={m.home ? team.logo : m.crest} />
+          {m.home ? <Crest size={54} /> : <Crest size={54} url={m.crest} />}
           <b>{m.home ? team.name.replace('FK ', '') : m.opp}</b>
           <div className="scorers">
             {m.home
@@ -82,7 +82,7 @@ export default function Matches() {
         <div className="report-side">
           {m.home
             ? (m.crest ? <Crest size={54} url={m.crest} /> : <button className="report-badge" onClick={() => crestRef.current.click()}>grb +</button>)
-            : <Crest size={54} url={team.logo} />}
+            : <Crest size={54} />}
           <input ref={crestRef} type="file" accept="image/*" hidden onChange={uploadCrest} />
           <b>{m.home ? m.opp : team.name.replace('FK ', '')}</b>
           <div className="scorers">
