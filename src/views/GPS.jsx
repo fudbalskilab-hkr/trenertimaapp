@@ -47,7 +47,11 @@ export default function GPS() {
     return (
       <section>
         <div className="sec-title"><h2>Catapult GPS — fizičke performanse</h2><span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>{buttons}</span></div>
-        <div className="card"><div className="empty">Još nema GPS podataka.<br />Klikni „Unesi ručno" / „Uvezi CSV", ili u ⚙️ (gore) → „Učitaj demo podatke" da vidiš kako izgleda.</div></div>
+        <div className="card"><div className="empty" style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+          <span>Još nema GPS podataka.</span>
+          <button className="btn primary" onClick={() => { if (confirm('Učitati DEMO podatke? Ovo zamenjuje trenutne podatke primerima (igrači, mečevi, GPS) — da vidiš kako izgleda. Kasnije: ⚙️ → Obriši sve pa unosiš svoje.')) store.resetAll() }}>Učitaj demo podatke</button>
+          <span style={{ fontSize: 12 }}>ili „Unesi ručno" / „Uvezi CSV" za svoje podatke</span>
+        </div></div>
         {entry && <GpsEntry matches={gpsMatches.length ? gpsMatches : matches} players={players} gps={gps} initial={entry} onClose={() => setEntry(null)} onSave={(mid, pid, m) => { store.setGps(mid, pid, m); setEntry(null) }} />}
         {importOpen && <GpsImport allMatches={matches} players={players} store={store} onClose={() => setImportOpen(false)} />}
       </section>
