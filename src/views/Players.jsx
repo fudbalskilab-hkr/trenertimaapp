@@ -5,12 +5,29 @@ import { Icon } from '../components/Icons'
 import { shrinkImage } from '../utils/img'
 
 const SORTS = [
+  { key: 'pos', label: 'Po pozicijama (GK→ATT)' },
   { key: 'dob', label: 'Najmlađi → najstariji' },
   { key: 'dobOld', label: 'Najstariji → najmlađi' },
   { key: 'minutes', label: 'Najviše minuta' },
   { key: 'apps', label: 'Najviše nastupa' },
   { key: 'name', label: 'Ime (A–Š)' },
 ]
+const GROUP_ORDER = { gk: 0, def: 1, mid: 2, att: 3 }
+const posRank = p => { const g = posGroup(p.pos); return g ? GROUP_ORDER[g] : 9 }
+
+// datum: interno yyyy-mm-dd, prikaz dd/mm/gggg
+function isoToDisp(iso) { if (!iso) return ''; const [y, m, d] = iso.split('-'); return (d && m && y) ? `${d}/${m}/${y}` : '' }
+function dispToIso(s) {
+  if (!s) return ''
+  const m = s.trim().match(/^(\d{1,2})[.\/\-](\d{1,2})[.\/\-](\d{4})\.?$/)
+  if (!m) return ''
+  return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
+}
+function posBadge(pos) {
+  if (!pos) return '—'
+  const g = posGroup(pos); const c = g ? POS_COLORS[g] : null
+  return <span className="pos" style={c ? { background: c, color: '#fff', borderColor: c } : undefined}>{pos}</span>
+}
 
 // kolone koje se biraju (name je uvek tu)
 const COLUMNS = [
@@ -39,7 +56,7 @@ function cellValue(key, p, fees) {
     case 'dob': return p.dob ? fmtDate(p.dob) + p.dob.slice(0, 4) + '.' : '—'
     case 'age': return ageFrom(p.dob) ?? '—'
     case 'foot': return <span style={{ textTransform: 'capitalize' }}>{p.foot || '—'}</span>
-    case 'pos': return p.pos ? <span className="pos">{p.pos}</span> : '—'
+    case 'pos': return posBadge(p.pos)
     case 'alt': return p.alt ? <span className="pos">{p.alt}</span> : '—'
     case 'hw': return p.hw || '—'
     case 'apps': return p._st?.apps ?? 0
@@ -54,7 +71,7 @@ export default function Players({ addOpen, onCloseAdd }) {
   const store = useStore()
   const { players, matches, fees } = store
   const [selId, setSelId] = useState(players[0]?.id)
-  const [sort, setSort] = useState('dob')
+  const [sort, setSort] = useState('pos')
   const [editing, setEditing] = useState(null)
   const [cols, setCols] = useState(loadCols)
   const [colMenu, setColMenu] = useState(false)
@@ -71,7 +88,8 @@ export default function Players({ addOpen, onCloseAdd }) {
       return a.dob < b.dob ? 1 : -1 // veći datum (mlađi) prvi
     }
     const arr = [...withStats]
-    if (sort === 'dob') arr.sort(byDob)
+    if (sort === 'pos') arr.sort((a, b) => posRank(a) - posRank(b) || (a.number ?? 99) - (b.number ?? 99) || a.name.localeCompare(b.name, 'sr'))
+    else if (sort === 'dob') arr.sort(byDob)
     else if (sort === 'dobOld') arr.sort((a, b) => -byDob(a, b))
     else if (sort === 'minutes') arr.sort((a, b) => b._st.minutes - a._st.minutes)
     else if (sort === 'apps') arr.sort((a, b) => b._st.apps - a._st.apps)
@@ -163,7 +181,7 @@ function Profile({ player, store, matches, onEdit }) {
         <input ref={photoRef} type="file" accept="image/*" hidden onChange={uploadPhoto} />
         <div>
           <h3>{player.name}</h3>
-          <div className="meta">{[player.pos, player.alt].filter(Boolean).join(' / ') || 'bez pozicije'} · {player.dob || 'nepoznat datum'}{age != null ? ` (${age})` : ''}</div>
+          <div className="meta">{[player.pos, player.alt].filter(Boolean).join(' / ') || 'bez pozicije'} · {isoToDisp(player.dob) || 'nepoznat datum'}{age != null ? ` (${age})` : ''}</div>
           <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {player.foot && <span className="tag" style={{ textTransform: 'capitalize' }}>{player.foot} noga</span>}
             {player.hw && <span className="tag">{player.hw} cm/kg</span>}
@@ -179,9 +197,9 @@ function Profile({ player, store, matches, onEdit }) {
       </div>
 
       <div className="kv">
-        <div><div className="kk">Datum rođenja</div><div className="vv">{player.dob || '—'}</div></div>
+        <div><div className="kk">Datum rođenja</div><div className="vv">{isoToDisp(player.dob) || '—'}</div></div>
         <div><div className="kk">Jača noga</div><div className="vv" style={{ textTransform: 'capitalize' }}>{player.foot || '—'}</div></div>
-        <div><div className="kk">Pozicija</div><div className="vv">{player.pos || '—'}</div></div>
+        <div><div className="kk">Pozicija</div><div className="vv">{posBadge(player.pos)}</div></div>
         <div><div className="kk">Alternativna</div><div className="vv">{player.alt || '—'}</div></div>
       </div>
 
@@ -227,12 +245,13 @@ function Stat({ n, l }) {
 
 function PlayerForm({ title, submitLabel, initial, onClose, onSave }) {
   const [f, setF] = useState({
-    name: initial.name || '', number: initial.number ?? '', dob: initial.dob || '',
+    name: initial.name || '', number: initial.number ?? '',
     foot: initial.foot || 'desna', pos: initial.pos || '', alt: initial.alt || '', hw: initial.hw || '',
   })
+  const [dobText, setDobText] = useState(isoToDisp(initial.dob))
   const set = (k, v) => setF(s => ({ ...s, [k]: v }))
   function save() {
-    onSave({ ...f, number: f.number === '' ? undefined : Number(f.number) })
+    onSave({ ...f, dob: dispToIso(dobText), number: f.number === '' ? undefined : Number(f.number) })
   }
   return (
     <div className="overlay" onClick={onClose}>
@@ -244,7 +263,7 @@ function PlayerForm({ title, submitLabel, initial, onClose, onSave }) {
             <div className="field"><label>Broj dresa</label><input className="input" inputMode="numeric" value={f.number} onChange={e => set('number', e.target.value)} placeholder="9" /></div>
           </div>
           <div className="row2">
-            <div className="field"><label>Datum rođenja</label><input className="input" type="date" value={f.dob} onChange={e => set('dob', e.target.value)} /></div>
+            <div className="field"><label>Datum rođenja</label><input className="input" value={dobText} onChange={e => setDobText(e.target.value)} placeholder="dd/mm/gggg" inputMode="numeric" /></div>
             <div className="field"><label>Jača noga</label>
               <select className="input" value={f.foot} onChange={e => set('foot', e.target.value)}>
                 <option value="desna">desna</option><option value="leva">leva</option><option value="obe">obe</option>

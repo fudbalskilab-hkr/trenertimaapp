@@ -15,166 +15,138 @@ export default function GPS() {
   const store = useStore()
   const { matches, players, gps } = store
   const [metric, setMetric] = useState('td')
-  const [mode, setMode] = useState('last')
-  const [sel, setSel] = useState([])
+  const [mode, setMode] = useState('last')      // last | last5
+  const [sel, setSel] = useState([])            // izabrani za poređenje (0–4)
   const [entry, setEntry] = useState(null)
   const [importOpen, setImportOpen] = useState(false)
 
   const metricMeta = GPS_METRICS.find(m => m.key === metric)
-  const gpsMatches = matches.filter(m => gps[m.id] && Object.keys(gps[m.id]).length)
-    .sort((a, b) => (a.date < b.date ? 1 : -1)) // najnovije prvo
+  const gpsMatches = matches.filter(m => gps[m.id] && Object.keys(gps[m.id]).length).sort((a, b) => (a.date < b.date ? 1 : -1))
   const last5 = gpsMatches.slice(0, 5)
   const lastMatch = gpsMatches[0]
-
-  // igrači koji imaju bar neki GPS
-  const gpsPlayerIds = new Set()
-  gpsMatches.forEach(m => Object.keys(gps[m.id]).forEach(pid => gpsPlayerIds.add(pid)))
-  const gpsPlayers = players.filter(p => gpsPlayerIds.has(p.id))
-
-  // default: prva 2
-  if (sel.length === 0 && gpsPlayers.length >= 2) {
-    // lazy init bez set-a u renderu -> koristi fallback prikaz
-  }
-  const selected = sel.length ? sel : gpsPlayers.slice(0, 2).map(p => p.id)
-
-  function toggle(pid) {
-    setSel(cur => {
-      const base = cur.length ? cur : gpsPlayers.slice(0, 2).map(p => p.id)
-      if (base.includes(pid)) return base.filter(x => x !== pid)
-      if (base.length >= 4) return base
-      return [...base, pid]
-    })
-  }
+  const gpsIds = new Set(); gpsMatches.forEach(m => Object.keys(gps[m.id]).forEach(pid => gpsIds.add(pid)))
+  const gpsPlayers = players.filter(p => gpsIds.has(p.id))
 
   const valueOf = (pid, key, m) => (gps[m?.id]?.[pid] || {})[key]
-  function metricValue(pid, key) {
-    if (mode === 'last') return valueOf(pid, key, lastMatch)
-    // prosek 5
-    const vals = last5.map(m => valueOf(pid, key, m)).filter(v => v != null)
-    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null
+  const agg = (pid, key, which) => {
+    if (which === 'last') return valueOf(pid, key, lastMatch)
+    const v = last5.map(m => valueOf(pid, key, m)).filter(x => x != null)
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null
+  }
+  const metricValue = (pid, key) => agg(pid, key, mode)
+  const toggle = pid => setSel(cur => cur.includes(pid) ? cur.filter(x => x !== pid) : (cur.length >= 4 ? cur : [...cur, pid]))
+
+  const buttons = (
+    <>
+      <button className="btn sm" onClick={() => setImportOpen(true)}><Icon.upload /> Uvezi CSV</button>
+      <button className="btn primary sm" onClick={() => setEntry({ matchId: lastMatch?.id })}><Icon.plus /> Unesi ručno</button>
+    </>
+  )
+
+  if (gpsPlayers.length === 0) {
+    return (
+      <section>
+        <div className="sec-title"><h2>Catapult GPS — fizičke performanse</h2><span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>{buttons}</span></div>
+        <div className="card"><div className="empty">Još nema GPS podataka.<br />Klikni „Unesi ručno" / „Uvezi CSV", ili u ⚙️ (gore) → „Učitaj demo podatke" da vidiš kako izgleda.</div></div>
+        {entry && <GpsEntry matches={gpsMatches.length ? gpsMatches : matches} players={players} gps={gps} initial={entry} onClose={() => setEntry(null)} onSave={(mid, pid, m) => { store.setGps(mid, pid, m); setEntry(null) }} />}
+        {importOpen && <GpsImport allMatches={matches} players={players} store={store} onClose={() => setImportOpen(false)} />}
+      </section>
+    )
   }
 
-  const maxForBar = Math.max(1, ...selected.map(pid => metricValue(pid, metric) || 0))
+  // rangiranje za tabelu (po izabranoj metrici, opadajuće)
+  const ranked = [...gpsPlayers].sort((a, b) => (metricValue(b.id, metric) || 0) - (metricValue(a.id, metric) || 0))
+  const maxForBar = Math.max(1, ...sel.map(pid => metricValue(pid, metric) || 0))
 
   return (
     <section>
-      <div className="sec-title"><h2>Catapult GPS — fizičke performanse</h2>
-        <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={() => setImportOpen(true)}><Icon.upload /> Uvezi CSV</button>
-        <button className="btn primary sm" onClick={() => setEntry({ matchId: lastMatch?.id })}><Icon.plus /> Unesi ručno</button>
-      </div>
+      <div className="sec-title"><h2>Catapult GPS — fizičke performanse</h2><span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>{buttons}</span></div>
 
-      {/* metrika */}
+      {/* metrika + mod */}
       <div className="filters">
-        {GPS_METRICS.map(m => (
-          <button key={m.key} className={'chip' + (m.key === metric ? ' on' : '')} onClick={() => setMetric(m.key)}>{m.short}</button>
-        ))}
+        {GPS_METRICS.map(m => <button key={m.key} className={'chip' + (m.key === metric ? ' on' : '')} onClick={() => setMetric(m.key)}>{m.short}</button>)}
       </div>
-
-      {/* izbor igrača (max 4) */}
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div className="card-h"><h3>Izaberi igrače za poređenje</h3><span className="pill blue" style={{ marginLeft: 'auto' }}>{selected.length}/4</span></div>
-        <div className="card-b">
-          <div className="gps-players">
-            {gpsPlayers.map(p => {
-              const on = selected.includes(p.id)
-              const idx = selected.indexOf(p.id)
-              return (
-                <button key={p.id} className={'gp-chip' + (on ? ' on' : '')} onClick={() => toggle(p.id)}
-                  style={on ? { borderColor: SERIES[idx], boxShadow: `inset 0 0 0 1px ${SERIES[idx]}` } : undefined}>
-                  {on && <span className="gp-dot" style={{ background: SERIES[idx] }} />}
-                  <span className="bi-num">{p.number ?? '?'}</span>{shortName(p.name)}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* mod */}
       <div className="filters">
-        {MODES.map(m => (
-          <button key={m.key} className={'chip' + (m.key === mode ? ' on' : '')} onClick={() => setMode(m.key)}>{m.label}</button>
-        ))}
+        <button className={'chip' + (mode === 'last' ? ' on' : '')} onClick={() => setMode('last')}>Poslednja utakmica</button>
+        <button className={'chip' + (mode === 'last5' ? ' on' : '')} onClick={() => setMode('last5')}>Prosek — poslednjih 5</button>
+        <span style={{ alignSelf: 'center', marginLeft: 'auto', fontSize: 12, color: 'var(--grey)' }}>
+          {mode === 'last' ? (lastMatch ? 'vs ' + lastMatch.opp : '') : `${last5.length} mečeva`}
+        </span>
       </div>
 
-      {/* prikaz */}
-      {mode !== 'perMatch' ? (
-        <>
-          <div className="card" style={{ marginBottom: 16 }}>
-            <div className="card-h"><h3>{metricMeta.label} {metricMeta.unit && <span className="foot-l">({metricMeta.unit})</span>}</h3>
-              <span className="pill blue" style={{ marginLeft: 'auto' }}>{mode === 'last' ? (lastMatch ? 'vs ' + lastMatch.opp : '—') : 'prosek 5 mečeva'}</span></div>
-            <div className="card-b">
-              <div className="cmp-bars">
-                {selected.map((pid, i) => {
-                  const p = players.find(x => x.id === pid); const v = metricValue(pid, metric)
-                  return (
-                    <div className="cmp-row" key={pid}>
-                      <div className="cmp-name">{p ? shortName(p.name) : pid}</div>
-                      <div className="cmp-track"><div className="cmp-fill" style={{ width: ((v || 0) / maxForBar * 100) + '%', background: SERIES[i] }} /></div>
-                      <div className="cmp-val num">{fmt(v, metric)}<span className="unit">{metricMeta.unit}</span></div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* tabela svih metrika */}
-          <div className="card">
-            <div className="card-h"><h3>Sve metrike — poređenje</h3></div>
-            <div className="tbl-wrap">
-              <table>
-                <thead><tr><th>Metrika</th>
-                  {selected.map((pid, i) => { const p = players.find(x => x.id === pid); return <th key={pid} style={{ color: SERIES[i] }}>{p ? shortName(p.name) : pid}</th> })}
-                </tr></thead>
-                <tbody>
-                  {GPS_METRICS.map(mm => {
-                    const vals = selected.map(pid => metricValue(pid, mm.key))
-                    const best = Math.max(...vals.map(v => v || 0))
-                    return (
-                      <tr key={mm.key} style={{ cursor: 'default' }}>
-                        <td><b>{mm.short}</b> <span className="foot-l">{mm.unit}</span></td>
-                        {vals.map((v, i) => (
-                          <td key={i} className="num" style={{ fontWeight: v != null && v === best ? 800 : 500, color: v != null && v === best ? SERIES[i] : undefined }}>
-                            {fmt(v, mm.key)}
-                          </td>
-                        ))}
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="card">
-          <div className="card-h"><h3>{metricMeta.label} — poslednjih {last5.length} utakmica</h3></div>
+      {/* poređenje izabranih (opciono) */}
+      {sel.length > 0 && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div className="card-h"><h3>Poređenje — {metricMeta.label} {metricMeta.unit && <span className="foot-l">({metricMeta.unit})</span>}</h3>
+            <button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={() => setSel([])}>Poništi izbor</button></div>
           <div className="card-b">
-            {selected.map((pid, i) => {
-              const p = players.find(x => x.id === pid)
-              const series = [...last5].reverse().map(m => ({ m, v: valueOf(pid, metric, m) }))
-              const mx = Math.max(1, ...series.map(s => s.v || 0))
-              return (
-                <div className="pm-block" key={pid}>
-                  <div className="pm-name"><span className="gp-dot" style={{ background: SERIES[i] }} />{p ? shortName(p.name) : pid}</div>
-                  <div className="pm-bars">
-                    {series.map((s, k) => (
-                      <div className="pm-col" key={k} title={`vs ${s.m.opp}: ${fmt(s.v, metric)} ${metricMeta.unit}`}>
-                        <div className="pm-bar-track"><div className="pm-bar" style={{ height: ((s.v || 0) / mx * 100) + '%', background: SERIES[i] }} /></div>
-                        <div className="pm-x">{s.m.opp.slice(0, 6)}</div>
-                        <div className="pm-v num">{fmt(s.v, metric)}</div>
-                      </div>
-                    ))}
+            <div className="cmp-bars">
+              {sel.map((pid, i) => {
+                const p = players.find(x => x.id === pid); const v = metricValue(pid, metric)
+                return (
+                  <div className="cmp-row" key={pid}>
+                    <div className="cmp-name">{p ? shortName(p.name) : pid}</div>
+                    <div className="cmp-track"><div className="cmp-fill" style={{ width: ((v || 0) / maxForBar * 100) + '%', background: SERIES[i] }} /></div>
+                    <div className="cmp-val num">{fmt(v, metric)}<span className="unit">{metricMeta.unit}</span></div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
+            {/* poslednjih 5 po utakmici */}
+            <div style={{ marginTop: 8 }}>
+              {sel.map((pid, i) => {
+                const p = players.find(x => x.id === pid)
+                const series = [...last5].reverse().map(m => ({ m, v: valueOf(pid, metric, m) }))
+                const mx = Math.max(1, ...series.map(s => s.v || 0))
+                return (
+                  <div className="pm-block" key={pid}>
+                    <div className="pm-name"><span className="gp-dot" style={{ background: SERIES[i] }} />{p ? shortName(p.name) : pid} <span className="foot-l">— poslednjih {series.length}</span></div>
+                    <div className="pm-bars">
+                      {series.map((s, k) => (
+                        <div className="pm-col" key={k} title={`vs ${s.m.opp}: ${fmt(s.v, metric)} ${metricMeta.unit}`}>
+                          <div className="pm-bar-track"><div className="pm-bar" style={{ height: ((s.v || 0) / mx * 100) + '%', background: SERIES[i] }} /></div>
+                          <div className="pm-x">{s.m.opp.slice(0, 6)}</div>
+                          <div className="pm-v num">{fmt(s.v, metric)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
       )}
 
-      <p className="mock-note" style={{ marginTop: 14 }}>Podaci su primer. Klikni „Unesi GPS" da uneseš prave brojeve iz Catapult-a (kasnije dodajemo i uvoz iz fajla).</p>
+      {/* SVI IGRAČI */}
+      <div className="card">
+        <div className="card-h"><h3>Svi igrači — {mode === 'last' ? 'poslednja utakmica' : 'prosek 5'}</h3>
+          <span className="pill blue" style={{ marginLeft: 'auto' }}>čekiraj do 4 za poređenje ({sel.length}/4)</span></div>
+        <div className="tbl-wrap">
+          <table>
+            <thead><tr><th></th><th>#</th><th>Igrač</th>
+              {GPS_METRICS.map(m => <th key={m.key} style={m.key === metric ? { color: 'var(--blue-600)' } : undefined}>{m.short}</th>)}
+            </tr></thead>
+            <tbody>
+              {ranked.map(p => {
+                const on = sel.includes(p.id); const idx = sel.indexOf(p.id)
+                return (
+                  <tr key={p.id} onClick={() => toggle(p.id)} style={on ? { background: 'var(--blue-100)' } : undefined}>
+                    <td><input type="checkbox" checked={on} readOnly style={{ accentColor: on ? SERIES[idx] : undefined, pointerEvents: 'none' }} /></td>
+                    <td className="rownum">{p.number ?? '—'}</td>
+                    <td><b>{shortName(p.name)}</b></td>
+                    {GPS_METRICS.map(m => (
+                      <td key={m.key} className="num" style={m.key === metric ? { fontWeight: 800 } : undefined}>{fmt(metricValue(p.id, m.key), m.key)}</td>
+                    ))}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p className="mock-note" style={{ marginTop: 14 }}>Klik na igrača (ili čekiraj) da ga dodaš u poređenje — do 4 odjednom. „Uvezi CSV" iz Catapult-a ili „Unesi ručno".</p>
 
       {entry && <GpsEntry matches={gpsMatches} players={gpsPlayers} gps={gps} initial={entry} onClose={() => setEntry(null)}
         onSave={(mid, pid, metrics) => { store.setGps(mid, pid, metrics); setEntry(null) }} />}

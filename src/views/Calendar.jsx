@@ -6,7 +6,7 @@ import { shrinkImage } from '../utils/img'
 
 const MONTHS_SR = ['januar', 'februar', 'mart', 'april', 'maj', 'jun', 'jul', 'avgust', 'septembar', 'oktobar', 'novembar', 'decembar']
 const CYCLE = [null, 'match', '80', '50', '30', 'regen', 'free']
-const tint = k => { const c = intensityColor(k); return c === 'transparent' ? 'var(--surface)' : `color-mix(in srgb, ${c} 16%, var(--surface))` }
+const tint = k => { const c = intensityColor(k); return c === 'transparent' ? 'var(--surface)' : `color-mix(in srgb, ${c} 32%, var(--surface))` }
 
 function weekLabel(w, i) {
   const s = new Date(w.start)
@@ -39,9 +39,10 @@ export default function Calendar() {
             {w.days.map((d, di) => {
               const match = d.matchId ? matches.find(m => m.id === d.matchId) : null
               return (
-                <div className={'day' + (match ? ' match' : '')} key={di} style={{ background: tint(d.intensity) }}
+                <div className={'day' + (match ? ' match' : '')} key={di} style={{ background: tint(match ? 'match' : d.intensity) }}
                   onDragOver={e => e.preventDefault()}
                   onDrop={() => { if (drag.current) { store.swapCalendarDays(drag.current, { wi, di }); drag.current = null } }}>
+                  <div className="int-stripe" style={{ background: intensityColor(match ? 'match' : d.intensity) }} />
                   <div className="day-h" draggable
                     onDragStart={() => { drag.current = { wi, di } }}
                     title="Prevuci da zameniš dan" style={{ cursor: 'grab' }}>
@@ -92,13 +93,12 @@ function MatchCell({ match, store }) {
   }
   return (
     <div className="match-cell">
-      <button className="badge-sm" onClick={() => fileRef.current.click()} title="Dodaj grb protivnika"
-        style={{ cursor: 'pointer', padding: match.crest ? 0 : 3, overflow: 'hidden' }}>
-        {match.crest ? <img src={match.crest} alt="grb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span>grb +</span>}
+      <button className="match-crest" onClick={() => fileRef.current.click()} title="Dodaj grb protivnika">
+        {match.crest ? <img src={match.crest} alt="grb" /> : <span>grb +</span>}
       </button>
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={upload} />
-      <b>vs {match.opp}</b>
-      <small>{match.time} · {match.home ? 'dom' : 'gost'}</small>
+      <b>{match.opp}</b>
+      <small>{match.home ? 'domaćin' : 'gost'} · {match.time}</small>
     </div>
   )
 }

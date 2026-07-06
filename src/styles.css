@@ -230,8 +230,8 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 .days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
 .day{background:var(--surface);border:1px solid var(--line);border-radius:11px;overflow:hidden;
   min-height:222px;display:flex;flex-direction:column;position:relative}
-.day .int-stripe{height:5px;flex:0 0 auto}
-.day.match{border-color:var(--blue-500);box-shadow:0 0 0 1px var(--blue-500) inset}
+.day .int-stripe{height:8px;flex:0 0 auto}
+.day.match{border-color:var(--bad);box-shadow:0 0 0 2px var(--bad) inset}
 .day-h{padding:6px 9px;background:var(--blue-900);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:6px}
 .day.match .day-h{background:var(--blue-600)}
 .day-h b{font-size:12px}.day-h .dt{font-size:10.5px;color:var(--blue-300)}
@@ -245,11 +245,14 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
   border:1px solid var(--line);border-radius:11px;font-size:12px}
 .int-legend .li2{display:flex;align-items:center;gap:6px;color:var(--ink-soft)}
 .int-legend .sw{width:13px;height:13px;border-radius:4px;flex:0 0 auto}
-.match-cell{display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:center;
-  text-align:center;padding:8px;flex:1}
-.badge-sm{width:40px;height:40px;border-radius:9px;background:var(--blue-50);border:1px dashed var(--blue-300);
-  display:grid;place-items:center;font-size:9px;color:var(--blue-500);line-height:1;padding:3px;object-fit:cover}
-.match-cell b{font-size:11.5px}.match-cell small{font-size:10px;color:var(--grey)}
+.match-cell{display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:center;
+  text-align:center;padding:8px 6px;flex:1}
+.match-crest{width:88%;max-width:120px;aspect-ratio:1;border:0;background:transparent;cursor:pointer;
+  display:grid;place-items:center;padding:0}
+.match-crest img{width:100%;height:100%;object-fit:contain}
+.match-crest span{width:80%;aspect-ratio:1;border-radius:12px;background:var(--surface);border:1px dashed var(--blue-300);
+  display:grid;place-items:center;font-size:12px;font-weight:600;color:var(--blue-500)}
+.match-cell b{font-size:13px;line-height:1.15}.match-cell small{font-size:11px;color:var(--ink-soft);font-weight:600}
 
 /* Mikrociklus */
 .mc-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}

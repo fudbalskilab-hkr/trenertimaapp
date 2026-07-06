@@ -125,6 +125,7 @@ function DataMenu({ store, onClose }) {
           <button className="btn primary" onClick={exportBackup} style={{ justifyContent: 'center' }}><Icon.download /> Izvoz (skini backup fajl)</button>
           <button className="btn" onClick={() => fileRef.current.click()} style={{ justifyContent: 'center' }}><Icon.upload /> Uvoz (učitaj backup)</button>
           <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={importBackup} />
+          <button className="btn" onClick={() => { if (confirm('Učitati DEMO podatke? Ovo zamenjuje trenutne podatke primerima (za pregled kako izgleda).')) { store.resetAll(); onClose() } }} style={{ justifyContent: 'center' }}>Učitaj demo podatke</button>
           <button className="btn" onClick={clearAll} style={{ justifyContent: 'center', color: 'var(--bad)', borderColor: 'var(--bad)' }}><Icon.trash /> Obriši sve podatke</button>
           <p className="mock-note" style={{ margin: '4px 0 0' }}>Podaci se čuvaju u cloud-u (Firebase) i sinhronizuju na svim prijavljenim uređajima. „Izvoz" pravi lokalni backup fajl. „Obriši sve" briše i u cloud-u.</p>
           {authCtx && (
