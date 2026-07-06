@@ -40,6 +40,8 @@ let _id = 1
 const uid = () => 'p' + (_id++)
 
 export const PLAYERS = [
+  { id: uid(), name: 'Nikola Đorđević',     foot: 'desna', dob: '2008-03-12', pos: 'GK',  alt: '',    hw: '189/82' },
+  { id: uid(), name: 'Vukašin Ilić',        foot: 'desna', dob: '2009-06-02', pos: 'GK',  alt: '',    hw: '186/78' },
   { id: uid(), name: 'Jovan Nikolić',       foot: 'desna', dob: '2008-10-11', pos: 'CM',  alt: 'DM',  hw: '' },
   { id: uid(), name: 'Aleksa Božić',        foot: 'leva',  dob: '2008-10-09', pos: 'RW',  alt: '',    hw: '177/62' },
   { id: uid(), name: 'Luka Nikolić',        foot: 'desna', dob: '2008-09-03', pos: 'CB',  alt: 'RB',  hw: '195/74' },

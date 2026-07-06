@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
 import { GPS_METRICS } from '../data/seed'
 import { Icon } from '../components/Icons'
+import { safeLoadDemo } from '../utils/backup'
 
 const SERIES = ['#1656B0', '#E8862B', '#1E9E6A', '#C0392B']
 const MODES = [
@@ -49,7 +50,7 @@ export default function GPS() {
         <div className="sec-title"><h2>Catapult GPS — fizičke performanse</h2><span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>{buttons}</span></div>
         <div className="card"><div className="empty" style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
           <span>Još nema GPS podataka.</span>
-          <button className="btn primary" onClick={() => { if (confirm('Učitati DEMO podatke? Ovo zamenjuje trenutne podatke primerima (igrači, mečevi, GPS) — da vidiš kako izgleda. Kasnije: ⚙️ → Obriši sve pa unosiš svoje.')) store.resetAll() }}>Učitaj demo podatke</button>
+          <button className="btn primary" onClick={() => safeLoadDemo(store)}>Učitaj demo podatke</button>
           <span style={{ fontSize: 12 }}>ili „Unesi ručno" / „Uvezi CSV" za svoje podatke</span>
         </div></div>
         {entry && <GpsEntry matches={gpsMatches.length ? gpsMatches : matches} players={players} gps={gps} initial={entry} onClose={() => setEntry(null)} onSave={(mid, pid, m) => { store.setGps(mid, pid, m); setEntry(null) }} />}
