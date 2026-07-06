@@ -109,6 +109,18 @@ export function StoreProvider({ children }) {
     setGps: (matchId, playerId, metrics) => setState(s => ({
       ...s, gps: { ...s.gps, [matchId]: { ...(s.gps[matchId] || {}), [playerId]: metrics } },
     })),
+    // DEMO GPS koji SAMO dodaje (za postojeće igrače), ništa ne briše
+    loadDemoGps: () => setState(s => {
+      if ((s.players || []).length === 0) return s
+      if (s.matches.some(m => String(m.id).startsWith('demo'))) return s // već dodato
+      const { matches, gps } = seed.makeDemoGps(s.players)
+      return { ...s, matches: [...s.matches, ...matches], gps: { ...s.gps, ...gps } }
+    }),
+    removeDemoGps: () => setState(s => {
+      const gps = { ...s.gps }
+      s.matches.filter(m => String(m.id).startsWith('demo')).forEach(m => { delete gps[m.id] })
+      return { ...s, matches: s.matches.filter(m => !String(m.id).startsWith('demo')), gps }
+    }),
 
     // Igrači
     addPlayer: (p) => setState(s => ({ ...s, players: [...s.players, { ...p, id: 'p' + Date.now() }] })),

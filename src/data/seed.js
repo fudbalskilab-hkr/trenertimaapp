@@ -147,6 +147,21 @@ PAST.forEach((m, mi) => {
   squad.forEach((pid, pi) => { GPS[m.id][pid] = gpsFor(pi, mi) })
 })
 
+// Demo GPS SAMO za trenutne igrače (ne dira roster) — za pregled kako izgleda Catapult
+export function makeDemoGps(players) {
+  const roster = (players || []).slice(0, 16)
+  const opps = ['Radnički', 'Voždovac', 'Zemun', 'Sinđelić', 'Čukarički']
+  const dates = ['2026-06-07', '2026-06-14', '2026-06-18', '2026-06-25', '2026-06-28']
+  const matches = opps.map((opp, i) => ({
+    id: 'demo' + i, date: dates[i], time: '17:00', opp: '(demo) ' + opp, home: i % 2 === 0,
+    comp: 'Demo utakmica', kind: 'friendly', crest: '', gf: 2, ga: i % 3, events: [],
+    lineup: roster.slice(0, 11).map(p => p.id), formation: '4-3-3', positions: {}, minutes: {},
+  }))
+  const gps = {}
+  matches.forEach((m, mi) => { gps[m.id] = {}; roster.forEach((p, pi) => { gps[m.id][p.id] = gpsFor(pi, mi) }) })
+  return { matches, gps }
+}
+
 const DAYS = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned']
 
 // Kalendar aktivnosti — nedelje sa danima; svaki dan Prepodne (am) / Popodne (pm)

@@ -2,7 +2,6 @@ import { useState, useRef } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
 import { GPS_METRICS } from '../data/seed'
 import { Icon } from '../components/Icons'
-import { safeLoadDemo } from '../utils/backup'
 
 const SERIES = ['#1656B0', '#E8862B', '#1E9E6A', '#C0392B']
 const MODES = [
@@ -37,8 +36,10 @@ export default function GPS() {
   const metricValue = (pid, key) => agg(pid, key, mode)
   const toggle = pid => setSel(cur => cur.includes(pid) ? cur.filter(x => x !== pid) : (cur.length >= 4 ? cur : [...cur, pid]))
 
+  const hasDemo = matches.some(m => String(m.id).startsWith('demo'))
   const buttons = (
     <>
+      {hasDemo && <button className="btn ghost sm" onClick={() => store.removeDemoGps()}>Ukloni demo</button>}
       <button className="btn sm" onClick={() => setImportOpen(true)}><Icon.upload /> Uvezi CSV</button>
       <button className="btn primary sm" onClick={() => setEntry({ matchId: lastMatch?.id })}><Icon.plus /> Unesi ručno</button>
     </>
@@ -50,8 +51,10 @@ export default function GPS() {
         <div className="sec-title"><h2>Catapult GPS — fizičke performanse</h2><span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>{buttons}</span></div>
         <div className="card"><div className="empty" style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
           <span>Još nema GPS podataka.</span>
-          <button className="btn primary" onClick={() => safeLoadDemo(store)}>Učitaj demo podatke</button>
-          <span style={{ fontSize: 12 }}>ili „Unesi ručno" / „Uvezi CSV" za svoje podatke</span>
+          {store.players.length > 0
+            ? <button className="btn primary" onClick={() => store.loadDemoGps()}>Dodaj demo GPS (za tvoje igrače)</button>
+            : <span style={{ fontSize: 13 }}>Prvo dodaj igrače u tabu „Igrači".</span>}
+          <span style={{ fontSize: 12, color: 'var(--grey)' }}>Ovo SAMO dodaje demo GPS za postojeće igrače — ništa ne briše. Ili „Unesi ručno" / „Uvezi CSV" za svoje.</span>
         </div></div>
         {entry && <GpsEntry matches={gpsMatches.length ? gpsMatches : matches} players={players} gps={gps} initial={entry} onClose={() => setEntry(null)} onSave={(mid, pid, m) => { store.setGps(mid, pid, m); setEntry(null) }} />}
         {importOpen && <GpsImport allMatches={matches} players={players} store={store} onClose={() => setImportOpen(false)} />}
