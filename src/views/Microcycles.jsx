@@ -45,13 +45,13 @@ export default function Microcycles() {
       <div className="mc-tabs">
         <span className="mc-period-lab">Pripremni</span>
         {prep.map(m => (
-          <button key={m.id} className={'mc-tab' + (m.id === active ? ' on' : '')} onClick={() => setActive(m.id)}>MC {m.n}<small>{m.type}</small></button>
+          <button key={m.id} className={'mc-tab' + (m.id === active ? ' on' : '')} onClick={() => setActive(m.id)}>MC {m.n}<small>{m.range || m.type}</small></button>
         ))}
         {comp.length > 0 && <>
           <span className="mc-sep" />
           <span className="mc-period-lab" style={{ color: '#B23B3B' }}>Takmičarski</span>
           {comp.map(m => (
-            <button key={m.id} className={'mc-tab comp' + (m.id === active ? ' on' : '')} onClick={() => setActive(m.id)}>MC {m.n}<small>{m.type}</small></button>
+            <button key={m.id} className={'mc-tab comp' + (m.id === active ? ' on' : '')} onClick={() => setActive(m.id)}>MC {m.n}<small>{m.range || m.type}</small></button>
           ))}
         </>}
         <button className="btn primary sm" style={{ marginLeft: 8 }} onClick={() => store.addMicrocycle()}><Icon.plus /> Nov mikrociklus</button>
@@ -86,14 +86,17 @@ export default function Microcycles() {
                     onClick={() => { const cur = CYCLE.indexOf(dm.intensity); store.setMcDay(mc.id, day, { intensity: CYCLE[(cur + 1) % CYCLE.length] }) }} />
                 </div>
                 <div className="mc-day-ctrl">
-                  <input value={dm.time || ''} placeholder="vreme" onChange={e => store.setMcDay(mc.id, day, { time: e.target.value })} title="Vreme treninga" />
-                  <button className="btn sm" onClick={() => store.setMcDay(mc.id, day, { single: !single })} title="Jedan ili dva treninga">{single ? '1×' : '2×'}</button>
+                  <button className="btn sm" style={{ width: '100%' }} onClick={() => store.setMcDay(mc.id, day, { single: !single })} title="Jedan ili dva treninga dnevno">{single ? '1 trening' : '2 treninga'}</button>
                 </div>
                 {parts.map(([part, plabel]) => {
                   const sess = getSession(day, part)
                   return (
                     <div className="mc-part" key={part}>
-                      <div className="mc-part-h">{plabel}</div>
+                      <div className="mc-part-h">
+                        <span style={{ flex: 1 }}>{plabel}</span>
+                        <input className="mc-time" value={dm[part + 'Time'] || ''} placeholder="—:—"
+                          onChange={e => store.setMcDay(mc.id, day, { [part + 'Time']: e.target.value })} title="Vreme treninga" />
+                      </div>
                       {SECTIONS.map((sec, k) => {
                         const val = sess?.sections?.[sec] || ''
                         return (
