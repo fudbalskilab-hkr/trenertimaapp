@@ -18,7 +18,15 @@ export default function Microcycles() {
   const prep = microcycles.filter(m => m.type !== 'Takmičarski')
   const comp = microcycles.filter(m => m.type === 'Takmičarski')
 
-  if (!mc) return <section><div className="card"><div className="empty">Nema mikrociklusa. Klikni „+ Nov mikrociklus".</div></div></section>
+  if (!mc) return (
+    <section>
+      <div className="sec-title"><h2>Mikrociklusi</h2></div>
+      <div className="card"><div className="empty" style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+        <span>Još nema mikrociklusa.</span>
+        <button className="btn primary" onClick={() => store.addMicrocycle()}><Icon.plus /> Nov mikrociklus</button>
+      </div></div>
+    </section>
+  )
 
   const dayMeta = mc.dayMeta || {}
   const getSession = (day, part) => mc.sessions.find(s => s.day === day && s.part === part)

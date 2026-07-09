@@ -121,6 +121,7 @@ function RecoveryBanner({ store }) {
 function DataMenu({ store, onClose }) {
   const fileRef = useRef()
   const authCtx = useAuth()
+  const [hist, setHist] = useState(null) // null=zatvoreno; niz=otvorena istorija
   function exportBackup() {
     const blob = new Blob([store.exportData()], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -134,11 +135,6 @@ function DataMenu({ store, onClose }) {
     r.onload = () => { try { store.importData(String(r.result)); alert('Podaci su uvezeni.'); onClose() } catch (err) { alert('Greška: fajl nije ispravan backup.') } }
     r.readAsText(file)
   }
-  function clearAll() {
-    if (!confirm('Obrisati SVE podatke (i u cloud-u)? Izvezi backup pre ovoga.')) return
-    if (!confirm('Sigurno? Ovo se ne može vratiti bez backup fajla.')) return
-    store.clearAll(); onClose()
-  }
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
@@ -147,16 +143,57 @@ function DataMenu({ store, onClose }) {
           <button className="btn primary" onClick={exportBackup} style={{ justifyContent: 'center' }}><Icon.download /> Izvoz (skini backup fajl)</button>
           <button className="btn" onClick={() => fileRef.current.click()} style={{ justifyContent: 'center' }}><Icon.upload /> Uvoz (učitaj backup)</button>
           <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={importBackup} />
-          <button className="btn" onClick={() => { store.restoreSeedData(); onClose() }} style={{ justifyContent: 'center' }}>↩ Vrati primere (poništi brisanje)</button>
-          <button className="btn" onClick={() => { if (confirm('Obrisati SAMO moje primere (igrači/mečevi/vežbe/mikrociklusi koje sam ja ubacio)? Ostaje ono što je trener sam dodao + demo GPS u Catapult-u.')) { store.removeSeedData(); onClose() } }} style={{ justifyContent: 'center' }}>Obriši demo/primere (zadrži tvoje)</button>
-          <button className="btn" onClick={clearAll} style={{ justifyContent: 'center', color: 'var(--bad)', borderColor: 'var(--bad)' }}><Icon.trash /> Obriši sve podatke</button>
-          <p className="mock-note" style={{ margin: '4px 0 0' }}>Podaci se čuvaju u cloud-u (Firebase) i sinhronizuju na svim prijavljenim uređajima. „Izvoz" pravi lokalni backup fajl. „Obriši sve" briše i u cloud-u.</p>
+          <button className="btn" onClick={() => setHist(store.getHistory())} style={{ justifyContent: 'center' }}>↩ Istorija (vrati verziju)</button>
+          <p className="mock-note" style={{ margin: '4px 0 0' }}>Podaci se čuvaju u cloud-u i automatski se pravi backup pri svakoj izmeni. „Istorija" vraća neko od ranijih stanja. „Izvoz" pravi fajl na tvom uređaju.</p>
           {authCtx && (
             <div style={{ marginTop: 8, paddingTop: 12, borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ flex: 1, fontSize: 12, color: 'var(--grey)' }}>Prijavljen: <b style={{ color: 'var(--ink)' }}>{authCtx.user.email}</b></div>
               <button className="btn sm" onClick={() => { authCtx.logout(); onClose() }}>Odjavi se</button>
             </div>
           )}
+        </div>
+      </div>
+      {hist && <HistoryModal store={store} local={hist} onClose={() => setHist(null)} onDone={onClose} />}
+    </div>
+  )
+}
+
+function HistoryModal({ store, local, onClose, onDone }) {
+  const [cloud, setCloud] = useState(null)
+  useEffect(() => { store.getCloudVersions().then(setCloud) }, [])
+  function fmtAt(at) {
+    if (!at) return '—'
+    const d = new Date(at)
+    const p = n => String(n).padStart(2, '0')
+    return `${p(d.getDate())}.${p(d.getMonth() + 1)}. ${p(d.getHours())}:${p(d.getMinutes())}`
+  }
+  function count(json) { try { const o = JSON.parse(json); return (o.players || []).length } catch (e) { return '?' } }
+  function restore(json) {
+    if (!confirm('Vratiti podatke na ovu verziju? Trenutno stanje se zamenjuje (ali i ono ide u istoriju).')) return
+    store.restoreSnapshot(json); onDone()
+  }
+  const cloudOnly = (cloud || []).filter(c => !local.some(l => l.json === c.json))
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 460 }}>
+        <div className="modal-h"><h3>Istorija verzija</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-b" style={{ maxHeight: '60vh', overflow: 'auto' }}>
+          <div className="eyebrow" style={{ marginBottom: 8 }}>Na ovom uređaju</div>
+          {local.length === 0 && <div className="empty" style={{ padding: 14 }}>Nema sačuvanih verzija još.</div>}
+          {local.map((h, i) => (
+            <div key={i} className="ge" style={{ marginBottom: 6 }}>
+              <span style={{ flex: 1 }}>{fmtAt(h.at)} · <b>{count(h.json)}</b> igrača</span>
+              <button className="btn sm" onClick={() => restore(h.json)}>Vrati</button>
+            </div>
+          ))}
+          <div className="eyebrow" style={{ margin: '14px 0 8px' }}>U cloud-u {cloud === null ? '(učitavanje…)' : ''}</div>
+          {cloud !== null && cloudOnly.length === 0 && <div className="empty" style={{ padding: 14 }}>Nema dodatnih cloud verzija.</div>}
+          {cloudOnly.map((h, i) => (
+            <div key={i} className="ge" style={{ marginBottom: 6 }}>
+              <span style={{ flex: 1 }}>{fmtAt(h.at)} · <b>{count(h.json)}</b> igrača</span>
+              <button className="btn sm" onClick={() => restore(h.json)}>Vrati</button>
+            </div>
+          ))}
         </div>
       </div>
     </div>

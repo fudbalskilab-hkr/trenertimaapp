@@ -36,10 +36,8 @@ export default function GPS() {
   const metricValue = (pid, key) => agg(pid, key, mode)
   const toggle = pid => setSel(cur => cur.includes(pid) ? cur.filter(x => x !== pid) : (cur.length >= 4 ? cur : [...cur, pid]))
 
-  const hasDemo = matches.some(m => String(m.id).startsWith('demo'))
   const buttons = (
     <>
-      {hasDemo && <button className="btn ghost sm" onClick={() => store.removeDemoGps()}>Ukloni demo</button>}
       <button className="btn sm" onClick={() => setImportOpen(true)}><Icon.upload /> Uvezi CSV</button>
       <button className="btn primary sm" onClick={() => setEntry({ matchId: lastMatch?.id })}><Icon.plus /> Unesi ručno</button>
     </>
@@ -49,12 +47,9 @@ export default function GPS() {
     return (
       <section>
         <div className="sec-title"><h2>Catapult GPS — fizičke performanse</h2><span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>{buttons}</span></div>
-        <div className="card"><div className="empty" style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+        <div className="card"><div className="empty" style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
           <span>Još nema GPS podataka.</span>
-          {store.players.length > 0
-            ? <button className="btn primary" onClick={() => store.loadDemoGps()}>Dodaj demo GPS (za tvoje igrače)</button>
-            : <span style={{ fontSize: 13 }}>Prvo dodaj igrače u tabu „Igrači".</span>}
-          <span style={{ fontSize: 12, color: 'var(--grey)' }}>Ovo SAMO dodaje demo GPS za postojeće igrače — ništa ne briše. Ili „Unesi ručno" / „Uvezi CSV" za svoje.</span>
+          <span style={{ fontSize: 13, color: 'var(--grey)' }}>Klikni „Unesi ručno" ili „Uvezi CSV" (iz Catapult-a) — dugmad gore desno.</span>
         </div></div>
         {entry && <GpsEntry matches={gpsMatches.length ? gpsMatches : matches} players={players} gps={gps} initial={entry} onClose={() => setEntry(null)} onSave={(mid, pid, m) => { store.setGps(mid, pid, m); setEntry(null) }} />}
         {importOpen && <GpsImport allMatches={matches} players={players} store={store} onClose={() => setImportOpen(false)} />}

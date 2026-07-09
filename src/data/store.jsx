@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
-import { doc, onSnapshot, setDoc } from 'firebase/firestore'
+import { doc, onSnapshot, setDoc, getDocs, collection } from 'firebase/firestore'
 import { db } from '../firebase'
 import * as seed from './seed'
 
@@ -14,19 +14,34 @@ const RECOVERY = typeof window !== 'undefined' && /[?&]recovery/.test(window.loc
 */
 
 const KEY = 'trenertima_v4'
+const HKEY = 'trenertima_history'   // lokalna istorija verzija (za „vrati nazad")
 
+// PRAZAN start — bez ikakvih demo podataka
 function initialState() {
   return {
-    team: seed.TEAM,
-    league: seed.LEAGUE,
-    players: seed.PLAYERS,
-    fees: {},                 // { [playerId]: { jul:true, avg:false, ... } }
-    matches: seed.MATCHES,
-    calendar: seed.CALENDAR,
-    microcycles: seed.MICROCYCLES,
-    trainings: seed.TRAININGS,
-    exercises: seed.EXERCISES,
-    gps: seed.GPS,            // { [matchId]: { [playerId]: {...metrike} } }
+    team: { ...seed.TEAM },
+    league: { ...seed.LEAGUE },
+    players: [],
+    fees: {},
+    matches: [],
+    calendar: [],
+    microcycles: [],
+    trainings: [],
+    exercises: [],
+    gps: {},
+  }
+}
+
+// Lokalna istorija: čuva poslednjih 15 stanja (za oporavak od pogrešnog klika)
+function pushHistory(json) {
+  try {
+    const h = JSON.parse(localStorage.getItem(HKEY) || '[]')
+    if (h[0] && h[0].json === json) return
+    h.unshift({ at: Date.now(), json })
+    while (h.length > 15) h.pop()
+    localStorage.setItem(HKEY, JSON.stringify(h))
+  } catch (e) {
+    try { const h = JSON.parse(localStorage.getItem(HKEY) || '[]'); localStorage.setItem(HKEY, JSON.stringify(h.slice(0, 5))) } catch (e2) {}
   }
 }
 
@@ -47,6 +62,8 @@ export function StoreProvider({ children }) {
   const stateRef = useRef(state); stateRef.current = state
   const remoteJson = useRef(null)   // poslednji JSON viđen u/za cloud (sprečava petlju)
   const saveTimer = useRef(null)
+  const verAt = useRef(0)           // kad je zadnja cloud-verzija upisana (throttle)
+  const verIdx = useRef(Number(localStorage.getItem('trenertima_veridx') || 0))
 
   // lokalni keš (radi i offline)
   useEffect(() => {
@@ -82,9 +99,19 @@ export function StoreProvider({ children }) {
     if (saveTimer.current) clearTimeout(saveTimer.current) // otkaži prethodni zakazani upis
     if (json === remoteJson.current) return                // ništa novo (to je već u cloud-u)
     remoteJson.current = json
+    pushHistory(json)                                      // lokalna istorija (za „vrati nazad")
     saveTimer.current = setTimeout(() => {
       setDoc(doc(db, CLOUD_DOC[0], CLOUD_DOC[1]), { json, updatedAt: Date.now() })
         .then(() => setCloud('online')).catch(() => setCloud('offline'))
+      // cloud verzija (rotirajuće 15), ne češće od 90s — zaštita i ako se izgubi uređaj
+      const now = Date.now()
+      if (now - verAt.current > 90000) {
+        verAt.current = now
+        const idx = verIdx.current % 15
+        verIdx.current = idx + 1
+        try { localStorage.setItem('trenertima_veridx', String(verIdx.current)) } catch (e) {}
+        setDoc(doc(db, 'versions', 'v' + idx), { json, at: now }).catch(() => {})
+      }
     }, 700)
   }, [state])
 
@@ -98,9 +125,25 @@ export function StoreProvider({ children }) {
     recovery: RECOVERY,
     update,
     resetAll: () => setState(initialState()),
-    // Izvoz / uvoz / brisanje (backup dok nema Firebase)
+    // Izvoz / uvoz
     exportData: () => JSON.stringify(state, null, 2),
     importData: (json) => { const obj = typeof json === 'string' ? JSON.parse(json) : json; setState({ ...initialState(), ...obj }) },
+
+    // Istorija verzija (za „vrati nazad")
+    getHistory: () => { try { return JSON.parse(localStorage.getItem(HKEY) || '[]') } catch (e) { return [] } },
+    restoreSnapshot: (json) => { try { setState({ ...initialState(), ...JSON.parse(json) }) } catch (e) {} },
+    getCloudVersions: async () => {
+      try {
+        const snap = await getDocs(collection(db, 'versions'))
+        const arr = []
+        snap.forEach(d => { const v = d.data(); if (v && v.json) arr.push({ id: d.id, at: v.at || 0, json: v.json }) })
+        return arr.sort((a, b) => b.at - a.at)
+      } catch (e) { return [] }
+    },
+    addTraining: () => setState(s => ({ ...s, trainings: [...s.trainings, {
+      id: 't' + Date.now(), date: '', part: 'Prepodne', time: '', duration: '', players: '', intensity: '',
+      md: '', goal: '', equipment: '', notes: '', sections: {}, drawings: {},
+    }] })),
     clearAll: () => setState({
       team: { ...seed.TEAM }, league: { ...seed.LEAGUE }, players: [], fees: {}, matches: [],
       calendar: seed.CALENDAR, microcycles: [], trainings: [], exercises: [], gps: {},

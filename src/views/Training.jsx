@@ -16,9 +16,19 @@ export default function Training() {
     ['MD ±', 'md'], ['Cilj treninga', 'goal'], ['Rekviziti', 'equipment'], ['Napomene', 'notes'],
   ]
 
+  if (!t) return (
+    <section>
+      <div className="sec-title"><h2>Koncept treninga</h2></div>
+      <div className="card"><div className="empty" style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+        <span>Još nema treninga.</span>
+        <button className="btn primary" onClick={() => store.addTraining()}><Icon.plus /> Napravi trening</button>
+      </div></div>
+    </section>
+  )
+
   return (
     <section>
-      <div className="sec-title"><h2>Koncept treninga</h2><span className="eyebrow">{fmtDate(t.date)} · {t.part} · MC1</span></div>
+      <div className="sec-title"><h2>Koncept treninga</h2><span className="eyebrow">{fmtDate(t.date) || 'novi'} · {t.part}</span></div>
 
       <div className="tr-head">
         {HEAD.map(([lab, key]) => (
