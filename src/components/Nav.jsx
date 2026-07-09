@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Icon, Crest } from './Icons'
 import { useStore, initials } from '../data/store'
 import { shrinkImage } from '../utils/img'
@@ -19,6 +19,13 @@ export const NAV = [
 
 export function Sidebar({ view, setView, sub, setSub }) {
   const { team } = useStore()
+  const [openId, setOpenId] = useState(view)   // koji parent je raširen
+  function clickParent(n) {
+    if (n.children) {
+      if (view === n.id) { setOpenId(o => o === n.id ? null : n.id); return } // već aktivan → toggle
+      setView(n.id); setOpenId(n.id)
+    } else { setView(n.id); setOpenId(null) }
+  }
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -32,10 +39,10 @@ export function Sidebar({ view, setView, sub, setSub }) {
       <nav className="nav">
         {NAV.map(n => {
           const I = n.icon
-          const expanded = n.children && view === n.id
+          const expanded = n.children && view === n.id && openId === n.id
           return (
             <div key={n.id}>
-              <button className={view === n.id ? 'on' : ''} onClick={() => setView(n.id)}>
+              <button className={view === n.id ? 'on' : ''} onClick={() => clickParent(n)}>
                 <I /> {n.label}
                 {n.children && <span className={'nav-caret' + (expanded ? ' open' : '')}>▾</span>}
               </button>
