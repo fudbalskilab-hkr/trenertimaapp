@@ -31,7 +31,7 @@ export default function App() {
   const setView = (v) => { setAdding(false); _setView(v) }
 
   const [title, subFn] = TITLES[view]
-  const sub = subFn(store)
+  const subtitle = subFn(store)
 
   function toggleTheme() {
     const root = document.documentElement
@@ -65,7 +65,7 @@ export default function App() {
         <header className="topbar">
           <div>
             <h1>{title}</h1>
-            <div className="sub">{sub}</div>
+            <div className="sub">{subtitle}</div>
           </div>
           <div className="spacer" />
           <span className="cloud-dot" title={store.cloud === 'online' ? 'Podaci se čuvaju u cloud-u' : store.cloud === 'offline' ? 'Nema veze — čuva se lokalno' : 'Povezivanje…'}>
