@@ -11,16 +11,19 @@ const SUBS = [
   { key: 'archive', label: 'Arhiva treninga' },
 ]
 
-export default function TrainingBase() {
+export default function TrainingBase({ sub: subProp, setSub: setSubProp }) {
   const store = useStore()
-  const [sub, setSub] = useState('ex')
+  const [subLocal, setSubLocal] = useState('ex')
+  const sub = subProp ?? subLocal
+  const setSub = setSubProp ?? setSubLocal
   const [selId, setSelId] = useState(store.trainings[0]?.id || null)
 
   const openInConcept = id => { setSelId(id); setSub('concept') }
 
   return (
     <section>
-      <div className="subtabs">
+      {/* horizontalni podtabovi — samo na telefonu (na desktopu su u levom meniju) */}
+      <div className="subtabs mobile-only">
         {SUBS.map(s => (
           <button key={s.key} className={'subtab' + (s.key === sub ? ' on' : '')} onClick={() => setSub(s.key)}>{s.label}</button>
         ))}

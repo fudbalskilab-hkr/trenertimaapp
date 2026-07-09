@@ -25,6 +25,7 @@ const TITLES = {
 export default function App() {
   const store = useStore()
   const [view, _setView] = useState('dash')
+  const [sub, setSub] = useState('ex')            // podtab za „Trening baza"
   const [adding, setAdding] = useState(false)
   const [dataMenu, setDataMenu] = useState(false)
   const setView = (v) => { setAdding(false); _setView(v) }
@@ -52,14 +53,14 @@ export default function App() {
     players: <Players addOpen={adding} onCloseAdd={() => setAdding(false)} />,
     cal: <Calendar />,
     mc: <Microcycles />,
-    base: <TrainingBase />,
+    base: <TrainingBase sub={sub} setSub={setSub} />,
     match: <Matches />,
     gps: <GPS />,
   }
 
   return (
     <div className="app">
-      <Sidebar view={view} setView={setView} />
+      <Sidebar view={view} setView={setView} sub={sub} setSub={setSub} />
       <div className="main">
         <header className="topbar">
           <div>

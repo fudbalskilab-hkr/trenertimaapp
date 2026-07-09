@@ -8,12 +8,16 @@ export const NAV = [
   { id: 'players', label: 'Igrači', icon: Icon.players, short: 'Igrači' },
   { id: 'cal', label: 'Kalendar aktivnosti', icon: Icon.cal, short: 'Kalendar' },
   { id: 'mc', label: 'Mikrociklusi', icon: Icon.mc, short: 'MC' },
-  { id: 'base', label: 'Trening baza', icon: Icon.train, short: 'Trening' },
+  { id: 'base', label: 'Trening baza', icon: Icon.train, short: 'Trening', children: [
+    { key: 'ex', label: 'Vežbe' },
+    { key: 'concept', label: 'Koncept treninga' },
+    { key: 'archive', label: 'Arhiva treninga' },
+  ] },
   { id: 'match', label: 'Utakmice', icon: Icon.match, short: 'Meč' },
   { id: 'gps', label: 'Catapult GPS', icon: Icon.gps, short: 'GPS' },
 ]
 
-export function Sidebar({ view, setView }) {
+export function Sidebar({ view, setView, sub, setSub }) {
   const { team } = useStore()
   return (
     <aside className="sidebar">
@@ -28,10 +32,23 @@ export function Sidebar({ view, setView }) {
       <nav className="nav">
         {NAV.map(n => {
           const I = n.icon
+          const expanded = n.children && view === n.id
           return (
-            <button key={n.id} className={view === n.id ? 'on' : ''} onClick={() => setView(n.id)}>
-              <I /> {n.label}
-            </button>
+            <div key={n.id}>
+              <button className={view === n.id ? 'on' : ''} onClick={() => setView(n.id)}>
+                <I /> {n.label}
+                {n.children && <span className={'nav-caret' + (expanded ? ' open' : '')}>▾</span>}
+              </button>
+              {expanded && (
+                <div className="subnav">
+                  {n.children.map(c => (
+                    <button key={c.key} className={'subnav-item' + (sub === c.key ? ' on' : '')} onClick={() => setSub(c.key)}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )
         })}
       </nav>
