@@ -39,6 +39,7 @@ export default function Microcycles() {
     setEdit(null)
   }
   const isComp = mc.type === 'Takmičarski'
+  const locked = !!mc.locked
 
   return (
     <section>
@@ -58,18 +59,22 @@ export default function Microcycles() {
       </div>
 
       <div className="sec-title">
-        <h2>Mikrociklus {mc.n} — {mc.type.toLowerCase()}</h2>
-        <select className="input" style={{ width: 'auto', padding: '5px 9px', fontSize: 12 }} value={mc.type}
+        <h2>Mikrociklus {mc.n}{mc.range ? ' · ' + mc.range : ''}</h2>
+        <select className="input" style={{ width: 'auto', padding: '5px 9px', fontSize: 12 }} value={mc.type} disabled={locked}
           onChange={e => store.updateMicrocycle(mc.id, { type: e.target.value })} title="Tip mikrociklusa">
           <option>Pripremni</option><option>Takmičarski</option>
         </select>
-        <input className="input" style={{ width: 150, padding: '5px 9px', fontSize: 12 }} placeholder="npr. 06.07 – 13.07"
-          value={mc.range || ''} onChange={e => store.updateMicrocycle(mc.id, { range: e.target.value })} title="Period" />
+        <input className="input" style={{ width: 150, padding: '5px 9px', fontSize: 12 }} placeholder="datum, npr. 06.07 – 13.07"
+          value={mc.range || ''} disabled={locked} onChange={e => store.updateMicrocycle(mc.id, { range: e.target.value })} title="Datum / period" />
+        {locked
+          ? <button className="btn" style={{ marginLeft: 'auto' }} onClick={() => store.updateMicrocycle(mc.id, { locked: false })}><Icon.edit /> Izmeni</button>
+          : <button className="btn primary" style={{ marginLeft: 'auto' }} onClick={() => store.updateMicrocycle(mc.id, { locked: true })}>✓ Snimi MC</button>}
         {microcycles.length > 1 && (
-          <button className="btn ghost sm" style={{ marginLeft: 'auto' }} title="Obriši mikrociklus"
+          <button className="btn ghost sm" title="Obriši mikrociklus"
             onClick={() => { if (confirm(`Obrisati Mikrociklus ${mc.n}?`)) { store.removeMicrocycle(mc.id); setActive(microcycles.find(x => x.id !== mc.id)?.id) } }}><Icon.trash /></button>
         )}
       </div>
+      {locked && <p className="mock-note" style={{ margin: '-8px 0 14px' }}>🔒 Snimljeno — zaključano da se ne dira slučajno. Klikni „Izmeni" da menjaš.</p>}
 
       <div className="tbl-wrap">
         <div className={'mc-board' + (isComp ? ' comp-theme' : '')}>
@@ -83,24 +88,25 @@ export default function Microcycles() {
                   {DAYS_SHORT[i]}
                   <button className="int-swatch" style={{ background: intensityColor(dm.intensity) || 'rgba(0,0,0,.12)' }}
                     title={'Intenzitet: ' + (INTENSITY.find(x => x.key === dm.intensity)?.label || 'nije označen')}
-                    onClick={() => { const cur = CYCLE.indexOf(dm.intensity); store.setMcDay(mc.id, day, { intensity: CYCLE[(cur + 1) % CYCLE.length] }) }} />
+                    onClick={() => { if (locked) return; const cur = CYCLE.indexOf(dm.intensity); store.setMcDay(mc.id, day, { intensity: CYCLE[(cur + 1) % CYCLE.length] }) }} />
                 </div>
-                <div className="mc-day-ctrl">
+                {!locked && <div className="mc-day-ctrl">
                   <button className="btn sm" style={{ width: '100%' }} onClick={() => store.setMcDay(mc.id, day, { single: !single })} title="Jedan ili dva treninga dnevno">{single ? '1 trening' : '2 treninga'}</button>
-                </div>
+                </div>}
                 {parts.map(([part, plabel]) => {
                   const sess = getSession(day, part)
                   return (
                     <div className="mc-part" key={part}>
                       <div className="mc-part-h">
                         <span style={{ flex: 1 }}>{plabel}</span>
-                        <input className="mc-time" value={dm[part + 'Time'] || ''} placeholder="—:—"
+                        <input className="mc-time" value={dm[part + 'Time'] || ''} placeholder="—:—" readOnly={locked}
                           onChange={e => store.setMcDay(mc.id, day, { [part + 'Time']: e.target.value })} title="Vreme treninga" />
                       </div>
                       {SECTIONS.map((sec, k) => {
                         const val = sess?.sections?.[sec] || ''
                         return (
-                          <button className="mc-seg" key={sec} onClick={() => setEdit({ day, part, section: sec, value: val, plabel })}>
+                          <button className="mc-seg" key={sec} style={{ cursor: locked ? 'default' : 'pointer' }}
+                            onClick={locked ? undefined : () => setEdit({ day, part, section: sec, value: val, plabel })}>
                             <div className="sg-lab">{k + 1} · {sec}</div>
                             <div className={'sg-val' + (val ? '' : ' empty2')}>{val || '—'}</div>
                           </button>
