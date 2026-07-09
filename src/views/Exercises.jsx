@@ -12,18 +12,23 @@ const DEMO = [
   { markers: [{ x: 80, y: 60 }, { x: 160, y: 90, team: 'away' }], arrows: [{ x1: 88, y1: 62, x2: 152, y2: 88, dash: true }] },
 ]
 
-export default function Exercises({ addOpen, onCloseAdd }) {
+export default function Exercises({ addOpen, onCloseAdd, embedded }) {
   const store = useStore()
   const { exercises } = store
   const [filter, setFilter] = useState('Sve')
   const [detail, setDetail] = useState(null)   // vežba za pregled
   const [editing, setEditing] = useState(null) // vežba za izmenu
+  const [localAdd, setLocalAdd] = useState(false)
 
   const shown = exercises.filter(e => filter === 'Sve' || e.section === filter || (e.tags || []).includes(filter))
+  const addIsOpen = embedded ? localAdd : addOpen
+  const closeAdd = embedded ? () => setLocalAdd(false) : onCloseAdd
 
   return (
     <section>
-      <div className="sec-title"><h2>Skladište vežbi</h2><span className="eyebrow">{exercises.length} vežbi u biblioteci</span></div>
+      <div className="sec-title"><h2>Vežbe</h2><span className="pill blue">{exercises.length}</span>
+        {embedded && <button className="btn primary sm" style={{ marginLeft: 'auto' }} onClick={() => setLocalAdd(true)}><Icon.plus /> Kreiraj vežbu</button>}
+      </div>
       <div className="filters">
         {FILTERS.map(f => (
           <button key={f} className={'chip' + (f === filter ? ' on' : '')} onClick={() => setFilter(f)}>{f}</button>
@@ -55,9 +60,9 @@ export default function Exercises({ addOpen, onCloseAdd }) {
       <p className="mock-note" style={{ marginTop: 16 }}>Klikni na vežbu za pregled i detalje. „Dodaj" (gore desno) za novu vežbu. Interaktivni editor terena stiže kasnije.</p>
 
       {detail && <Detail ex={detail} store={store} onClose={() => setDetail(null)} onEdit={() => { setEditing(detail); setDetail(null) }} />}
-      {addOpen && <ExerciseForm title="Nova vežba" submitLabel="Sačuvaj"
+      {addIsOpen && <ExerciseForm title="Nova vežba" submitLabel="Sačuvaj"
         initial={{ name: '', desc: '', section: 'Uvodni deo', tags: '', image: '' }}
-        onClose={onCloseAdd} onSave={e => { store.addExercise(e); onCloseAdd() }} />}
+        onClose={closeAdd} onSave={e => { store.addExercise(e); closeAdd() }} />}
       {editing && <ExerciseForm title="Izmeni vežbu" submitLabel="Sačuvaj izmene"
         initial={editing}
         onClose={() => setEditing(null)} onSave={e => { store.updateExercise(editing.id, e); setEditing(null) }} />}

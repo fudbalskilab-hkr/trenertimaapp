@@ -140,10 +140,6 @@ export function StoreProvider({ children }) {
         return arr.sort((a, b) => b.at - a.at)
       } catch (e) { return [] }
     },
-    addTraining: () => setState(s => ({ ...s, trainings: [...s.trainings, {
-      id: 't' + Date.now(), date: '', part: 'Prepodne', time: '', duration: '', players: '', intensity: '',
-      md: '', goal: '', equipment: '', notes: '', sections: {}, drawings: {},
-    }] })),
     clearAll: () => setState({
       team: { ...seed.TEAM }, league: { ...seed.LEAGUE }, players: [], fees: {}, matches: [],
       calendar: seed.CALENDAR, microcycles: [], trainings: [], exercises: [], gps: {},
@@ -264,9 +260,62 @@ export function StoreProvider({ children }) {
       }),
     })),
 
-    // Treninzi
+    // Treninzi (imenovana arhiva)
+    addTraining: (name) => {
+      const id = 't' + Date.now()
+      setState(s => ({ ...s, trainings: [...s.trainings, {
+        id, name: name || 'Novi trening', date: '', part: 'Prepodne', time: '', duration: '',
+        players: '', intensity: '', md: '', goal: '', equipment: '', notes: '', sections: {}, drawings: {},
+      }] }))
+      return id
+    },
     updateTraining: (id, patch) => setState(s => ({
       ...s, trainings: s.trainings.map(t => t.id === id ? { ...t, ...patch } : t),
+    })),
+    removeTraining: (id) => setState(s => ({ ...s, trainings: s.trainings.filter(t => t.id !== id) })),
+    duplicateTraining: (id) => {
+      const nid = 't' + Date.now()
+      setState(s => {
+        const src = s.trainings.find(t => t.id === id); if (!src) return s
+        return { ...s, trainings: [...s.trainings, { ...JSON.parse(JSON.stringify(src)), id: nid, name: (src.name || 'Trening') + ' (kopija)' }] }
+      })
+      return nid
+    },
+    // Ubaci trening (nezavisna kopija) u MC dan/termin; čuva vezu ka izvoru (sourceId)
+    insertTrainingToMc: (mcId, day, part, training) => setState(s => {
+      const copy = { ...JSON.parse(JSON.stringify(training)), sourceId: training.id, id: 'mct' + Date.now() }
+      return { ...s, microcycles: s.microcycles.map(m => m.id !== mcId ? m : {
+        ...m, dayMeta: { ...(m.dayMeta || {}), [day]: { ...((m.dayMeta || {})[day] || {}), [part + 'Training']: copy } },
+      }) }
+    }),
+    // Izmena treninga u MC danu; opciono na sve dane sa istim izvorom
+    updateMcTraining: (mcId, day, part, patch, applyToSiblings) => setState(s => ({
+      ...s, microcycles: s.microcycles.map(m => {
+        if (m.id !== mcId) return m
+        const dm = { ...(m.dayMeta || {}) }
+        const cur = (dm[day] || {})[part + 'Training']
+        if (!cur) return m
+        const srcId = cur.sourceId
+        Object.keys(dm).forEach(d => {
+          ;['am', 'pm'].forEach(p => {
+            const tr = (dm[d] || {})[p + 'Training']
+            if (!tr) return
+            const isSelf = d === day && p === part
+            if (isSelf || (applyToSiblings && srcId && tr.sourceId === srcId)) {
+              dm[d] = { ...dm[d], [p + 'Training']: { ...tr, ...patch } }
+            }
+          })
+        })
+        return { ...m, dayMeta: dm }
+      }),
+    })),
+    removeMcTraining: (mcId, day, part) => setState(s => ({
+      ...s, microcycles: s.microcycles.map(m => {
+        if (m.id !== mcId) return m
+        const dm = { ...(m.dayMeta || {}) }; const dd = { ...(dm[day] || {}) }
+        delete dd[part + 'Training']; dm[day] = dd
+        return { ...m, dayMeta: dm }
+      }),
     })),
 
     // Vežbe

@@ -8,20 +8,18 @@ import Dashboard from './views/Dashboard'
 import Players from './views/Players'
 import Calendar from './views/Calendar'
 import Microcycles from './views/Microcycles'
-import Training from './views/Training'
+import TrainingBase from './views/TrainingBase'
 import Matches from './views/Matches'
 import GPS from './views/GPS'
-import Exercises from './views/Exercises'
 
 const TITLES = {
   dash: ['Pregled', s => `Sezona ${s.team.season} · ${s.team.period}`],
   players: ['Igrači', s => `${s.players.length} igrača · profili, statistika i članarina`],
-  cal: ['Kalendar aktivnosti', () => '06.07 – 16.08 · plan po danima'],
-  mc: ['Mikrociklusi', () => '5 pripremnih + 1 takmičarski'],
-  train: ['Koncept treninga', () => 'Jedan trening — detaljno'],
+  cal: ['Kalendar aktivnosti', () => 'Plan po danima'],
+  mc: ['Mikrociklusi', () => 'Nedeljni plan'],
+  base: ['Trening baza', () => 'Vežbe · koncept treninga · arhiva'],
   match: ['Utakmice', () => 'Unos, formacija i statistika mečeva'],
   gps: ['Catapult GPS', () => 'Fizičke performanse i poređenje igrača'],
-  ex: ['Skladište vežbi', s => `${s.exercises.length} vežbi u biblioteci`],
 }
 
 export default function App() {
@@ -47,17 +45,16 @@ export default function App() {
   }, [])
   useEffect(() => { window.scrollTo(0, 0) }, [view])
 
-  const canAdd = view === 'players' || view === 'ex'
+  const canAdd = view === 'players'
 
   const views = {
     dash: <Dashboard setView={setView} />,
     players: <Players addOpen={adding} onCloseAdd={() => setAdding(false)} />,
     cal: <Calendar />,
     mc: <Microcycles />,
-    train: <Training />,
+    base: <TrainingBase />,
     match: <Matches />,
     gps: <GPS />,
-    ex: <Exercises addOpen={adding} onCloseAdd={() => setAdding(false)} />,
   }
 
   return (

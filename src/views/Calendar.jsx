@@ -3,6 +3,7 @@ import { useStore, fmtDate } from '../data/store'
 import { INTENSITY, intensityColor } from '../data/seed'
 import { Icon } from '../components/Icons'
 import { shrinkImage } from '../utils/img'
+import { exportNodeAsImage } from '../utils/exportImage'
 
 const MONTHS_SR = ['januar', 'februar', 'mart', 'april', 'maj', 'jun', 'jul', 'avgust', 'septembar', 'oktobar', 'novembar', 'decembar']
 const CYCLE = [null, 'match', '80', '50', '30', 'regen', 'free']
@@ -20,10 +21,14 @@ export default function Calendar() {
   const { calendar, matches } = store
   const [edit, setEdit] = useState(null)
   const drag = useRef(null)
+  const areaRef = useRef()
 
   return (
     <section>
-      <div className="sec-title"><h2>Plan pripremnog perioda</h2><span className="eyebrow">06.07 – 16.08 · jedan red = nedelja</span></div>
+      <div className="sec-title"><h2>Plan pripremnog perioda</h2><span className="eyebrow">jedan red = nedelja</span>
+        <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={() => exportNodeAsImage(areaRef.current, 'kalendar-aktivnosti.png')}><Icon.download /> Izvoz kao slika</button>
+      </div>
+      <div ref={areaRef} className="export-area">
 
       <div className="int-legend">
         {INTENSITY.map(i => (
@@ -68,6 +73,7 @@ export default function Calendar() {
           </div>
         </div>
       ))}
+      </div>
 
       {edit && <EditSlot data={edit} onClose={() => setEdit(null)}
         onSave={(v) => { store.setCalendarCell(edit.wi, edit.di, edit.part, v.trim() || '/'); setEdit(null) }} />}

@@ -8,10 +8,9 @@ export const NAV = [
   { id: 'players', label: 'Igrači', icon: Icon.players, short: 'Igrači' },
   { id: 'cal', label: 'Kalendar aktivnosti', icon: Icon.cal, short: 'Kalendar' },
   { id: 'mc', label: 'Mikrociklusi', icon: Icon.mc, short: 'MC' },
-  { id: 'train', label: 'Koncept treninga', icon: Icon.train, short: 'Trening' },
+  { id: 'base', label: 'Trening baza', icon: Icon.train, short: 'Trening' },
   { id: 'match', label: 'Utakmice', icon: Icon.match, short: 'Meč' },
   { id: 'gps', label: 'Catapult GPS', icon: Icon.gps, short: 'GPS' },
-  { id: 'ex', label: 'Skladište vežbi', icon: Icon.ex, short: 'Vežbe' },
 ]
 
 export function Sidebar({ view, setView }) {

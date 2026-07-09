@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useStore } from '../data/store'
 import { SECTIONS, INTENSITY, intensityColor } from '../data/seed'
 import { Icon } from '../components/Icons'
+import TrainingEditor, { trainingOverview } from '../components/TrainingEditor'
+import { exportNodeAsImage } from '../utils/exportImage'
 
 const DAYS = ['Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota', 'Nedelja']
 const DAYS_SHORT = ['PON', 'UTO', 'SRE', 'ČET', 'PET', 'SUB', 'NED']
@@ -13,6 +15,8 @@ export default function Microcycles() {
   const { microcycles } = store
   const [active, setActive] = useState(microcycles[0]?.id)
   const [edit, setEdit] = useState(null)
+  const [trDetail, setTrDetail] = useState(null) // {day, part}
+  const boardRef = useRef()
 
   const mc = microcycles.find(m => m.id === active) || microcycles[0]
   const prep = microcycles.filter(m => m.type !== 'Takmičarski')
@@ -66,9 +70,10 @@ export default function Microcycles() {
         </select>
         <input className="input" style={{ width: 150, padding: '5px 9px', fontSize: 12 }} placeholder="datum, npr. 06.07 – 13.07"
           value={mc.range || ''} disabled={locked} onChange={e => store.updateMicrocycle(mc.id, { range: e.target.value })} title="Datum / period" />
+        <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={() => exportNodeAsImage(boardRef.current, `MC${mc.n}${mc.range ? '-' + mc.range.replace(/[^\w]+/g, '_') : ''}.png`)}><Icon.download /> Slika</button>
         {locked
-          ? <button className="btn" style={{ marginLeft: 'auto' }} onClick={() => store.updateMicrocycle(mc.id, { locked: false })}><Icon.edit /> Izmeni</button>
-          : <button className="btn primary" style={{ marginLeft: 'auto' }} onClick={() => store.updateMicrocycle(mc.id, { locked: true })}>✓ Snimi MC</button>}
+          ? <button className="btn" onClick={() => store.updateMicrocycle(mc.id, { locked: false })}><Icon.edit /> Izmeni</button>
+          : <button className="btn primary" onClick={() => store.updateMicrocycle(mc.id, { locked: true })}>✓ Snimi MC</button>}
         {microcycles.length > 1 && (
           <button className="btn ghost sm" title="Obriši mikrociklus"
             onClick={() => { if (confirm(`Obrisati Mikrociklus ${mc.n}?`)) { store.removeMicrocycle(mc.id); setActive(microcycles.find(x => x.id !== mc.id)?.id) } }}><Icon.trash /></button>
@@ -77,7 +82,7 @@ export default function Microcycles() {
       {locked && <p className="mock-note" style={{ margin: '-8px 0 14px' }}>🔒 Snimljeno — zaključano da se ne dira slučajno. Klikni „Izmeni" da menjaš.</p>}
 
       <div className="tbl-wrap">
-        <div className={'mc-board' + (isComp ? ' comp-theme' : '')}>
+        <div className={'mc-board' + (isComp ? ' comp-theme' : '')} ref={boardRef}>
           {DAYS.map((day, i) => {
             const dm = dayMeta[day] || {}
             const single = !!dm.single
@@ -95,6 +100,7 @@ export default function Microcycles() {
                 </div>}
                 {parts.map(([part, plabel]) => {
                   const sess = getSession(day, part)
+                  const training = dm[part + 'Training']
                   return (
                     <div className="mc-part" key={part}>
                       <div className="mc-part-h">
@@ -102,16 +108,28 @@ export default function Microcycles() {
                         <input className="mc-time" value={dm[part + 'Time'] || ''} placeholder="—:—" readOnly={locked}
                           onChange={e => store.setMcDay(mc.id, day, { [part + 'Time']: e.target.value })} title="Vreme treninga" />
                       </div>
-                      {SECTIONS.map((sec, k) => {
-                        const val = sess?.sections?.[sec] || ''
-                        return (
-                          <button className="mc-seg" key={sec} style={{ cursor: locked ? 'default' : 'pointer' }}
-                            onClick={locked ? undefined : () => setEdit({ day, part, section: sec, value: val, plabel })}>
-                            <div className="sg-lab">{k + 1} · {sec}</div>
-                            <div className={'sg-val' + (val ? '' : ' empty2')}>{val || '—'}</div>
-                          </button>
-                        )
-                      })}
+                      {training ? (
+                        <button className="mc-has-train" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 0, cursor: 'pointer' }}
+                          onClick={() => setTrDetail({ day, part })}>
+                          <div className="mc-train-badge">📋 trening — klik za detalje</div>
+                          {(() => { const ov = trainingOverview(training); return <>
+                            {ov.goal && <div className="mht-goal">{ov.goal}</div>}
+                            {ov.parts.map(p => <div className="mht-line" key={p.sec}><b>{p.sec.replace(' deo', '')}:</b> {p.txt}</div>)}
+                            {!ov.goal && ov.parts.length === 0 && <div className="mht-line">Prazan trening — klik za unos.</div>}
+                          </> })()}
+                        </button>
+                      ) : (
+                        SECTIONS.map((sec, k) => {
+                          const val = sess?.sections?.[sec] || ''
+                          return (
+                            <button className="mc-seg" key={sec} style={{ cursor: locked ? 'default' : 'pointer' }}
+                              onClick={locked ? undefined : () => setEdit({ day, part, section: sec, value: val, plabel })}>
+                              <div className="sg-lab">{k + 1} · {sec}</div>
+                              <div className={'sg-val' + (val ? '' : ' empty2')}>{val || '—'}</div>
+                            </button>
+                          )
+                        })
+                      )}
                     </div>
                   )
                 })}
@@ -124,7 +142,55 @@ export default function Microcycles() {
 
       {edit && <EditModal title={`${edit.day} · ${edit.plabel} · ${edit.section}`} value={edit.value}
         onClose={() => setEdit(null)} onSave={v => saveSection(edit.day, edit.part, edit.section, v)} />}
+
+      {trDetail && (() => {
+        const tr = (mc.dayMeta?.[trDetail.day] || {})[trDetail.part + 'Training']
+        if (!tr) return null
+        // koliko dana ima isti izvorni trening (za „primeni na ostale")
+        let siblings = 0
+        Object.keys(mc.dayMeta || {}).forEach(d => ['am', 'pm'].forEach(p => {
+          const x = mc.dayMeta[d][p + 'Training']
+          if (x && tr.sourceId && x.sourceId === tr.sourceId && !(d === trDetail.day && p === trDetail.part)) siblings++
+        }))
+        return <TrainingDetailModal training={tr} siblings={siblings} locked={locked}
+          onClose={() => setTrDetail(null)}
+          onChange={(patch, applyAll) => store.updateMcTraining(mc.id, trDetail.day, trDetail.part, patch, applyAll)}
+          onRemove={() => { store.removeMcTraining(mc.id, trDetail.day, trDetail.part); setTrDetail(null) }} />
+      })()}
     </section>
+  )
+}
+
+function TrainingDetailModal({ training, siblings, locked, onClose, onChange, onRemove }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(training)
+  const areaRef = useRef()
+  function done() {
+    let applyAll = false
+    if (siblings > 0) applyAll = confirm(`Ovaj trening je u još ${siblings} dan(a). Primeniti izmene i na njih?\n\nOK = na sve · Otkaži = samo ovaj dan`)
+    onChange(draft, applyAll)
+    setEditing(false)
+  }
+  const view = editing ? draft : training
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 760 }}>
+        <div className="modal-h">
+          <h3>{view.name || 'Trening'}</h3>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+            <button className="btn sm" onClick={() => exportNodeAsImage(areaRef.current, `trening-${(view.name || 'trening').replace(/\s+/g, '_')}.png`)}><Icon.download /> Slika</button>
+            {!locked && (editing
+              ? <button className="btn primary sm" onClick={done}>✓ Gotovo</button>
+              : <button className="btn sm" onClick={() => { setDraft(training); setEditing(true) }}><Icon.edit /> Izmeni</button>)}
+            {!locked && <button className="btn ghost sm" title="Ukloni iz dana" onClick={onRemove}><Icon.trash /></button>}
+            <button className="btn ghost sm" onClick={onClose}><Icon.close /></button>
+          </div>
+        </div>
+        <div className="modal-b" ref={areaRef}>
+          <TrainingEditor key={editing ? 'edit' : 'view'} value={view} onChange={patch => setDraft(d => ({ ...d, ...patch }))} readOnly={!editing} />
+        </div>
+      </div>
+    </div>
   )
 }
 
