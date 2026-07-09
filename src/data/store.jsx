@@ -100,6 +100,20 @@ export function StoreProvider({ children }) {
       team: { ...seed.TEAM }, league: { ...seed.LEAGUE }, players: [], fees: {}, matches: [],
       calendar: seed.CALENDAR, microcycles: [], trainings: [], exercises: [], gps: {},
     }),
+    // Obriši SAMO moje primere (kratke seed-oznake p1/m3/e2/mc4…), zadrži trenerove unose (dugačke oznake) i demo GPS (demo*)
+    removeSeedData: () => setState(s => {
+      const isSeed = id => { const x = String(id); return !x.startsWith('demo') && /^(p|m|l|e|mc|t)\d{1,2}$/.test(x) }
+      const players = s.players.filter(p => !isSeed(p.id))
+      const matches = s.matches.filter(m => !isSeed(m.id))
+      const keptM = new Set(matches.map(m => m.id)); const keptP = new Set(players.map(p => p.id))
+      const gps = {}; Object.keys(s.gps || {}).forEach(mid => { if (keptM.has(mid)) gps[mid] = s.gps[mid] })
+      const fees = {}; Object.keys(s.fees || {}).forEach(pid => { if (keptP.has(pid)) fees[pid] = s.fees[pid] })
+      return {
+        ...s, players, matches, gps, fees,
+        exercises: s.exercises.filter(e => !isSeed(e.id)),
+        microcycles: s.microcycles.filter(m => !isSeed(m.id)),
+      }
+    }),
 
     // Tim (ime trenera, grb kluba) i liga
     updateTeam: (patch) => setState(s => ({ ...s, team: { ...s.team, ...patch } })),
