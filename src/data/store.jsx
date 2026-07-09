@@ -114,6 +114,18 @@ export function StoreProvider({ children }) {
         microcycles: s.microcycles.filter(m => !isSeed(m.id)),
       }
     }),
+    // Vrati moje primere (poništi „Obriši demo/primere") — dodaje seed stavke nazad, ne dira trenerove
+    restoreSeedData: () => setState(s => {
+      const missing = (arr, list) => list.filter(x => !arr.some(y => y.id === x.id))
+      return {
+        ...s,
+        players: [...s.players, ...missing(s.players, seed.PLAYERS)],
+        matches: [...s.matches, ...missing(s.matches, seed.MATCHES)],
+        exercises: [...s.exercises, ...missing(s.exercises, seed.EXERCISES)],
+        microcycles: [...s.microcycles, ...missing(s.microcycles, seed.MICROCYCLES)],
+        gps: { ...seed.GPS, ...s.gps },
+      }
+    }),
 
     // Tim (ime trenera, grb kluba) i liga
     updateTeam: (patch) => setState(s => ({ ...s, team: { ...s.team, ...patch } })),

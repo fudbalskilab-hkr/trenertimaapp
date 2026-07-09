@@ -125,6 +125,7 @@ function DataMenu({ store, onClose }) {
           <button className="btn primary" onClick={exportBackup} style={{ justifyContent: 'center' }}><Icon.download /> Izvoz (skini backup fajl)</button>
           <button className="btn" onClick={() => fileRef.current.click()} style={{ justifyContent: 'center' }}><Icon.upload /> Uvoz (učitaj backup)</button>
           <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={importBackup} />
+          <button className="btn" onClick={() => { store.restoreSeedData(); onClose() }} style={{ justifyContent: 'center' }}>↩ Vrati primere (poništi brisanje)</button>
           <button className="btn" onClick={() => { if (confirm('Obrisati SAMO moje primere (igrači/mečevi/vežbe/mikrociklusi koje sam ja ubacio)? Ostaje ono što je trener sam dodao + demo GPS u Catapult-u.')) { store.removeSeedData(); onClose() } }} style={{ justifyContent: 'center' }}>Obriši demo/primere (zadrži tvoje)</button>
           <button className="btn" onClick={clearAll} style={{ justifyContent: 'center', color: 'var(--bad)', borderColor: 'var(--bad)' }}><Icon.trash /> Obriši sve podatke</button>
           <p className="mock-note" style={{ margin: '4px 0 0' }}>Podaci se čuvaju u cloud-u (Firebase) i sinhronizuju na svim prijavljenim uređajima. „Izvoz" pravi lokalni backup fajl. „Obriši sve" briše i u cloud-u.</p>
