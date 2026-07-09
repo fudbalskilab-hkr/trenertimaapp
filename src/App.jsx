@@ -87,11 +87,33 @@ export default function App() {
           </button>
         </header>
         <div className="content">
+          {store.recovery && <RecoveryBanner store={store} />}
           <div className="view" key={view}>{views[view]}</div>
         </div>
       </div>
       <MobileNav view={view} setView={setView} />
       {dataMenu && <DataMenu store={store} onClose={() => setDataMenu(false)} />}
+    </div>
+  )
+}
+
+function RecoveryBanner({ store }) {
+  function exportBackup() {
+    const blob = new Blob([store.exportData()], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'trenertima-backup.json'; a.click()
+    URL.revokeObjectURL(url)
+  }
+  const n = (store.players || []).length
+  return (
+    <div style={{ background: '#FBF1DC', border: '1px solid #E0A21A', borderRadius: 12, padding: '16px 18px', marginBottom: 18 }}>
+      <div style={{ fontWeight: 800, color: '#8a5b00', marginBottom: 6 }}>🛟 REŽIM SPAŠAVANJA — podaci se NE sinhronizuju</div>
+      <div style={{ fontSize: 13.5, color: '#5a4a20', marginBottom: 12 }}>
+        Ovo je poslednje lokalno sačuvano stanje na ovom uređaju. Trenutno ima <b>{n}</b> igrača.
+        Ako su tvoji podaci tu — klikni dugme da ih sačuvaš u fajl.
+      </div>
+      <button className="btn primary" onClick={exportBackup}><Icon.download /> Sačuvaj podatke (Izvoz)</button>
     </div>
   )
 }

@@ -4,6 +4,8 @@ import { db } from '../firebase'
 import * as seed from './seed'
 
 const CLOUD_DOC = ['app', 'main'] // Firestore: kolekcija "app", dokument "main"
+// REŽIM SPAŠAVANJA: ?recovery u linku -> NE dira cloud (ne sinhronizuje, ne prepisuje lokalno)
+const RECOVERY = typeof window !== 'undefined' && /[?&]recovery/.test(window.location.search)
 
 /*
   Sloj za podatke. Trenutno: localStorage.
@@ -53,6 +55,7 @@ export function StoreProvider({ children }) {
 
   // Firestore: učitaj + prati promene u realnom vremenu
   useEffect(() => {
+    if (RECOVERY) { setCloud('offline'); return } // spašavanje: ne diramo cloud
     const ref = doc(db, CLOUD_DOC[0], CLOUD_DOC[1])
     const unsub = onSnapshot(ref, snap => {
       setCloud('online')
@@ -74,6 +77,7 @@ export function StoreProvider({ children }) {
 
   // Sačuvaj promene u cloud (debounce), osim ako je to upravo ono što smo primili
   useEffect(() => {
+    if (RECOVERY) return // spašavanje: ne upisujemo u cloud
     const json = JSON.stringify(state)
     if (saveTimer.current) clearTimeout(saveTimer.current) // otkaži prethodni zakazani upis
     if (json === remoteJson.current) return                // ništa novo (to je već u cloud-u)
@@ -91,6 +95,7 @@ export function StoreProvider({ children }) {
   const api = {
     ...state,
     cloud,
+    recovery: RECOVERY,
     update,
     resetAll: () => setState(initialState()),
     // Izvoz / uvoz / brisanje (backup dok nema Firebase)
