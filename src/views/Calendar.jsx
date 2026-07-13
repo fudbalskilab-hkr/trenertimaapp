@@ -47,6 +47,7 @@ export default function Calendar({ openMatch }) {
       <div className="week-add">
         <button className="btn sm" onClick={() => store.addCalendarWeek(firstStart ? addDays(firstStart, -7) : mondayOf(today))}><Icon.plus /> Nedelja pre</button>
         <button className="btn sm" onClick={() => store.addCalendarWeek(lastStart ? addDays(lastStart, 7) : mondayOf(today))}><Icon.plus /> Nedelja posle</button>
+        <button className="btn primary sm" style={{ marginLeft: 'auto' }} onClick={() => setNewMatch({ date: firstStart || today })}><Icon.match /> Dodaj utakmicu</button>
       </div>
 
       <div ref={areaRef} className="export-area">
@@ -92,7 +93,6 @@ export default function Calendar({ openMatch }) {
                     <>
                       <Slot label="Prepodne" value={d.am} onClick={() => setEdit({ wi, di, part: 'am', value: d.am, day: d.day })} />
                       <Slot label="Popodne" value={d.pm} onClick={() => setEdit({ wi, di, part: 'pm', value: d.pm, day: d.day })} />
-                      <button className="add-match-mini" onClick={() => setNewMatch({ date: d.date })} title="Dodaj utakmicu na ovaj dan">+ utakmica</button>
                     </>
                   )}
                 </div>
@@ -145,30 +145,31 @@ function MatchPopup({ m, onClose, onOpen }) {
 }
 
 function NewMatch({ date, store, onClose, onCreated }) {
-  const [f, setF] = useState({ opp: '', time: '17:00', home: true, kind: 'friendly', comp: 'Prijateljska' })
+  const [f, setF] = useState({ opp: '', date: date || '', time: '17:00', home: true, kind: 'friendly', comp: 'Prijateljska' })
   const set = (k, v) => setF(s => ({ ...s, [k]: v }))
   function create() {
     const id = store.addMatch()
-    store.updateMatch(id, { ...f, date })
+    store.updateMatch(id, { ...f })
     onCreated(id)
   }
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-h"><h3>Nova utakmica · {fmtDate(date)}{date?.slice(0, 4)}</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-h"><h3>Nova utakmica</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
         <div className="modal-b">
           <div className="field"><label>Protivnik</label><input className="input" value={f.opp} autoFocus onChange={e => set('opp', e.target.value)} placeholder="npr. Partizan" /></div>
           <div className="row2">
+            <div className="field"><label>Datum</label><input className="input" type="date" value={f.date} onChange={e => set('date', e.target.value)} /></div>
             <div className="field"><label>Vreme</label><input className="input" value={f.time} onChange={e => set('time', e.target.value)} placeholder="17:00" /></div>
-            <div className="field"><label>Mesto</label><select className="input" value={f.home ? '1' : '0'} onChange={e => set('home', e.target.value === '1')}><option value="1">Domaćin</option><option value="0">Gost</option></select></div>
           </div>
           <div className="row2">
+            <div className="field"><label>Mesto</label><select className="input" value={f.home ? '1' : '0'} onChange={e => set('home', e.target.value === '1')}><option value="1">Domaćin</option><option value="0">Gost</option></select></div>
             <div className="field"><label>Tip</label><select className="input" value={f.kind}
               onChange={e => { const k = e.target.value; setF(s => ({ ...s, kind: k, comp: k === 'league' ? 'Omladinska liga' : 'Prijateljska' })) }}>
               <option value="friendly">Prijateljska</option><option value="league">Prvenstvena</option></select></div>
-            <div className="field"><label>Takmičenje</label><input className="input" value={f.comp} onChange={e => set('comp', e.target.value)} /></div>
           </div>
-          <p className="mock-note">Grb protivnika dodaješ posle (klik na utakmicu). Pojaviće se automatski na ovom danu.</p>
+          <div className="field"><label>Takmičenje</label><input className="input" value={f.comp} onChange={e => set('comp', e.target.value)} /></div>
+          <p className="mock-note">Grb protivnika dodaješ posle (klik na utakmicu). Pojaviće se automatski u kalendaru na tom datumu.</p>
         </div>
         <div className="modal-f"><button className="btn ghost" onClick={onClose}>Otkaži</button>
           <button className="btn primary" disabled={!f.opp.trim()} onClick={create}>Napravi i otvori</button></div>

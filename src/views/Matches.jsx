@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
 import { Icon, Crest } from '../components/Icons'
 import FormationBoard from '../components/FormationBoard'
+import RatingSlider from '../components/RatingSlider'
 import { shrinkImage, urlToCrest } from '../utils/img'
 
 // da li je utakmica prošla po datumu a još nije zaključana (treba popuniti)
@@ -111,8 +112,8 @@ export default function Matches({ focusId, onFocusHandled }) {
         <div className="card-b"><FormationBoard match={m} players={players} store={store} /></div>
       </div>
 
-      {/* Minutaža i učinak */}
-      <MinutesCard m={m} players={players} store={store} />
+      {/* Igrači na meču — minuti, učinak, ocena, beleška (sve na jednom mestu) */}
+      <PlayersCard m={m} players={players} store={store} />
 
 
       <div>
@@ -145,9 +146,6 @@ export default function Matches({ focusId, onFocusHandled }) {
           </div>
         </div>
       </div>
-
-      {/* Ocene igrača (5–10) + beleške */}
-      <RatingsCard m={m} players={players} store={store} />
 
       {/* Izveštaj sa utakmice */}
       <div className="card" style={{ marginTop: 18 }}>
@@ -202,82 +200,58 @@ function CrestPicker({ current, onClose, onSave }) {
   )
 }
 
-const RATING_COLORS = { 5: '#D64545', 6: '#E8862B', 7: '#E4B62B', 8: '#7FB83E', 9: '#2FA36B', 10: '#1E9E6A' }
-function RatingsCard({ m, players, store }) {
+
+function PlayersCard({ m, players, store }) {
   const lineup = m.lineup || []
   const events = m.events || []
   const minutes = m.minutes || {}
   const ratings = m.ratings || {}
   const involved = players.filter(p =>
-    lineup.includes(p.id) || events.some(e => (e.type === 'sub' && e.inId === p.id) || e.playerId === p.id) || minutes[p.id] != null || ratings[p.id])
-
-  return (
-    <div className="card" style={{ marginTop: 18 }}>
-      <div className="card-h"><h3>Ocene igrača</h3><span className="pill blue" style={{ marginLeft: 'auto' }}>skala 5–10 (5 najgore)</span></div>
-      <div className="card-b">
-        {involved.length === 0 ? <div className="empty">Postavi prvu postavu pa oceni igrače.</div> : (
-          <div className="ratings">
-            {involved.map(p => {
-              const r = ratings[p.id] || {}
-              return (
-                <div className="rate-row" key={p.id}>
-                  <div className="rate-name">{shortName(p.name)} {p.pos && <span className="pos">{p.pos}</span>}</div>
-                  <div className="rate-scale">
-                    {[5, 6, 7, 8, 9, 10].map(n => (
-                      <button key={n} className={'rate-dot' + (Number(r.score) === n ? ' on' : '')}
-                        style={Number(r.score) === n ? { background: RATING_COLORS[n], borderColor: RATING_COLORS[n], color: '#fff' } : undefined}
-                        onClick={() => store.setMatchRating(m.id, p.id, { score: Number(r.score) === n ? undefined : n })}>{n}</button>
-                    ))}
-                  </div>
-                  <input className="input rate-note" defaultValue={r.note || ''} placeholder="beleška o igraču…"
-                    onBlur={e => store.setMatchRating(m.id, p.id, { note: e.target.value })} />
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function MinutesCard({ m, players, store }) {
-  const lineup = m.lineup || []
-  const events = m.events || []
-  const minutes = m.minutes || {}
-  // igrači koji su učestvovali: postava + ušli kao izmena + oni sa unetim minutima
-  const involved = players.filter(p =>
     lineup.includes(p.id) ||
     events.some(e => (e.type === 'sub' && e.inId === p.id) || e.playerId === p.id) ||
-    minutes[p.id] != null)
+    minutes[p.id] != null || ratings[p.id])
   const cnt = (pid, type) => events.filter(e => e.playerId === pid && e.type === type).length
   const setMin = (pid, v) => store.updateMatch(m.id, { minutes: { ...minutes, [pid]: v === '' ? undefined : Math.max(0, Math.min(120, parseInt(v) || 0)) } })
   const fill90 = () => { const nm = { ...minutes }; lineup.forEach(pid => { if (nm[pid] == null) nm[pid] = 90 }); store.updateMatch(m.id, { minutes: nm }) }
 
   return (
     <div className="card" style={{ marginBottom: 18 }}>
-      <div className="card-h"><h3>Minutaža i učinak</h3>
+      <div className="card-h"><h3>Igrači na meču</h3>
+        <span className="foot-l">minuti · učinak · ocena · beleška</span>
         <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={fill90}>Postavi 90′ startnima</button></div>
-      <div className="tbl-wrap">
-        <table>
-          <thead><tr><th>Igrač</th><th>Minuti</th><th>⚽</th><th>🅰</th><th>🟨</th><th>🟥</th></tr></thead>
-          <tbody>
-            {involved.length === 0 && <tr><td colSpan={6} style={{ cursor: 'default' }}><div className="empty" style={{ padding: 18 }}>Postavi prvu postavu (gore) pa se igrači pojave ovde.</div></td></tr>}
-            {involved.map(p => (
-              <tr key={p.id} style={{ cursor: 'default' }}>
-                <td><b>{p.name}</b> {p.pos && <span className="pos">{p.pos}</span>}</td>
-                <td><input className="input" style={{ width: 74, padding: '5px 8px' }} inputMode="numeric"
-                  value={minutes[p.id] ?? ''} onChange={e => setMin(p.id, e.target.value)} placeholder="—" /></td>
-                <td className="num">{cnt(p.id, 'goal') || ''}</td>
-                <td className="num">{cnt(p.id, 'assist') || ''}</td>
-                <td className="num">{cnt(p.id, 'yellow') || ''}</td>
-                <td className="num">{cnt(p.id, 'red') || ''}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="card-b">
+        {involved.length === 0 ? <div className="empty">Postavi prvu postavu (gore) pa se igrači pojave ovde.</div> : (
+          <div className="pm-rows">
+            {involved.map(p => {
+              const r = ratings[p.id] || {}
+              const chips = [
+                cnt(p.id, 'goal') && `⚽ ${cnt(p.id, 'goal')}`,
+                cnt(p.id, 'assist') && `🅰 ${cnt(p.id, 'assist')}`,
+                cnt(p.id, 'yellow') && `🟨 ${cnt(p.id, 'yellow')}`,
+                cnt(p.id, 'red') && `🟥 ${cnt(p.id, 'red')}`,
+              ].filter(Boolean)
+              return (
+                <div className="pmr" key={p.id}>
+                  <div className="pmr-head">
+                    <div className="pmr-name"><b>{shortName(p.name)}</b> {p.pos && <span className="pos">{p.pos}</span>}</div>
+                    <div className="pmr-min">
+                      <input className="input" inputMode="numeric" value={minutes[p.id] ?? ''} onChange={e => setMin(p.id, e.target.value)} placeholder="min" />
+                      <span className="pmr-unit">min</span>
+                    </div>
+                    <div className="pmr-chips">{chips.length ? chips.map((c, i) => <span key={i} className="pmr-chip">{c}</span>) : <span className="foot-l">—</span>}</div>
+                  </div>
+                  <div className="pmr-rate">
+                    <RatingSlider value={r.score} onChange={v => store.setMatchRating(m.id, p.id, { score: v })} />
+                    <input className="input pmr-note" defaultValue={r.note || ''} placeholder="beleška o igraču…"
+                      onBlur={e => store.setMatchRating(m.id, p.id, { note: e.target.value })} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+        <p className="mock-note" style={{ marginTop: 12 }}>Golovi/asist./kartoni dolaze iz „Tok meča" (gore) i sami se sabiraju. Ocena 5–10 (klizač, može i 6,5). Sve ide u profil igrača.</p>
       </div>
-      <div className="card-b" style={{ paddingTop: 12 }}><p className="mock-note" style={{ margin: 0 }}>Minute upisuješ ručno (ili „Postavi 90′"). Golovi/asist./kartoni dolaze iz „Tok meča" i sabiraju se u statistiku igrača.</p></div>
     </div>
   )
 }
