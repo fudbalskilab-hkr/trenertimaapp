@@ -238,6 +238,17 @@ export function StoreProvider({ children }) {
       })
       return { ...s, calendar: cal }
     }),
+    // dodaj/ukloni nedelju (fleksibilan kalendar kroz celu sezonu)
+    addCalendarWeek: (startISO) => setState(s => {
+      if (s.calendar.some(w => w.start === startISO)) return s
+      const D = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned']
+      const days = D.map((d, i) => {
+        const dt = new Date(startISO); dt.setDate(dt.getDate() + i)
+        return { day: d, date: dt.toISOString().slice(0, 10), am: '/', pm: '/', matchId: null, intensity: null }
+      })
+      return { ...s, calendar: [...s.calendar, { start: startISO, days }].sort((a, b) => (a.start < b.start ? -1 : 1)) }
+    }),
+    removeCalendarWeek: (startISO) => setState(s => ({ ...s, calendar: s.calendar.filter(w => w.start !== startISO) })),
     // zameni sadržaj dva dana (drag&drop pri promeni termina); čuva datum/naziv dana na mestu
     swapCalendarDays: (a, b) => setState(s => {
       const cal = s.calendar.map(w => ({ ...w, days: w.days.slice() }))
