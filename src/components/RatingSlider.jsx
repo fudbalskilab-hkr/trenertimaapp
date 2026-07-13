@@ -25,17 +25,17 @@ const GRAD = `linear-gradient(90deg, ${STOPS.map(s => `rgb(${s[1].join(',')}) ${
 
 export default function RatingSlider({ value, onChange }) {
   const has = value != null && value !== ''
-  const v = has ? Number(value) : 7.5
-  const col = has ? ratingColor(v) : '#8A99B5'
+  const v = has ? Number(value) : 6.5           // podrazumevano 6,5
+  const col = ratingColor(v)
   return (
     <div className="rslider">
       <input type="range" min="5" max="10" step="0.1" value={v}
-        style={{ background: GRAD }}
+        style={{ background: GRAD, opacity: has ? 1 : .55 }}
         onChange={e => onChange(Number(e.target.value))} aria-label="Ocena" />
-      <span className="rslider-val" style={{ background: col }}>{has ? v.toFixed(1).replace('.', ',') : '—'}</span>
+      <span className="rslider-val" style={{ background: has ? col : '#8A99B5' }}>{v.toFixed(1).replace('.', ',')}</span>
       {has
-        ? <button className="rslider-x" title="Obriši ocenu" onClick={() => onChange(undefined)}>×</button>
-        : <button className="rslider-set" onClick={() => onChange(7.5)}>oceni</button>}
+        ? <button className="rslider-x" title="Vrati na podrazumevano (6,5)" onClick={() => onChange(undefined)}>×</button>
+        : <span className="rslider-hint" title="Podrazumevano dok ne oceniš">auto</span>}
     </div>
   )
 }

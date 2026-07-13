@@ -81,7 +81,7 @@ export default function Players({ addOpen, onCloseAdd }) {
   const visible = COLUMNS.filter(c => cols.includes(c.key))
 
   const rows = useMemo(() => {
-    const withStats = players.map(p => ({ ...p, _st: computeStats(p.id, matches) }))
+    const withStats = players.map(p => ({ ...p, _st: computeStats(p.id, matches, p) }))
     const byDob = (a, b) => {
       if (!a.dob && !b.dob) return 0
       if (!a.dob) return 1
@@ -163,7 +163,7 @@ export default function Players({ addOpen, onCloseAdd }) {
 }
 
 function Profile({ player, store, matches, onEdit }) {
-  const st = computeStats(player.id, matches)
+  const st = computeStats(player.id, matches, player)
   const fee = store.fees[player.id] || {}
   const age = ageFrom(player.dob)
   const exempt = !!player.exempt

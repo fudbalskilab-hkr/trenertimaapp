@@ -224,6 +224,32 @@ export function StoreProvider({ children }) {
         ...m, ratings: { ...(m.ratings || {}), [playerId]: { ...((m.ratings || {})[playerId] || {}), ...patch } },
       }),
     })),
+    // Dodaj/ukloni igrača na meč (izmene — igrači koji su ušli)
+    addMatchPlayer: (matchId, playerId) => setState(s => ({
+      ...s, matches: s.matches.map(m => m.id !== matchId || (m.extra || []).includes(playerId) || (m.lineup || []).includes(playerId)
+        ? m : { ...m, extra: [...(m.extra || []), playerId] }),
+    })),
+    removeMatchPlayer: (matchId, playerId) => setState(s => ({
+      ...s, matches: s.matches.map(m => {
+        if (m.id !== matchId) return m
+        const minutes = { ...(m.minutes || {}) }; delete minutes[playerId]
+        const ratings = { ...(m.ratings || {}) }; delete ratings[playerId]
+        return { ...m, extra: (m.extra || []).filter(x => x !== playerId), minutes, ratings }
+      }),
+    })),
+    // Brzo dodavanje/uklanjanje događaja (gol/asist/karton) po igraču — bez minuta
+    addMatchEvent: (matchId, playerId, type) => setState(s => ({
+      ...s, matches: s.matches.map(m => m.id !== matchId ? m : { ...m, events: [...(m.events || []), { id: 'ev' + Date.now() + Math.round(performance.now()), type, playerId, minute: null }] }),
+    })),
+    removeMatchEvent: (matchId, playerId, type) => setState(s => ({
+      ...s, matches: s.matches.map(m => {
+        if (m.id !== matchId) return m
+        const ev = [...(m.events || [])]
+        // ukloni poslednji takav događaj za tog igrača
+        for (let i = ev.length - 1; i >= 0; i--) { if (ev[i].type === type && ev[i].playerId === playerId) { ev.splice(i, 1); break } }
+        return { ...m, events: ev }
+      }),
+    })),
 
     // Kalendar
     setCalendarCell: (wi, di, part, value) => setState(s => {
@@ -383,8 +409,21 @@ export function fmtDate(iso) {
 // Događaji: {type:'goal'|'assist'|'yellow'|'red', playerId, minute}
 //           {type:'sub', inId, outId, minute}
 const MATCH_LEN = 90
-export function computeStats(playerId, matches) {
+// da li je igrač učestvovao na meču (postava, ušao kao izmena, ima minute/ocenu, ili ručno dodat)
+export function playedInMatch(m, playerId) {
+  if ((m.lineup || []).includes(playerId)) return true
+  if ((m.events || []).some(e => e.type === 'sub' && e.inId === playerId)) return true
+  const mm = (m.minutes || {})[playerId]
+  if (mm != null && mm !== '') return true
+  if ((m.ratings || {})[playerId]) return true
+  if ((m.extra || []).includes(playerId)) return true
+  return false
+}
+
+export function computeStats(playerId, matches, player) {
   const st = { apps: 0, minutes: 0, goals: 0, assists: 0, yellow: 0, red: 0, cs: 0 }
+  const grp = seed.posGroup(player?.pos)
+  const isDefender = grp === 'gk' || grp === 'def'
   for (const m of matches) {
     const finished = m.played || m.gf !== null || m.ga !== null
     if (!finished) continue
@@ -409,23 +448,25 @@ export function computeStats(playerId, matches) {
       if (e.type === 'yellow') st.yellow++
       if (e.type === 'red') st.red++
     }
-    // clean sheet: primio 0 golova, a igrač je bio u postavi na poziciji GK/DEF (procena: bio u startnih 11)
-    if (inLineup && m.ga === 0) st.cs++
+    // clean sheet: SAMO golmani i odbrana, kad je primljeno 0 golova i bili su u postavi
+    if (inLineup && m.ga === 0 && isDefender) st.cs++
   }
   return st
 }
 
-// Ocene igrača (5–10) po mečevima + prosek
+// Ocene igrača (5–10) po mečevima + prosek. Podrazumevana ocena = 6.5 ako je igrao a nije ocenjen.
+export const DEFAULT_RATING = 6.5
 export function computeRatings(playerId, matches) {
   const perMatch = []
   for (const m of matches) {
-    const r = (m.ratings || {})[playerId]
-    if (r && r.score != null && r.score !== '') {
-      perMatch.push({ matchId: m.id, opp: m.opp, date: m.date, score: Number(r.score), note: r.note || '' })
-    }
+    const finished = m.played || m.gf !== null || m.ga !== null
+    if (!finished) continue
+    if (!playedInMatch(m, playerId)) continue
+    const r = (m.ratings || {})[playerId] || {}
+    const explicit = r.score != null && r.score !== '' && !isNaN(Number(r.score))
+    perMatch.push({ matchId: m.id, opp: m.opp, date: m.date, score: explicit ? Number(r.score) : DEFAULT_RATING, note: r.note || '', dflt: !explicit })
   }
   perMatch.sort((a, b) => (a.date < b.date ? 1 : -1))
-  const scored = perMatch.filter(x => !isNaN(x.score))
-  const avg = scored.length ? scored.reduce((s, x) => s + x.score, 0) / scored.length : null
-  return { avg, count: scored.length, perMatch }
+  const avg = perMatch.length ? perMatch.reduce((s, x) => s + x.score, 0) / perMatch.length : null
+  return { avg, count: perMatch.length, perMatch }
 }

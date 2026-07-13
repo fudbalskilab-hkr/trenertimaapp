@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
+import { posGroup } from '../data/seed'
 import { Icon, Crest } from '../components/Icons'
 import FormationBoard from '../components/FormationBoard'
 import RatingSlider from '../components/RatingSlider'
@@ -201,44 +202,68 @@ function CrestPicker({ current, onClose, onSave }) {
 }
 
 
+const POS_RANK = { gk: 0, def: 1, mid: 2, att: 3 }
+const posRank = p => { const g = posGroup(p.pos); return g ? POS_RANK[g] : 9 }
+const STATS = [
+  { type: 'goal', ico: '⚽' }, { type: 'assist', ico: '🅰' },
+  { type: 'yellow', ico: '🟨' }, { type: 'red', ico: '🟥' },
+]
+
 function PlayersCard({ m, players, store }) {
+  const [addOpen, setAddOpen] = useState(false)
   const lineup = m.lineup || []
   const events = m.events || []
   const minutes = m.minutes || {}
   const ratings = m.ratings || {}
-  const involved = players.filter(p =>
-    lineup.includes(p.id) ||
-    events.some(e => (e.type === 'sub' && e.inId === p.id) || e.playerId === p.id) ||
-    minutes[p.id] != null || ratings[p.id])
+  const extra = m.extra || []
+  const involvedIds = new Set([
+    ...lineup, ...extra,
+    ...events.filter(e => e.type === 'sub').map(e => e.inId),
+    ...events.filter(e => e.playerId).map(e => e.playerId),
+    ...Object.keys(minutes), ...Object.keys(ratings),
+  ].filter(Boolean))
+  const involved = players.filter(p => involvedIds.has(p.id)).sort((a, b) => posRank(a) - posRank(b) || (a.number ?? 99) - (b.number ?? 99))
   const cnt = (pid, type) => events.filter(e => e.playerId === pid && e.type === type).length
   const setMin = (pid, v) => store.updateMatch(m.id, { minutes: { ...minutes, [pid]: v === '' ? undefined : Math.max(0, Math.min(120, parseInt(v) || 0)) } })
   const fill90 = () => { const nm = { ...minutes }; lineup.forEach(pid => { if (nm[pid] == null) nm[pid] = 90 }); store.updateMatch(m.id, { minutes: nm }) }
+  const isStarter = pid => lineup.includes(pid)
+  const cleanSheet = pid => { const g = posGroup(players.find(p => p.id === pid)?.pos); return (g === 'gk' || g === 'def') && isStarter(pid) && m.ga === 0 }
 
   return (
     <div className="card" style={{ marginBottom: 18 }}>
       <div className="card-h"><h3>Igrači na meču</h3>
-        <span className="foot-l">minuti · učinak · ocena · beleška</span>
-        <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={fill90}>Postavi 90′ startnima</button></div>
+        <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={fill90}>90′ startnima</button>
+        <button className="btn sm" onClick={() => setAddOpen(true)}><Icon.plus /> Dodaj igrača (izmena)</button></div>
       <div className="card-b">
         {involved.length === 0 ? <div className="empty">Postavi prvu postavu (gore) pa se igrači pojave ovde.</div> : (
           <div className="pm-rows">
             {involved.map(p => {
               const r = ratings[p.id] || {}
-              const chips = [
-                cnt(p.id, 'goal') && `⚽ ${cnt(p.id, 'goal')}`,
-                cnt(p.id, 'assist') && `🅰 ${cnt(p.id, 'assist')}`,
-                cnt(p.id, 'yellow') && `🟨 ${cnt(p.id, 'yellow')}`,
-                cnt(p.id, 'red') && `🟥 ${cnt(p.id, 'red')}`,
-              ].filter(Boolean)
               return (
                 <div className="pmr" key={p.id}>
                   <div className="pmr-head">
-                    <div className="pmr-name"><b>{shortName(p.name)}</b> {p.pos && <span className="pos">{p.pos}</span>}</div>
+                    <div className="pmr-name">
+                      <b>{shortName(p.name)}</b> {p.pos && <span className="pos">{p.pos}</span>}
+                      {!isStarter(p.id) && <span className="pmr-tag">izmena</span>}
+                      {cleanSheet(p.id) && <span className="pmr-cs" title="Clean sheet">CS</span>}
+                    </div>
                     <div className="pmr-min">
                       <input className="input" inputMode="numeric" value={minutes[p.id] ?? ''} onChange={e => setMin(p.id, e.target.value)} placeholder="min" />
                       <span className="pmr-unit">min</span>
                     </div>
-                    <div className="pmr-chips">{chips.length ? chips.map((c, i) => <span key={i} className="pmr-chip">{c}</span>) : <span className="foot-l">—</span>}</div>
+                    {!isStarter(p.id) && <button className="btn ghost sm" title="Ukloni igrača" onClick={() => store.removeMatchPlayer(m.id, p.id)}><Icon.trash /></button>}
+                  </div>
+                  <div className="pmr-stats">
+                    {STATS.map(s => {
+                      const c = cnt(p.id, s.type)
+                      return (
+                        <div className={'stepper' + (c ? ' has' : '')} key={s.type}>
+                          <button className="st-minus" disabled={!c} onClick={() => store.removeMatchEvent(m.id, p.id, s.type)}>−</button>
+                          <span className="st-ico">{s.ico}</span><span className="st-n num">{c}</span>
+                          <button className="st-plus" onClick={() => store.addMatchEvent(m.id, p.id, s.type)}>+</button>
+                        </div>
+                      )
+                    })}
                   </div>
                   <div className="pmr-rate">
                     <RatingSlider value={r.score} onChange={v => store.setMatchRating(m.id, p.id, { score: v })} />
@@ -250,7 +275,30 @@ function PlayersCard({ m, players, store }) {
             })}
           </div>
         )}
-        <p className="mock-note" style={{ marginTop: 12 }}>Golovi/asist./kartoni dolaze iz „Tok meča" (gore) i sami se sabiraju. Ocena 5–10 (klizač, može i 6,5). Sve ide u profil igrača.</p>
+        <p className="mock-note" style={{ marginTop: 12 }}>Sve za igrača na jednom mestu: minuti, gol/asist/kartoni (klik + / −), ocena (5–10, klizač, podrazumevano 6,5) i beleška. Clean sheet ide automatski golmanu i odbrani kad je primljeno 0 golova. Igrači su poređani po pozicijama (GK → ATT).</p>
+      </div>
+      {addOpen && <AddMatchPlayer players={players.filter(p => !involvedIds.has(p.id))} onClose={() => setAddOpen(false)}
+        onPick={pid => { store.addMatchPlayer(m.id, pid); setAddOpen(false) }} />}
+    </div>
+  )
+}
+
+function AddMatchPlayer({ players, onClose, onPick }) {
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-h"><h3>Dodaj igrača (ušao kao izmena)</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-b" style={{ maxHeight: '60vh', overflow: 'auto' }}>
+          {players.length === 0 ? <div className="empty">Svi igrači su već na spisku.</div> : (
+            <div className="lineup-chips">
+              {players.map(p => (
+                <button key={p.id} className="pchip" onClick={() => onPick(p.id)}>
+                  <span>{shortName(p.name)}</span>{p.pos && <span className="pc-pos">{p.pos}</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
