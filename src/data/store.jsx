@@ -218,6 +218,12 @@ export function StoreProvider({ children }) {
     updateMatch: (id, patch) => setState(s => ({
       ...s, matches: s.matches.map(m => m.id === id ? { ...m, ...patch } : m),
     })),
+    // Ocena igrača na meču (5–10) + beleška
+    setMatchRating: (matchId, playerId, patch) => setState(s => ({
+      ...s, matches: s.matches.map(m => m.id !== matchId ? m : {
+        ...m, ratings: { ...(m.ratings || {}), [playerId]: { ...((m.ratings || {})[playerId] || {}), ...patch } },
+      }),
+    })),
 
     // Kalendar
     setCalendarCell: (wi, di, part, value) => setState(s => {
@@ -369,7 +375,7 @@ const MATCH_LEN = 90
 export function computeStats(playerId, matches) {
   const st = { apps: 0, minutes: 0, goals: 0, assists: 0, yellow: 0, red: 0, cs: 0 }
   for (const m of matches) {
-    const finished = m.gf !== null || m.ga !== null
+    const finished = m.played || m.gf !== null || m.ga !== null
     if (!finished) continue
     const inLineup = (m.lineup || []).includes(playerId)
     const events = m.events || []
@@ -396,4 +402,19 @@ export function computeStats(playerId, matches) {
     if (inLineup && m.ga === 0) st.cs++
   }
   return st
+}
+
+// Ocene igrača (5–10) po mečevima + prosek
+export function computeRatings(playerId, matches) {
+  const perMatch = []
+  for (const m of matches) {
+    const r = (m.ratings || {})[playerId]
+    if (r && r.score != null && r.score !== '') {
+      perMatch.push({ matchId: m.id, opp: m.opp, date: m.date, score: Number(r.score), note: r.note || '' })
+    }
+  }
+  perMatch.sort((a, b) => (a.date < b.date ? 1 : -1))
+  const scored = perMatch.filter(x => !isNaN(x.score))
+  const avg = scored.length ? scored.reduce((s, x) => s + x.score, 0) / scored.length : null
+  return { avg, count: scored.length, perMatch }
 }

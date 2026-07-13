@@ -1,8 +1,16 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
 import { Icon, Crest } from '../components/Icons'
 import FormationBoard from '../components/FormationBoard'
-import { shrinkImage } from '../utils/img'
+import { shrinkImage, urlToCrest } from '../utils/img'
+
+// da li je utakmica prošla po datumu a još nije zaključana (treba popuniti)
+export function needsFilling(m) {
+  if (m.played) return false
+  if (!m.date) return false
+  const d = new Date(m.date + 'T23:59:59')
+  return !isNaN(d) && d.getTime() < Date.now()
+}
 
 const EVENT_TYPES = [
   { type: 'goal', label: 'Gol' },
@@ -12,13 +20,15 @@ const EVENT_TYPES = [
   { type: 'sub', label: 'Izmena' },
 ]
 
-export default function Matches() {
+export default function Matches({ focusId, onFocusHandled }) {
   const store = useStore()
   const { matches, players, team } = store
   const [activeId, setActiveId] = useState(matches[0]?.id)
   const [addEv, setAddEv] = useState(null)
   const [editMeta, setEditMeta] = useState(false)
-  const crestRef = useRef()
+  const [crestOpen, setCrestOpen] = useState(false)
+
+  useEffect(() => { if (focusId) { setActiveId(focusId); onFocusHandled && onFocusHandled() } }, [focusId])
 
   const m = matches.find(x => x.id === activeId) || matches[0]
   const pName = id => { const p = players.find(x => x.id === id); return p ? shortName(p.name) : '—' }
@@ -33,10 +43,6 @@ export default function Matches() {
   }
   const addEvent = ev => { store.updateMatch(m.id, { events: [...(m.events || []), { ...ev, id: 'ev' + Date.now() }] }); setAddEv(null) }
   const removeEvent = id => store.updateMatch(m.id, { events: (m.events || []).filter(e => e.id !== id) })
-  function uploadCrest(e) {
-    const file = e.target.files[0]; if (!file) return
-    shrinkImage(file, 256, true).then(url => store.updateMatch(m.id, { crest: url }))
-  }
 
   const events = [...((m && m.events) || [])].sort((a, b) => (a.minute || 0) - (b.minute || 0))
   const lineup = (m && m.lineup) || []
@@ -47,6 +53,7 @@ export default function Matches() {
       <div className="mc-tabs">
         {matches.map(x => (
           <button key={x.id} className={'mc-tab' + (x.id === activeId ? ' on' : '') + (x.kind === 'league' ? ' comp' : '')} onClick={() => setActiveId(x.id)}>
+            {needsFilling(x) && <span className="match-flag" title="Treba popuniti">!</span>}
             vs {x.opp}<small>{x.date ? fmtDate(x.date) + ' · ' : ''}{x.home ? 'dom' : 'gost'}</small>
           </button>
         ))}
@@ -59,7 +66,7 @@ export default function Matches() {
       {/* Izveštaj / rezultat */}
       <div className="report">
         <div className="report-side">
-          {m.home ? <Crest size={54} /> : <Crest size={54} url={m.crest} />}
+          {m.home ? <Crest size={54} /> : (m.crest ? <button style={{ border: 0, background: 'transparent', cursor: 'pointer' }} onClick={() => setCrestOpen(true)}><Crest size={54} url={m.crest} /></button> : <button className="report-badge" onClick={() => setCrestOpen(true)}>grb +</button>)}
           <b>{m.home ? team.name.replace('FK ', '') : m.opp}</b>
           <div className="scorers">
             {m.home
@@ -74,16 +81,21 @@ export default function Matches() {
             <span style={{ opacity: .55 }}>:</span>
             <input className="sc-box num" value={m.ga ?? ''} onChange={e => setScore('ga', e.target.value)} inputMode="numeric" placeholder="–" aria-label="Golovi gosti" />
           </div>
-          <span className="status">{m.gf === null && m.ga === null ? 'Nije odigrano' : 'Završeno'}</span>
+          <span className="status">{m.played ? '⚫ Odigrana' : '🔵 Zakazana'}</span>
           <div className="rm-meta">{fmtDate(m.date)}{m.date?.slice(0, 4)} · {m.time}<br />{m.comp} · {m.home ? 'domaćin' : 'gost'}</div>
-          <button className="btn sm" style={{ background: 'rgba(255,255,255,.16)', border: 0, color: '#fff' }} onClick={() => setEditMeta(true)}>Izmeni podatke</button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className="btn sm" style={{ background: 'rgba(255,255,255,.16)', border: 0, color: '#fff' }} onClick={() => setEditMeta(true)}>Izmeni</button>
+            <button className="btn sm" style={{ background: m.played ? 'rgba(255,255,255,.16)' : '#1E9E6A', border: 0, color: '#fff' }}
+              onClick={() => store.updateMatch(m.id, { played: !m.played })}>
+              {m.played ? 'Otključaj' : '✓ Zaključi'}
+            </button>
+          </div>
         </div>
 
         <div className="report-side">
           {m.home
-            ? (m.crest ? <Crest size={54} url={m.crest} /> : <button className="report-badge" onClick={() => crestRef.current.click()}>grb +</button>)
+            ? (m.crest ? <button style={{ border: 0, background: 'transparent', cursor: 'pointer' }} onClick={() => setCrestOpen(true)}><Crest size={54} url={m.crest} /></button> : <button className="report-badge" onClick={() => setCrestOpen(true)}>grb +</button>)
             : <Crest size={54} />}
-          <input ref={crestRef} type="file" accept="image/*" hidden onChange={uploadCrest} />
           <b>{m.home ? m.opp : team.name.replace('FK ', '')}</b>
           <div className="scorers">
             {!m.home
@@ -134,12 +146,98 @@ export default function Matches() {
         </div>
       </div>
 
+      {/* Ocene igrača (5–10) + beleške */}
+      <RatingsCard m={m} players={players} store={store} />
+
+      {/* Izveštaj sa utakmice */}
+      <div className="card" style={{ marginTop: 18 }}>
+        <div className="card-h"><h3>Izveštaj sa utakmice</h3></div>
+        <div className="card-b">
+          <textarea className="input" rows={4} defaultValue={m.report || ''} placeholder="Celokupan utisak: šta je bilo dobro, šta popraviti, ključni momenti…"
+            onBlur={e => store.updateMatch(m.id, { report: e.target.value })} />
+        </div>
+      </div>
+
       {addEv && <AddEvent type={addEv} players={players} lineup={lineup} onClose={() => setAddEv(null)} onSave={addEvent} />}
       {editMeta && <EditMatchMeta m={m} onClose={() => setEditMeta(false)}
         onSave={patch => { store.updateMatch(m.id, patch); setEditMeta(false) }}
         onDelete={() => { if (confirm(`Obrisati utakmicu vs ${m.opp}?`)) { store.removeMatch(m.id); setEditMeta(false); setActiveId(matches.find(x => x.id !== m.id)?.id) } }} />}
+      {crestOpen && <CrestPicker current={m.crest} onClose={() => setCrestOpen(false)}
+        onSave={url => { store.updateMatch(m.id, { crest: url }); setCrestOpen(false) }} />}
       </>}
     </section>
+  )
+}
+
+function CrestPicker({ current, onClose, onSave }) {
+  const [url, setUrl] = useState('')
+  const [busy, setBusy] = useState(false)
+  const fileRef = useRef()
+  function upload(e) {
+    const file = e.target.files[0]; if (!file) return
+    setBusy(true); shrinkImage(file, 256, true).then(u => { onSave(u) })
+  }
+  function fromUrl() {
+    if (!url.trim()) return
+    setBusy(true); urlToCrest(url).then(u => onSave(u))
+  }
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-h"><h3>Grb protivnika</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-b">
+          {current && <div style={{ textAlign: 'center', marginBottom: 14 }}><Crest size={64} url={current} /></div>}
+          <div className="field"><label>Nalepi link slike (URL)</label>
+            <input className="input" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…/grb.png" autoFocus />
+            <p className="mock-note" style={{ marginTop: 6 }}>Npr. sa Wikipedije (desni klik na sliku → „Copy image address"). PNG sa providnom pozadinom je najbolji.</p>
+          </div>
+          <button className="btn primary" style={{ width: '100%', justifyContent: 'center' }} disabled={busy || !url.trim()} onClick={fromUrl}>{busy ? 'Učitavam…' : 'Dodaj sa linka'}</button>
+          <div style={{ textAlign: 'center', color: 'var(--grey)', fontSize: 12, margin: '12px 0' }}>— ili —</div>
+          <button className="btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => fileRef.current.click()}><Icon.upload /> Ubaci sliku sa uređaja</button>
+          <input ref={fileRef} type="file" accept="image/*" hidden onChange={upload} />
+          {current && <button className="btn ghost" style={{ width: '100%', justifyContent: 'center', color: 'var(--bad)', marginTop: 10 }} onClick={() => onSave('')}>Ukloni grb</button>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const RATING_COLORS = { 5: '#D64545', 6: '#E8862B', 7: '#E4B62B', 8: '#7FB83E', 9: '#2FA36B', 10: '#1E9E6A' }
+function RatingsCard({ m, players, store }) {
+  const lineup = m.lineup || []
+  const events = m.events || []
+  const minutes = m.minutes || {}
+  const ratings = m.ratings || {}
+  const involved = players.filter(p =>
+    lineup.includes(p.id) || events.some(e => (e.type === 'sub' && e.inId === p.id) || e.playerId === p.id) || minutes[p.id] != null || ratings[p.id])
+
+  return (
+    <div className="card" style={{ marginTop: 18 }}>
+      <div className="card-h"><h3>Ocene igrača</h3><span className="pill blue" style={{ marginLeft: 'auto' }}>skala 5–10 (5 najgore)</span></div>
+      <div className="card-b">
+        {involved.length === 0 ? <div className="empty">Postavi prvu postavu pa oceni igrače.</div> : (
+          <div className="ratings">
+            {involved.map(p => {
+              const r = ratings[p.id] || {}
+              return (
+                <div className="rate-row" key={p.id}>
+                  <div className="rate-name">{shortName(p.name)} {p.pos && <span className="pos">{p.pos}</span>}</div>
+                  <div className="rate-scale">
+                    {[5, 6, 7, 8, 9, 10].map(n => (
+                      <button key={n} className={'rate-dot' + (Number(r.score) === n ? ' on' : '')}
+                        style={Number(r.score) === n ? { background: RATING_COLORS[n], borderColor: RATING_COLORS[n], color: '#fff' } : undefined}
+                        onClick={() => store.setMatchRating(m.id, p.id, { score: Number(r.score) === n ? undefined : n })}>{n}</button>
+                    ))}
+                  </div>
+                  <input className="input rate-note" defaultValue={r.note || ''} placeholder="beleška o igraču…"
+                    onBlur={e => store.setMatchRating(m.id, p.id, { note: e.target.value })} />
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 

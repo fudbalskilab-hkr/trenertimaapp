@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { useStore, ageFrom, initials, computeStats, fmtDate } from '../data/store'
+import { useStore, ageFrom, initials, computeStats, computeRatings, fmtDate } from '../data/store'
 import { FEE_MONTHS, posGroup, POS_COLORS } from '../data/seed'
 import { Icon } from '../components/Icons'
 import { shrinkImage } from '../utils/img'
@@ -213,6 +213,9 @@ function Profile({ player, store, matches, onEdit }) {
         <Stat n={st.cs} l="Clean sheet" />
       </div>
 
+      <RatingsBlock player={player} matches={matches} />
+
+
       <div style={{ display: 'flex', alignItems: 'center', padding: '4px 18px 8px', gap: 8 }}>
         <span className="eyebrow">Članarina 2026</span>
         <button className={'pill ' + (exempt ? 'bad' : 'good')} style={{ marginLeft: 'auto', cursor: 'pointer', border: 0 }}
@@ -241,6 +244,31 @@ function Profile({ player, store, matches, onEdit }) {
 
 function Stat({ n, l }) {
   return <div className="stat"><b className="num">{n}</b><span>{l}</span></div>
+}
+
+const RCOL = { 5: '#D64545', 6: '#E8862B', 7: '#E4B62B', 8: '#7FB83E', 9: '#2FA36B', 10: '#1E9E6A' }
+const rcol = s => RCOL[Math.round(s)] || 'var(--grey)'
+function RatingsBlock({ player, matches }) {
+  const { avg, count, perMatch } = computeRatings(player.id, matches)
+  return (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '10px 18px 0', gap: 8 }}>
+        <span className="eyebrow">Ocene (5–10)</span>
+        {avg != null && <span className="rate-badge" style={{ marginLeft: 'auto', background: rcol(avg) }}>{avg.toFixed(1)}</span>}
+        <span className="foot-l" style={avg != null ? {} : { marginLeft: 'auto' }}>{count ? `prosek · ${count} ocena` : 'nema ocena'}</span>
+      </div>
+      {perMatch.length > 0 && (
+        <div style={{ padding: '8px 18px 4px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {perMatch.slice(0, 6).map(r => (
+            <div key={r.matchId} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 12.5 }}>
+              <span className="rate-badge" style={{ background: rcol(r.score) }}>{r.score}</span>
+              <span style={{ flex: 1 }}>vs {r.opp} <span className="foot-l">{fmtDate(r.date)}</span>{r.note && <span style={{ color: 'var(--grey)' }}> — {r.note}</span>}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  )
 }
 
 function PlayerForm({ title, submitLabel, initial, onClose, onSave }) {

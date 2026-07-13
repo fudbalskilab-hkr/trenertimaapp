@@ -28,7 +28,9 @@ export default function App() {
   const [sub, setSub] = useState('ex')            // podtab za „Trening baza"
   const [adding, setAdding] = useState(false)
   const [dataMenu, setDataMenu] = useState(false)
+  const [matchFocus, setMatchFocus] = useState(null) // koju utakmicu otvoriti u tabu
   const setView = (v) => { setAdding(false); _setView(v) }
+  const openMatch = (id) => { setMatchFocus(id); setAdding(false); _setView('match') }
 
   const [title, subFn] = TITLES[view]
   const subtitle = subFn(store)
@@ -49,12 +51,12 @@ export default function App() {
   const canAdd = view === 'players'
 
   const views = {
-    dash: <Dashboard setView={setView} />,
+    dash: <Dashboard setView={setView} openMatch={openMatch} />,
     players: <Players addOpen={adding} onCloseAdd={() => setAdding(false)} />,
-    cal: <Calendar />,
+    cal: <Calendar openMatch={openMatch} />,
     mc: <Microcycles />,
     base: <TrainingBase sub={sub} setSub={setSub} />,
-    match: <Matches />,
+    match: <Matches focusId={matchFocus} onFocusHandled={() => setMatchFocus(null)} />,
     gps: <GPS />,
   }
 

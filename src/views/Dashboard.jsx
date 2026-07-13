@@ -1,22 +1,38 @@
-import { useStore, initials, fmtDate } from '../data/store'
+import { useStore, initials, fmtDate, shortName } from '../data/store'
 import { Icon, Crest } from '../components/Icons'
 import { FEE_MONTHS } from '../data/seed'
+import { needsFilling } from './Matches'
 
-export default function Dashboard({ setView }) {
+export default function Dashboard({ setView, openMatch }) {
   const { players, matches, microcycles, fees, team, league } = useStore()
 
   const curMonth = 'jul'
   const dueNames = players.filter(p => !p.exempt && !(fees[p.id] && fees[p.id][curMonth]))
 
-  const upcoming = matches.filter(m => m.gf === null && m.ga === null)
+  const upcoming = matches.filter(m => !m.played && m.gf === null && m.ga === null && !needsFilling(m))
     .sort((a, b) => (a.date < b.date ? -1 : 1))
-  // sledeća prvenstvena je glavna; ako je nema, sledeća bilo koja
   const next = upcoming.find(m => m.kind === 'league') || upcoming[0]
   const isLeague = next?.kind === 'league'
   const firstLeague = matches.filter(m => m.kind === 'league').sort((a, b) => (a.date < b.date ? -1 : 1))[0]
 
+  // odigrane po datumu a nezaključane → „za popunjavanje/zatvaranje"
+  const toClose = matches.filter(needsFilling).sort((a, b) => (a.date < b.date ? 1 : -1))
+  // poslednje zaključane (rezultati)
+  const recent = matches.filter(m => m.played).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 4)
+  const go = m => openMatch ? openMatch(m.id) : setView('match')
+
   return (
     <section>
+      {toClose.length > 0 && (
+        <div className="season-box" style={{ background: 'color-mix(in srgb,#E8862B 12%,var(--surface))', borderColor: 'color-mix(in srgb,#E8862B 34%,var(--line))' }}>
+          <span className="sb-ic">📝</span>
+          <div className="sb-txt">
+            <b>Utakmica za popunjavanje ({toClose.length})</b>
+            <span>vs {toClose[0].opp} · {fmtDate(toClose[0].date)}{toClose[0].date?.slice(0, 4)} — unesi rezultat, ocene i zaključi</span>
+          </div>
+          <button className="btn primary sm" onClick={() => go(toClose[0])}>Popuni</button>
+        </div>
+      )}
       {firstLeague && (
         <div className="season-box">
           <span className="sb-ic">🏆</span>
@@ -74,6 +90,24 @@ export default function Dashboard({ setView }) {
           </div>
         </div>
       </div>
+
+      {recent.length > 0 && (
+        <div className="card" style={{ marginTop: 18 }}>
+          <div className="card-h"><h3>Poslednji rezultati</h3></div>
+          <div className="card-b" style={{ paddingTop: 6 }}>
+            {recent.map(m => {
+              const won = m.gf > m.ga, draw = m.gf === m.ga
+              return (
+                <button key={m.id} className="list-row" style={{ width: '100%', background: 'transparent', border: 0, cursor: 'pointer', textAlign: 'left' }} onClick={() => go(m)}>
+                  <span className="res-badge" style={{ background: draw ? 'var(--grey)' : won ? 'var(--good)' : 'var(--bad)' }}>{draw ? 'N' : won ? 'P' : 'I'}</span>
+                  <div className="nm">vs {m.opp}<small>{fmtDate(m.date)}{m.date?.slice(0, 4)} · {m.home ? 'dom' : 'gost'} · {m.comp}</small></div>
+                  <b className="num" style={{ fontSize: 16 }}>{m.gf ?? '–'}:{m.ga ?? '–'}</b>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </section>
   )
 }
