@@ -8,6 +8,17 @@ import { exportNodeAsImage } from '../utils/exportImage'
 const DAYS = ['Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota', 'Nedelja']
 const DAYS_SHORT = ['PON', 'UTO', 'SRE', 'ČET', 'PET', 'SUB', 'NED']
 const CYCLE = [null, 'match', '80', '50', '30', 'regen', 'free']
+// termini treninga 24h (bez AM/PM), na 15 min
+const TIMES = (() => { const a = []; for (let h = 6; h <= 21; h++) for (const m of [0, 15, 30, 45]) a.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`); return a })()
+function TimeSelect({ value, onChange, className, style, title }) {
+  return (
+    <select className={className} value={value || ''} onChange={e => onChange(e.target.value)} style={style} title={title}>
+      <option value="">—:—</option>
+      {value && !TIMES.includes(value) && <option value={value}>{value}</option>}
+      {TIMES.map(t => <option key={t} value={t}>{t}</option>)}
+    </select>
+  )
+}
 // boje kao u kalendaru: telo dana svetlo (bg), zaglavlje tamnije (accent)
 const dayBody = k => { const c = intensityBg(k); return c === 'transparent' ? 'var(--surface)' : `color-mix(in srgb, ${c} 50%, var(--surface))` }
 const dayHead = k => { const c = intensityColor(k); return c === 'transparent' ? 'var(--surface-2)' : `color-mix(in srgb, ${c} 42%, var(--surface))` }
@@ -69,19 +80,18 @@ export default function Microcycles() {
           ))}
         </>}
         <button className="btn primary sm" style={{ marginLeft: 8 }} onClick={() => setActive(store.addMicrocycle(mc.type))} title={`Napravi nov ${mc.type.toLowerCase()} mikrociklus (isti tip kao trenutni)`}><Icon.plus /> Nov mikrociklus</button>
-      </div>
-
-      <div className="mc-actions">
-        <button className="btn sm" onClick={() => setFavOpen(true)} title="Standardne (omiljene) aktivnosti"><Icon.gear /> Standardne</button>
-        {linkedWeek
-          ? <button className="btn sm on" title={'U kalendaru od ' + linkedWeek.start + ' — klikni da ukloniš'} onClick={() => store.unlinkMcFromWeek(linkedWeek.start)}><Icon.cal /> U kalendaru ✓</button>
-          : <button className="btn sm" onClick={() => setCalPick(true)}><Icon.cal /> Ubaci u kalendar</button>}
-        <button className="btn sm" onClick={() => setActive(store.duplicateMicrocycle(mc.id))} title="Napravi kopiju ovog MC"><Icon.plus /> Dupliraj</button>
-        <button className="btn sm" onClick={() => exportNodeAsImage(boardRef.current, `MC${dispN}${mc.range ? '-' + mc.range.replace(/[^\w]+/g, '_') : ''}.png`)}><Icon.download /> Slika</button>
-        {microcycles.length > 1 && (
-          <button className="btn ghost sm" title="Obriši mikrociklus"
-            onClick={() => { if (confirm(`Obrisati Mikrociklus ${dispN}?`)) { store.removeMicrocycle(mc.id); setActive(microcycles.find(x => x.id !== mc.id)?.id) } }}><Icon.trash /></button>
-        )}
+        <span className="mc-tabs-actions">
+          <button className="btn sm" onClick={() => setFavOpen(true)} title="Standardne (omiljene) aktivnosti"><Icon.gear /> Standardne</button>
+          {linkedWeek
+            ? <button className="btn sm on" title={'U kalendaru od ' + linkedWeek.start + ' — klikni da ukloniš'} onClick={() => store.unlinkMcFromWeek(linkedWeek.start)}><Icon.cal /> U kalendaru ✓</button>
+            : <button className="btn sm" onClick={() => setCalPick(true)}><Icon.cal /> Ubaci u kalendar</button>}
+          <button className="btn sm" onClick={() => setActive(store.duplicateMicrocycle(mc.id))} title="Napravi kopiju ovog MC"><Icon.plus /> Dupliraj</button>
+          <button className="btn sm" onClick={() => exportNodeAsImage(boardRef.current, `MC${dispN}${mc.range ? '-' + mc.range.replace(/[^\w]+/g, '_') : ''}.png`)}><Icon.download /> Slika</button>
+          {microcycles.length > 1 && (
+            <button className="btn ghost sm" title="Obriši mikrociklus"
+              onClick={() => { if (confirm(`Obrisati Mikrociklus ${dispN}?`)) { store.removeMicrocycle(mc.id); setActive(microcycles.find(x => x.id !== mc.id)?.id) } }}><Icon.trash /></button>
+          )}
+        </span>
       </div>
 
       <div className="sec-title mc-toolbar">
@@ -94,7 +104,7 @@ export default function Microcycles() {
           <button className={mc.type === 'Takmičarski' ? 'on comp' : ''} onClick={() => store.updateMicrocycle(mc.id, { type: 'Takmičarski' })}>Takmičarski</button>
         </div>
         <span className="mc-type-lab">Termin:</span>
-        <input className="input" type="time" value={allTime} onChange={e => setAllTime(e.target.value)} style={{ width: 130, padding: '5px 9px', fontSize: 12 }} title="Termin za sve dane" />
+        <TimeSelect className="input" value={allTime} onChange={setAllTime} style={{ width: 100, padding: '5px 9px', fontSize: 12 }} title="Termin za sve dane" />
         <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'am', allTime)} title="Upiši kao prepodnevni termin za sve dane">Prep. svima</button>
         <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'pm', allTime)} title="Upiši kao popodnevni termin za sve dane">Pop. svima</button>
       </div>
@@ -121,8 +131,7 @@ export default function Microcycles() {
                     <div className="mc-part" key={part}>
                       <div className="mc-part-h">
                         <span className="mc-plabel">{plabel}</span>
-                        <input className="mc-time" type="time" value={dm[part + 'Time'] || ''}
-                          onChange={e => store.setMcDay(mc.id, day, { [part + 'Time']: e.target.value })} title="Vreme treninga" />
+                        <TimeSelect className="mc-time" value={dm[part + 'Time']} onChange={v => store.setMcDay(mc.id, day, { [part + 'Time']: v })} title="Vreme treninga" />
                       </div>
                       {training ? (
                         <div className="mc-has-train" onClick={() => setTrDetail({ day, part })}>
