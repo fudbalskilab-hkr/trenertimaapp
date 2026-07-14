@@ -216,8 +216,9 @@ export default function FormationBoard({ match, players, store }) {
                   {p ? (
                     <div className={'bslot-p' + (picked === p.id ? ' picked' : '')} draggable onDragStart={() => { dragId.current = p.id }}>
                       <button className="bs-x" title="Nije pozvan" onClick={e => { e.stopPropagation(); toPool(p.id) }}>×</button>
-                      <span className="bs-num" style={{ background: POS_COLORS[grp(p)] || '#868e96' }}>{p.number ?? '?'}</span>
+                      <span className="bs-num" style={{ background: POS_COLORS[grp(p)] || '#868e96' }}>{p.pos || '–'}</span>
                       <span className="bs-name">{shortName(p.name)}</span>
+                      {p.number != null && p.number !== '' && <span className="bs-after">#{p.number}</span>}
                     </div>
                   ) : <span className="bs-plus">+</span>}
                 </div>
