@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { shortName } from '../data/store'
 import { posGroup, POS_COLORS } from '../data/seed'
 
@@ -122,6 +122,18 @@ export default function FormationBoard({ data, players, onChange, available }) {
     save(gkId === pid ? null : gkId, nf, nb)
   }
   function toPool(pid) { setWarn(''); const nf = { ...field }; delete nf[pid]; save(gkId === pid ? null : gkId, nf, benchIds.filter(b => b !== pid)) }
+
+  // Delete/Backspace briše izabranog (kliknutog) igrača
+  useEffect(() => {
+    if (!picked) return
+    function onKey(e) {
+      const t = e.target
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
+      if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); toPool(picked); setPicked(null) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [picked, gkId, field, benchIds])
 
   function pitchXY(e) { const r = fieldRef.current.getBoundingClientRect(); return { x: ((e.clientX || 0) - r.left) / r.width * 100, y: ((e.clientY || 0) - r.top) / r.height * 100 } }
   function place(pid, x, y) { if (y >= GK_ZONE + 1) setGk(pid); else addOut(pid, x, y) }
