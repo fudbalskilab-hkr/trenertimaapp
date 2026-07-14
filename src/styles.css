@@ -558,6 +558,7 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 .arch-card .ac-goal{font-size:12.5px;color:var(--ink-soft)}
 .arch-card .ac-meta{font-size:11.5px;color:var(--grey);margin-top:2px}
 /* MC dan sa treningom */
+.mc-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .mc-toolbar{flex-wrap:wrap;row-gap:8px}
 .mc-type-lab{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--grey-2)}
 .seg-toggle{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
