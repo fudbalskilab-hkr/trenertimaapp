@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useStore, fmtDate } from '../data/store'
-import { INTENSITY, intensityColor, intensityBg } from '../data/seed'
+import { INTENSITY, intensityColor, intensityBg, matchColor } from '../data/seed'
 import { Icon, Crest } from '../components/Icons'
 import { exportNodeAsImage } from '../utils/exportImage'
 import { mcDayOverview } from '../utils/mcOverview'
@@ -78,16 +78,20 @@ export default function Calendar({ openMatch }) {
           <div className="days">
             {w.days.map((d, di) => {
               const match = byDate[d.date] || (d.matchId ? matches.find(m => m.id === d.matchId) : null)
+              const mc_ = match ? matchColor(match) : null
               const mcOv = linkedMc && !match ? mcDayOverview(linkedMc, di) : null
               const dayInt = match ? 'match' : (mcOv ? mcOv.intensity : d.intensity)
               const isToday = d.date === today
               const isOff = !match && dayInt === 'free'
+              const dayBg = match ? `color-mix(in srgb, ${mc_.bg} 72%, var(--surface))` : tint(dayInt)
+              const stripeC = match ? mc_.color : intensityColor(dayInt)
               return (
-                <div className={'day' + (match ? ' match' : '') + (isToday ? ' today' : '') + (isOff ? ' off' : '')} key={di} style={{ background: tint(dayInt) }}
+                <div className={'day' + (match ? ' match' : '') + (isToday ? ' today' : '') + (isOff ? ' off' : '')} key={di}
+                  style={{ background: dayBg, ...(match ? { borderColor: mc_.color, boxShadow: `0 0 0 2px ${mc_.color} inset` } : {}) }}
                   onDragOver={e => e.preventDefault()}
                   onDrop={() => { if (drag.current && !linkedMc) { store.swapCalendarDays(drag.current, { wi, di }); drag.current = null } }}>
                   {isToday && <span className="today-flag">DANAS</span>}
-                  <div className="int-stripe" style={{ background: intensityColor(dayInt) }} />
+                  <div className="int-stripe" style={{ background: stripeC }} />
                   <div className={'day-h' + (!linkedMc && !match ? ' clickable' : '')} draggable={!linkedMc}
                     onDragStart={() => { if (!linkedMc) drag.current = { wi, di } }}
                     onClick={() => { if (!linkedMc && !match) setDayOpt({ wi, di }) }}
@@ -104,11 +108,11 @@ export default function Calendar({ openMatch }) {
                   </div>
                   {match ? (
                     <button className="match-cell" style={{ border: 0, background: 'transparent', cursor: 'pointer', width: '100%' }} onClick={() => setPopup(match)}>
+                      <span className="ha-badge" style={{ background: mc_.color }} title={mc_.label}>{mc_.short}</span>
                       <div className="match-crest">{match.crest ? <img src={match.crest} alt="grb" /> : <span>grb</span>}</div>
-                      <b>{match.opp}</b>
                       {match.played
-                        ? <small><b className="num" style={{ fontSize: 14 }}>{match.gf ?? '–'}:{match.ga ?? '–'}</b></small>
-                        : <small>{match.home ? 'domaćin' : 'gost'} · {match.time}</small>}
+                        ? <b className="num" style={{ fontSize: 18 }}>{match.gf ?? '–'}:{match.ga ?? '–'}</b>
+                        : <small>{match.time}</small>}
                     </button>
                   ) : isOff ? (
                     <div className="off-cell" onClick={linkedMc ? undefined : () => setDayOpt({ wi, di })}

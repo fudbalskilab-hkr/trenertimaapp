@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
-import { posGroup } from '../data/seed'
+import { posGroup, POS_COLORS, matchColor } from '../data/seed'
 import { Icon, Crest } from '../components/Icons'
 import FormationBoard from '../components/FormationBoard'
 import RatingSlider from '../components/RatingSlider'
@@ -52,15 +52,8 @@ export default function Matches({ focusId, onFocusHandled }) {
 
   return (
     <section>
-      <div className="mc-tabs">
-        {matches.map(x => (
-          <button key={x.id} className={'mc-tab' + (x.id === activeId ? ' on' : '') + (x.kind === 'league' ? ' comp' : '')} onClick={() => setActiveId(x.id)}>
-            {needsFilling(x) && <span className="match-flag" title="Treba popuniti">!</span>}
-            vs {x.opp}<small>{x.date ? fmtDate(x.date) + ' · ' : ''}{x.home ? 'dom' : 'gost'}</small>
-          </button>
-        ))}
-        <button className="btn primary sm" onClick={() => setActiveId(store.addMatch())}><Icon.plus /> Nova utakmica</button>
-      </div>
+      <MatchList matches={matches} activeId={activeId} onSelect={setActiveId} onNew={() => setActiveId(store.addMatch())} />
+
       {matches.length === 0 && <div className="card"><div className="empty">Nema utakmica. Klikni „+ Nova utakmica".</div></div>}
       {m && <>
 
@@ -84,7 +77,11 @@ export default function Matches({ focusId, onFocusHandled }) {
             <input className="sc-box num" value={m.ga ?? ''} onChange={e => setScore('ga', e.target.value)} inputMode="numeric" placeholder="–" aria-label="Golovi gosti" />
           </div>
           <span className="status">{m.played ? '⚫ Odigrana' : '🔵 Zakazana'}</span>
-          <div className="rm-meta">{fmtDate(m.date)}{m.date?.slice(0, 4)} · {m.time}<br />{m.comp} · {m.home ? 'domaćin' : 'gost'}</div>
+          <div className="ha-toggle">
+            <button className={m.home ? 'on' : ''} onClick={() => store.updateMatch(m.id, { home: true })}>Domaćin</button>
+            <button className={!m.home ? 'on' : ''} onClick={() => store.updateMatch(m.id, { home: false })}>Gost</button>
+          </div>
+          <div className="rm-meta">{fmtDate(m.date)}{m.date?.slice(0, 4)} · {m.time}<br />{m.comp}</div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button className="btn sm" style={{ background: 'rgba(255,255,255,.16)', border: 0, color: '#fff' }} onClick={() => setEditMeta(true)}>Izmeni</button>
             <button className="btn sm" style={{ background: m.played ? 'rgba(255,255,255,.16)' : '#1E9E6A', border: 0, color: '#fff' }}
@@ -168,6 +165,103 @@ export default function Matches({ focusId, onFocusHandled }) {
   )
 }
 
+function sortMatches(matches) {
+  return [...matches].sort((a, b) => {
+    const da = a.date || '9999-99-99', db = b.date || '9999-99-99'
+    return da < db ? 1 : da > db ? -1 : 0 // najnovije prvo (prazan datum = novo, ide gore)
+  })
+}
+
+function MatchList({ matches, activeId, onSelect, onNew }) {
+  const [view, setView] = useState(() => localStorage.getItem('trenertima_matchview') || 'list')
+  const [page, setPage] = useState(0)
+  const [allOpen, setAllOpen] = useState(false)
+  const sorted = sortMatches(matches)
+  const per = 5
+  const maxPage = Math.max(0, Math.ceil(sorted.length / per) - 1)
+  const pg = Math.min(page, maxPage)
+  const items = sorted.slice(pg * per, pg * per + per)
+  const setV = v => { setView(v); localStorage.setItem('trenertima_matchview', v) }
+
+  return (
+    <div className="match-browser">
+      <div className="mb-bar">
+        <button className="btn primary sm" onClick={onNew}><Icon.plus /> Nova utakmica</button>
+        <div style={{ flex: 1 }} />
+        <div className="view-toggle">
+          <button className={view === 'list' ? 'on' : ''} onClick={() => setV('list')} title="Lista">☰</button>
+          <button className={view === 'cards' ? 'on' : ''} onClick={() => setV('cards')} title="Kartice">▦</button>
+        </div>
+        <button className="btn sm" onClick={() => setAllOpen(true)}>Sve utakmice ({matches.length})</button>
+      </div>
+
+      {sorted.length > 0 && (
+        <div className="mb-body">
+          <button className="mb-arrow" disabled={pg >= maxPage} onClick={() => setPage(pg + 1)} title="Starije">‹</button>
+          <div className={view === 'cards' ? 'match-cards' : 'match-rows'}>
+            {items.map(m => view === 'cards'
+              ? <MatchCard key={m.id} m={m} active={m.id === activeId} onClick={() => onSelect(m.id)} />
+              : <MatchRow key={m.id} m={m} active={m.id === activeId} onClick={() => onSelect(m.id)} />)}
+          </div>
+          <button className="mb-arrow" disabled={pg <= 0} onClick={() => setPage(pg - 1)} title="Novije">›</button>
+        </div>
+      )}
+      {sorted.length > per && <div className="mb-page">prikaz {pg * per + 1}–{Math.min(pg * per + per, sorted.length)} od {sorted.length} · strelice za dalje</div>}
+
+      {allOpen && <AllMatches matches={sorted} activeId={activeId} onClose={() => setAllOpen(false)} onSelect={id => { onSelect(id); setAllOpen(false) }} />}
+    </div>
+  )
+}
+
+function MatchRow({ m, active, onClick }) {
+  const c = matchColor(m)
+  return (
+    <button className={'match-row' + (active ? ' active' : '')} onClick={onClick} style={{ borderLeftColor: c.color }}>
+      {needsFilling(m) && <span className="match-flag" title="Treba popuniti">!</span>}
+      <span className="mr-date">{m.date ? fmtDate(m.date) : '—'}</span>
+      <span className="mr-crest">{m.crest ? <img src={m.crest} alt="" /> : <span className="mr-nocrest">?</span>}</span>
+      <span className="mr-opp">{m.opp}</span>
+      <span className="mr-ha" style={{ background: c.color }} title={c.label}>{c.short}</span>
+      <span className="mr-res num">{m.played ? `${m.gf ?? '–'}:${m.ga ?? '–'}` : (m.time || '')}</span>
+      <span className="mr-comp">{m.comp}</span>
+    </button>
+  )
+}
+
+function MatchCard({ m, active, onClick }) {
+  const c = matchColor(m)
+  return (
+    <button className={'match-card' + (active ? ' active' : '')} onClick={onClick} style={{ borderTopColor: c.color }}>
+      {needsFilling(m) && <span className="match-flag" title="Treba popuniti">!</span>}
+      <div className="mcard-crest">{m.crest ? <img src={m.crest} alt="" /> : <span className="mr-nocrest">?</span>}</div>
+      <div className="mcard-res num">{m.played ? `${m.gf ?? '–'}:${m.ga ?? '–'}` : 'VS'}</div>
+      <div className="mcard-opp">{m.opp}</div>
+      <div className="mcard-meta"><span className="mr-ha" style={{ background: c.color }}>{c.short}</span> {m.date ? fmtDate(m.date) : '—'}</div>
+      <div className="mcard-comp">{m.comp}</div>
+    </button>
+  )
+}
+
+function AllMatches({ matches, activeId, onClose, onSelect }) {
+  const [q, setQ] = useState('')
+  const ql = q.trim().toLowerCase()
+  const list = ql ? matches.filter(m => (m.opp || '').toLowerCase().includes(ql) || (m.comp || '').toLowerCase().includes(ql)) : matches
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 560 }}>
+        <div className="modal-h"><h3>Sve utakmice ({matches.length})</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-b" style={{ maxHeight: '72vh', overflow: 'auto' }}>
+          <input className="input" style={{ marginBottom: 10 }} value={q} onChange={e => setQ(e.target.value)} placeholder="🔍 traži po protivniku ili takmičenju…" />
+          <div className="match-rows">
+            {list.map(m => <MatchRow key={m.id} m={m} active={m.id === activeId} onClick={() => onSelect(m.id)} />)}
+            {list.length === 0 && <div className="empty" style={{ padding: 16 }}>Nema rezultata.</div>}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CrestPicker({ current, onClose, onSave }) {
   const [url, setUrl] = useState('')
   const [busy, setBusy] = useState(false)
@@ -204,6 +298,8 @@ function CrestPicker({ current, onClose, onSave }) {
 
 const POS_RANK = { gk: 0, def: 1, mid: 2, att: 3 }
 const posRank = p => { const g = posGroup(p.pos); return g ? POS_RANK[g] : 9 }
+const GROUPS = [{ key: 'gk', label: 'Golmani' }, { key: 'def', label: 'Odbrana' }, { key: 'mid', label: 'Vezni red' }, { key: 'att', label: 'Napad' }, { key: '_', label: 'Ostalo' }]
+const byPosNum = (a, b) => posRank(a) - posRank(b) || (a.number ?? 99) - (b.number ?? 99)
 const STATS = [
   { type: 'goal', ico: '⚽' }, { type: 'assist', ico: '🅰' },
   { type: 'yellow', ico: '🟨' }, { type: 'red', ico: '🟥' },
@@ -284,20 +380,38 @@ function PlayersCard({ m, players, store }) {
 }
 
 function AddMatchPlayer({ players, onClose, onPick }) {
+  const [q, setQ] = useState('')
+  const ql = q.trim().toLowerCase()
+  const list = ql ? players.filter(p => p.name.toLowerCase().includes(ql) || (p.pos || '').toLowerCase().includes(ql)) : players
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-h"><h3>Dodaj igrača (ušao kao izmena)</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
-        <div className="modal-b" style={{ maxHeight: '60vh', overflow: 'auto' }}>
-          {players.length === 0 ? <div className="empty">Svi igrači su već na spisku.</div> : (
-            <div className="lineup-chips">
-              {players.map(p => (
-                <button key={p.id} className="pchip" onClick={() => onPick(p.id)}>
-                  <span>{shortName(p.name)}</span>{p.pos && <span className="pc-pos">{p.pos}</span>}
-                </button>
-              ))}
-            </div>
-          )}
+        <div className="modal-b" style={{ maxHeight: '62vh', overflow: 'auto' }}>
+          {players.length === 0 ? <div className="empty">Svi igrači su već na spisku.</div> : (<>
+            <input className="input" style={{ marginBottom: 10 }} value={q} autoFocus onChange={e => setQ(e.target.value)} placeholder="🔍 traži igrača…" />
+            {GROUPS.map(g => {
+              const gl = list.filter(p => (posGroup(p.pos) || '_') === g.key).sort(byPosNum)
+              if (!gl.length) return null
+              return (
+                <div key={g.key} className="pick-group">
+                  <div className="pick-group-h"><span className="bg-dot" style={{ background: POS_COLORS[g.key] || '#adb5bd' }} />{g.label} <span className="bg-n">{gl.length}</span></div>
+                  <div className="lineup-chips">
+                    {gl.map(p => {
+                      const col = POS_COLORS[posGroup(p.pos) || '_'] || '#868e96'
+                      return (
+                        <button key={p.id} className="pchip" onClick={() => onPick(p.id)} style={{ borderLeft: `4px solid ${col}` }}>
+                          <span className="pc-num" style={{ background: col }}>{p.number ?? '?'}</span>
+                          <span className="pc-name">{shortName(p.name)}</span>{p.pos && <span className="pc-pos">{p.pos}</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+            {ql && list.length === 0 && <div className="empty" style={{ padding: 12 }}>Nema rezultata za „{q}".</div>}
+          </>)}
         </div>
       </div>
     </div>

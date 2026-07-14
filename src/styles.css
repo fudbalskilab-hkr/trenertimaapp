@@ -615,3 +615,76 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
   .mobile-only{display:flex}
 }
 @media (max-width:560px){.kpis{grid-template-columns:1fr 1fr}.months{grid-template-columns:repeat(3,1fr)}.row2{grid-template-columns:1fr}}
+
+/* ===== UTAKMICE — dorade ===== */
+/* H/A prekidač na izveštaju */
+.ha-toggle{display:inline-flex;border-radius:9px;overflow:hidden;border:1px solid rgba(255,255,255,.25)}
+.ha-toggle button{border:0;background:rgba(255,255,255,.12);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer}
+.ha-toggle button.on{background:#fff;color:#123}
+/* H/A/P oznaka (kalendar + spisak) */
+.ha-badge{position:absolute;top:6px;left:6px;z-index:3;width:18px;height:18px;border-radius:6px;color:#fff;
+  font-size:10px;font-weight:900;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.match-cell{position:relative}
+.mr-ha{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:5px;color:#fff;font-size:9.5px;font-weight:900;flex:0 0 auto}
+
+/* Spisak utakmica (lista / kartice) */
+.match-browser{margin-bottom:18px}
+.mb-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.view-toggle{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.view-toggle button{border:0;background:var(--surface);color:var(--grey);font-size:15px;line-height:1;padding:5px 10px;cursor:pointer}
+.view-toggle button.on{background:var(--blue-600);color:#fff}
+.mb-body{display:flex;align-items:stretch;gap:8px}
+.mb-arrow{flex:0 0 auto;width:30px;border:1px solid var(--line);border-radius:9px;background:var(--surface);
+  color:var(--blue-600);font-size:20px;font-weight:800;cursor:pointer}
+.mb-arrow:hover:not(:disabled){background:var(--blue-50)}
+.mb-arrow:disabled{opacity:.3;cursor:default}
+.match-rows{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.match-row{position:relative;display:flex;align-items:center;gap:10px;padding:8px 12px 8px 14px;border:1px solid var(--line);
+  border-left:4px solid var(--blue-500);border-radius:10px;background:var(--surface);cursor:pointer;text-align:left;width:100%}
+.match-row:hover{border-color:var(--blue-300);background:var(--blue-50)}
+.match-row.active{box-shadow:0 0 0 2px var(--blue-500);border-color:var(--blue-500)}
+.mr-date{font-size:11px;color:var(--grey);width:52px;flex:0 0 auto;font-weight:600}
+.mr-crest{width:26px;height:26px;flex:0 0 auto;display:grid;place-items:center}
+.mr-crest img{width:100%;height:100%;object-fit:contain}
+.mr-nocrest{width:22px;height:22px;border-radius:6px;background:var(--surface-2);color:var(--grey-2);display:grid;place-items:center;font-size:11px;font-weight:700}
+.mr-opp{flex:1;font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mr-res{width:44px;text-align:center;font-weight:800;font-size:13px;flex:0 0 auto}
+.mr-comp{font-size:10.5px;color:var(--grey);width:88px;text-align:right;flex:0 0 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.match-row .match-flag,.match-card .match-flag{position:absolute;top:-6px;left:-6px}
+.match-cards{flex:1;display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.match-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px 10px;
+  border:1px solid var(--line);border-top:3px solid var(--blue-500);border-radius:11px;background:var(--surface);cursor:pointer}
+.match-card:hover{border-color:var(--blue-300);background:var(--blue-50)}
+.match-card.active{box-shadow:0 0 0 2px var(--blue-500)}
+.mcard-crest{width:40px;height:40px;display:grid;place-items:center}
+.mcard-crest img{width:100%;height:100%;object-fit:contain}
+.mcard-res{font-size:18px;font-weight:800}
+.mcard-opp{font-weight:700;font-size:12px;text-align:center;line-height:1.15;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.mcard-meta{font-size:10px;color:var(--grey);display:flex;align-items:center;gap:5px}
+.mcard-comp{font-size:9.5px;color:var(--grey-2);text-align:center;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.mb-page{font-size:10.5px;color:var(--grey-2);text-align:center;margin-top:7px}
+
+/* Izbor igrača — grupe/boje/broj (klupa + dodavanje) */
+.bench-search{padding:0 9px 8px}
+.bench-search .input{padding:6px 9px;font-size:12px}
+.bench-group{margin-bottom:8px}
+.bench-group-h,.pick-group-h{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--grey);padding:3px 2px 5px}
+.bg-dot{width:10px;height:10px;border-radius:3px;flex:0 0 auto}
+.bg-n{margin-left:auto;color:var(--grey-2)}
+.bench-group .bench-item{margin-bottom:5px}
+.bench-item .bi-num{background:var(--blue-900)}
+.pick-group{margin-bottom:10px}
+.pc-num{width:22px;height:22px;border-radius:6px;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700;flex:0 0 auto}
+.pc-name{flex:1}
+
+/* Teren — slobodno postavljanje */
+.pitch-field .token{position:absolute;transform:translate(-50%,-50%);cursor:grab;z-index:2}
+.pitch-field .token .disc{border-width:3px}
+.token .tpos{font-size:9px;font-weight:700;opacity:.95}
+.token-x{position:absolute;top:-7px;right:-7px;z-index:4;width:17px;height:17px;border-radius:50%;border:0;
+  background:rgba(0,0,0,.6);color:#fff;font-size:12px;line-height:1;cursor:pointer;display:none;place-items:center}
+.token:hover .token-x{display:grid}
+.pitch-hint{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:5;background:rgba(0,0,0,.72);
+  color:#fff;font-size:11px;padding:5px 12px;border-radius:20px;white-space:nowrap;pointer-events:none}
+@media (max-width:560px){.match-cards{grid-template-columns:repeat(2,1fr)}.mr-comp{display:none}}

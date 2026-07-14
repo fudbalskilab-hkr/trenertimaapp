@@ -23,6 +23,15 @@ export const INTENSITY = [
 export const intensityColor = (k) => (INTENSITY.find(i => i.key === k) || {}).color || 'transparent'
 export const intensityBg = (k) => (INTENSITY.find(i => i.key === k) || {}).bg || 'transparent'
 
+// Boja dana u kalendaru za utakmicu — po tome da li smo domaćin/gost ili je pripremna
+export const MATCH_COLORS = {
+  home: { color: '#1864AB', bg: '#A5D8FF', label: 'DOMAĆIN', short: 'H' },
+  away: { color: '#862E9C', bg: '#EEBEFA', label: 'GOST', short: 'A' },
+  friendly: { color: '#0B7285', bg: '#96F2D7', label: 'PRIPREMNA', short: 'P' },
+}
+export const matchColorKey = (m) => (m && m.kind === 'friendly') ? 'friendly' : (m && m.home ? 'home' : 'away')
+export const matchColor = (m) => MATCH_COLORS[matchColorKey(m)]
+
 // Grupa pozicije (za bojenje): gk / def / mid / att
 const DEF = ['CB', 'LCB', 'RCB', 'CCB', 'LB', 'RB', 'LWB', 'RWB', 'WB', 'DF', 'D']
 const MID = ['DM', 'CM', 'LCM', 'RCM', 'LM', 'RM', 'AMF', 'AM', 'CAM', 'MF', 'M']
