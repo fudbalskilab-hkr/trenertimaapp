@@ -117,8 +117,8 @@ export default function Microcycles() {
                   const training = dm[part + 'Training']
                   return (
                     <div className="mc-part" key={part}>
-                      <div className="mc-part-h"><span style={{ flex: 1 }}>{plabel}</span></div>
-                      <div className="mc-time-row">
+                      <div className="mc-part-h">
+                        <span className="mc-plabel">{plabel}</span>
                         <input className="mc-time" type="time" value={dm[part + 'Time'] || ''}
                           onChange={e => store.setMcDay(mc.id, day, { [part + 'Time']: e.target.value })} title="Vreme treninga" />
                       </div>

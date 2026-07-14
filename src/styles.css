@@ -348,10 +348,10 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 .mc-day-ctrl input{width:100%;padding:5px 8px;font-size:11.5px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink)}
 .mc-day-ctrl .btn{padding:5px 8px;font-size:10.5px;white-space:nowrap}
 .mc-part{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:1}
-.mc-part-h{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--blue-600);
-  padding:5px 9px;background:var(--surface-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px}
-.mc-time-row{padding:6px 9px 2px}
-.mc-time{display:block;width:100%;box-sizing:border-box;padding:4px 6px;font-size:11.5px;border:1px solid var(--line);border-radius:6px;
+.mc-part-h{font-size:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:800;color:var(--blue-600);
+  padding:4px 8px;background:var(--surface-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px}
+.mc-plabel{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc-time{width:98px;flex:0 0 auto;padding:3px 4px;font-size:11px;border:1px solid var(--line);border-radius:6px;
   background:var(--surface);color:var(--ink);text-align:center;font-variant-numeric:tabular-nums}
 .comp-theme .mc-part-h{color:#B23B3B}
 .comp-theme .mc-part-h{color:#B23B3B}
