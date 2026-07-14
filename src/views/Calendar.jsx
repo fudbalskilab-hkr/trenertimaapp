@@ -6,7 +6,6 @@ import { exportNodeAsImage } from '../utils/exportImage'
 import { mcDayOverview } from '../utils/mcOverview'
 
 const MONTHS_SR = ['januar', 'februar', 'mart', 'april', 'maj', 'jun', 'jul', 'avgust', 'septembar', 'oktobar', 'novembar', 'decembar']
-const CYCLE = [null, 'match', '80', '50', '30', 'regen', 'free']
 const tint = k => { const c = intensityColor(k); return c === 'transparent' ? 'var(--surface)' : `color-mix(in srgb, ${c} 32%, var(--surface))` }
 
 function mondayOf(d) { const x = new Date(d); const dw = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dw); return x.toISOString().slice(0, 10) }
@@ -23,6 +22,7 @@ export default function Calendar({ openMatch }) {
   const [edit, setEdit] = useState(null)
   const [popup, setPopup] = useState(null)      // utakmica za popup
   const [newMatch, setNewMatch] = useState(null) // {date}
+  const [dayOpt, setDayOpt] = useState(null)     // {wi, di} — opcije dana
   const drag = useRef(null)
   const areaRef = useRef()
 
@@ -85,14 +85,15 @@ export default function Calendar({ openMatch }) {
                 <div className={'day' + (match ? ' match' : '') + (isToday ? ' today' : '') + (isOff ? ' off' : '')} key={di} style={{ background: tint(dayInt) }}
                   onDragOver={e => e.preventDefault()}
                   onDrop={() => { if (drag.current && !linkedMc) { store.swapCalendarDays(drag.current, { wi, di }); drag.current = null } }}>
+                  {isToday && <span className="today-flag">DANAS</span>}
                   <div className="int-stripe" style={{ background: intensityColor(dayInt) }} />
                   <div className="day-h" draggable={!linkedMc} onDragStart={() => { if (!linkedMc) drag.current = { wi, di } }} title={linkedMc ? '' : 'Prevuci da zameniš dan'} style={{ cursor: linkedMc ? 'default' : 'grab' }}>
                     <b>{d.day.toUpperCase()}</b>
                     <span className="dt">{fmtDate(d.date)}</span>
                     {!match && !mcOv && (
                       <button className="int-swatch" style={{ background: intensityColor(d.intensity) || 'rgba(255,255,255,.15)' }}
-                        title={'Intenzitet: ' + (INTENSITY.find(x => x.key === d.intensity)?.label || 'nije označen')}
-                        onClick={() => { const cur = CYCLE.indexOf(d.intensity); store.setDayIntensity(wi, di, CYCLE[(cur + 1) % CYCLE.length]) }} />
+                        title="Opcije dana — intenzitet / OFF / utakmica"
+                        onClick={() => setDayOpt({ wi, di })} />
                     )}
                   </div>
                   {match ? (
@@ -136,6 +137,14 @@ export default function Calendar({ openMatch }) {
       {popup && <MatchPopup m={popup} onClose={() => setPopup(null)} onOpen={() => { setPopup(null); openMatch && openMatch(popup.id) }} />}
       {newMatch && <NewMatch date={newMatch.date} store={store} onClose={() => setNewMatch(null)}
         onCreated={id => { setNewMatch(null); openMatch && openMatch(id) }} />}
+      {dayOpt && (() => {
+        const d = calendar[dayOpt.wi]?.days[dayOpt.di]; if (!d) return null
+        const exMatch = byDate[d.date] || (d.matchId ? matches.find(m => m.id === d.matchId) : null)
+        return <DayOptions d={d} existingMatch={exMatch} onClose={() => setDayOpt(null)}
+          onIntensity={k => store.setDayIntensity(dayOpt.wi, dayOpt.di, k)}
+          onAddMatch={() => { const dt = d.date; setDayOpt(null); setNewMatch({ date: dt }) }}
+          onOpenMatch={m => { setDayOpt(null); openMatch && openMatch(m.id) }} />
+      })()}
     </section>
   )
 }
@@ -201,6 +210,34 @@ function NewMatch({ date, store, onClose, onCreated }) {
         </div>
         <div className="modal-f"><button className="btn ghost" onClick={onClose}>Otkaži</button>
           <button className="btn primary" disabled={!f.opp.trim()} onClick={create}>Napravi i otvori</button></div>
+      </div>
+    </div>
+  )
+}
+
+function DayOptions({ d, existingMatch, onClose, onIntensity, onAddMatch, onOpenMatch }) {
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 380 }}>
+        <div className="modal-h"><h3>{d.day} · {fmtDate(d.date)}</h3>
+          <button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-b">
+          <div className="field"><label>Intenzitet / tip dana</label>
+            <div className="int-choose">
+              <button className={'int-opt' + (!d.intensity ? ' on' : '')} onClick={() => onIntensity(null)}>
+                <span className="sw" style={{ background: 'rgba(128,128,128,.3)' }} />Bez oznake</button>
+              {INTENSITY.map(i => (
+                <button key={i.key} className={'int-opt' + (d.intensity === i.key ? ' on' : '')} onClick={() => onIntensity(i.key)}>
+                  <span className="sw" style={{ background: i.color }} />{i.label}{i.key === 'free' ? ' (OFF)' : ''}</button>
+              ))}
+            </div>
+          </div>
+          <div className="field" style={{ marginBottom: 0 }}><label>Utakmica</label>
+            {existingMatch
+              ? <button className="btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => onOpenMatch(existingMatch)}><Icon.match /> Otvori utakmicu ({existingMatch.opp || 'protivnik'})</button>
+              : <button className="btn primary" style={{ width: '100%', justifyContent: 'center' }} onClick={onAddMatch}><Icon.match /> Dodaj utakmicu na ovaj dan</button>}
+          </div>
+        </div>
       </div>
     </div>
   )
