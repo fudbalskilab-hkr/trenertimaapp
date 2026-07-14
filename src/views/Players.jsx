@@ -236,11 +236,11 @@ function Roster({ addOpen, onCloseAdd }) {
   )
 }
 
+const PROF_TABS = [['profil', 'Profil'], ['stat', 'Statistika'], ['dolazci', 'Dolazci'], ['med', 'Med. karton'], ['fee', 'Članarine']]
+
 function Profile({ player, store, matches, onEdit }) {
-  const st = computeStats(player.id, matches, player)
-  const fee = store.fees[player.id] || {}
+  const [ptab, setPtab] = useState('profil')
   const age = ageFrom(player.dob)
-  const exempt = !!player.exempt
   const photoRef = useRef()
   function uploadPhoto(e) {
     const file = e.target.files[0]; if (!file) return
@@ -255,7 +255,7 @@ function Profile({ player, store, matches, onEdit }) {
         </button>
         <input ref={photoRef} type="file" accept="image/*" hidden onChange={uploadPhoto} />
         <div>
-          <h3>{player.name}</h3>
+          <h3>{player.name}{player.registered && <span className="reg-chk" title="Registrovan">✓</span>}</h3>
           <div className="meta">{[player.pos, player.alt].filter(Boolean).join(' / ') || 'bez pozicije'} · {isoToDisp(player.dob) || 'nepoznat datum'}{age != null ? ` (${age})` : ''}</div>
           <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {player.foot && <span className="tag" style={{ textTransform: 'capitalize' }}>{player.foot} noga</span>}
@@ -271,31 +271,76 @@ function Profile({ player, store, matches, onEdit }) {
         </div>
       </div>
 
+      <div className="subtabs prof-tabs">
+        {PROF_TABS.map(([k, l]) => <button key={k} className={ptab === k ? 'on' : ''} onClick={() => setPtab(k)}>{l}</button>)}
+      </div>
+
+      {ptab === 'profil' && <ProfilTab player={player} store={store} />}
+      {ptab === 'stat' && <StatTab player={player} matches={matches} />}
+      {ptab === 'dolazci' && <div className="empty" style={{ margin: 18, padding: 22 }}>Evidencija dolazaka se uvodi preko „zatvaranja treninga" u kalendaru — uskoro.</div>}
+      {ptab === 'med' && <MedTab player={player} store={store} />}
+      {ptab === 'fee' && <FeeTab player={player} store={store} />}
+    </div>
+  )
+}
+
+function ProfilTab({ player, store }) {
+  const setC = (k, v) => store.updatePlayer(player.id, { [k]: v })
+  return (
+    <>
       <div className="kv">
+        <div><div className="kk">Broj dresa</div><div className="vv">{player.number ?? '—'}</div></div>
         <div><div className="kk">Datum rođenja</div><div className="vv">{isoToDisp(player.dob) || '—'}</div></div>
         <div><div className="kk">Jača noga</div><div className="vv" style={{ textTransform: 'capitalize' }}>{player.foot || '—'}</div></div>
         <div><div className="kk">Pozicija</div><div className="vv">{posBadge(player.pos)}</div></div>
         <div><div className="kk">Alternativna</div><div className="vv">{player.alt || '—'}</div></div>
+        <div><div className="kk">Visina/težina</div><div className="vv">{player.hw || '—'}</div></div>
       </div>
+      <div className="prof-sec">
+        <div className="prof-sec-h">Registracija</div>
+        <button className={'pill ' + (player.registered ? 'good' : 'bad')} style={{ cursor: 'pointer', border: 0 }}
+          onClick={() => setC('registered', !player.registered)}>{player.registered ? 'Registrovan ✓' : 'Nije registrovan'}</button>
+      </div>
+      <div className="prof-sec">
+        <div className="prof-sec-h">Kontakt</div>
+        <div className="ct-grid">
+          <label>Telefon igrača<input className="input" defaultValue={player.phone || ''} onBlur={e => setC('phone', e.target.value)} placeholder="06x…" /></label>
+          <label>Roditelj<input className="input" defaultValue={player.parent || ''} onBlur={e => setC('parent', e.target.value)} placeholder="ime" /></label>
+          <label>Telefon roditelja<input className="input" defaultValue={player.parentPhone || ''} onBlur={e => setC('parentPhone', e.target.value)} placeholder="06x…" /></label>
+          <label>Email<input className="input" defaultValue={player.email || ''} onBlur={e => setC('email', e.target.value)} placeholder="opciono" /></label>
+        </div>
+      </div>
+    </>
+  )
+}
 
-      <div className="eyebrow" style={{ padding: '16px 18px 0' }}>Statistika sezone</div>
+function StatTab({ player, matches }) {
+  const st = computeStats(player.id, matches, player)
+  return (
+    <>
       <div className="statgrid">
         <Stat n={st.apps} l="Nastupi" />
         <Stat n={st.minutes} l="Minuti" />
         <Stat n={st.goals} l="Golovi" />
         <Stat n={st.assists} l="Asist." />
         <Stat n={st.yellow} l="Žuti" />
+        <Stat n={st.red} l="Crveni" />
         <Stat n={st.cs} l="Clean sheet" />
       </div>
-
       <RatingsBlock player={player} matches={matches} />
+    </>
+  )
+}
 
-
-      <div style={{ display: 'flex', alignItems: 'center', padding: '4px 18px 8px', gap: 8 }}>
+function FeeTab({ player, store }) {
+  const fee = store.fees[player.id] || {}
+  const exempt = !!player.exempt
+  return (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '14px 18px 8px', gap: 8 }}>
         <span className="eyebrow">Članarina 2026</span>
         <button className={'pill ' + (exempt ? 'bad' : 'good')} style={{ marginLeft: 'auto', cursor: 'pointer', border: 0 }}
-          onClick={() => store.updatePlayer(player.id, { exempt: !exempt })}
-          title="Da li igrač plaća članarinu">
+          onClick={() => store.updatePlayer(player.id, { exempt: !exempt })} title="Da li igrač plaća članarinu">
           {exempt ? 'Ne plaća' : 'Plaća'}
         </button>
       </div>
@@ -305,14 +350,56 @@ function Profile({ player, store, matches, onEdit }) {
         <div className="months">
           {FEE_MONTHS.slice(0, 6).map(m => {
             const paid = fee[m]
-            return (
-              <button key={m} className={'mo ' + (paid ? 'paid' : 'due')} onClick={() => store.toggleFee(player.id, m)}>
-                <small>{m.toUpperCase()}</small>{paid ? '✓' : '✕'}
-              </button>
-            )
+            return (<button key={m} className={'mo ' + (paid ? 'paid' : 'due')} onClick={() => store.toggleFee(player.id, m)}><small>{m.toUpperCase()}</small>{paid ? '✓' : '✕'}</button>)
           })}
         </div>
       )}
+    </>
+  )
+}
+
+function MedTab({ player, store }) {
+  const med = player.med || []
+  const [text, setText] = useState('')
+  const [inj, setInj] = useState(false)
+  const [days, setDays] = useState('')
+  const [tr, setTr] = useState('')
+  const [mt, setMt] = useState('')
+  function add() {
+    if (!text.trim()) return
+    const entry = { id: 'n' + Date.now(), date: new Date().toISOString().slice(0, 10), text: text.trim(), injury: inj ? { days: Number(days) || 0, tr: Number(tr) || 0, mt: Number(mt) || 0 } : null }
+    store.updatePlayer(player.id, { med: [entry, ...med] })
+    setText(''); setInj(false); setDays(''); setTr(''); setMt('')
+  }
+  const del = id => store.updatePlayer(player.id, { med: med.filter(e => e.id !== id) })
+  return (
+    <div style={{ padding: '14px 18px 18px' }}>
+      <div className="field"><label>Nova beleška</label>
+        <textarea className="input" rows={2} value={text} onChange={e => setText(e.target.value)} placeholder="npr. Istegnuće zadnje lože, pauzira…" /></div>
+      <label className="med-check"><input type="checkbox" checked={inj} onChange={e => setInj(e.target.checked)} /> Povreda (upiši trajanje)</label>
+      {inj && <div className="med-inj-row">
+        <label>Dana<input className="input" inputMode="numeric" value={days} onChange={e => setDays(e.target.value)} placeholder="0" /></label>
+        <label>Propušteno treninga<input className="input" inputMode="numeric" value={tr} onChange={e => setTr(e.target.value)} placeholder="0" /></label>
+        <label>Propušteno utakmica<input className="input" inputMode="numeric" value={mt} onChange={e => setMt(e.target.value)} placeholder="0" /></label>
+      </div>}
+      <button className="btn primary sm" style={{ marginTop: 8 }} disabled={!text.trim()} onClick={add}><Icon.plus /> Dodaj belešku</button>
+
+      <div className="med-list">
+        {med.length === 0 && <div className="empty" style={{ padding: 16 }}>Nema beleški.</div>}
+        {med.map(e => (
+          <div key={e.id} className={'med-item' + (e.injury ? ' inj' : '')}>
+            <div className="med-top">
+              <span className="med-date">{isoToDisp(e.date)}</span>
+              {e.injury && <span className="med-badge">Povreda</span>}
+              <button className="btn ghost sm" style={{ marginLeft: 'auto' }} title="Obriši" onClick={() => del(e.id)}><Icon.trash /></button>
+            </div>
+            <div className="med-text">{e.text}</div>
+            {e.injury && (e.injury.days || e.injury.tr || e.injury.mt) ? (
+              <div className="med-inj-info">{[e.injury.days ? e.injury.days + ' dana' : '', e.injury.tr ? e.injury.tr + ' tren.' : '', e.injury.mt ? e.injury.mt + ' utak.' : ''].filter(Boolean).join(' · ')}</div>
+            ) : null}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
