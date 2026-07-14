@@ -165,28 +165,42 @@ export default function Matches({ focusId, onFocusHandled }) {
   )
 }
 
-function sortMatches(matches) {
-  return [...matches].sort((a, b) => {
-    const da = a.date || '9999-99-99', db = b.date || '9999-99-99'
-    return da < db ? 1 : da > db ? -1 : 0 // najnovije prvo (prazan datum = novo, ide gore)
-  })
+function sortMatches(matches, mode) {
+  const arr = [...matches]
+  if (mode === 'scheduled') { // zakazane: najbliža prvo (rastuće), prazan datum na kraj
+    return arr.sort((a, b) => (a.date || '9999-99-99') < (b.date || '9999-99-99') ? -1 : 1)
+  }
+  // odigrane / sve: najnovije prvo (opadajuće), prazan datum gore (tek napravljeno)
+  return arr.sort((a, b) => { const da = a.date || '9999-99-99', db = b.date || '9999-99-99'; return da < db ? 1 : da > db ? -1 : 0 })
 }
 
 function MatchList({ matches, activeId, onSelect, onNew }) {
   const [view, setView] = useState(() => localStorage.getItem('trenertima_matchview') || 'list')
+  const [filter, setFilter] = useState('played') // played | scheduled | all
   const [page, setPage] = useState(0)
   const [allOpen, setAllOpen] = useState(false)
-  const sorted = sortMatches(matches)
+  const played = matches.filter(m => m.played)
+  // ako nema odigranih, ne prikazuj prazno — padni na „sve"
+  const eff = filter === 'played' && played.length === 0 ? 'all' : filter
+  const base = eff === 'played' ? played : eff === 'scheduled' ? matches.filter(m => !m.played) : matches
+  const sorted = sortMatches(base, eff)
   const per = 5
   const maxPage = Math.max(0, Math.ceil(sorted.length / per) - 1)
   const pg = Math.min(page, maxPage)
   const items = sorted.slice(pg * per, pg * per + per)
   const setV = v => { setView(v); localStorage.setItem('trenertima_matchview', v) }
+  const setF = f => { setFilter(f); setPage(0) }
+  const FILTERS = [['played', 'Odigrane'], ['scheduled', 'Zakazane'], ['all', 'Sve']]
 
   return (
     <div className="match-browser">
       <div className="mb-bar">
-        <button className="btn primary sm" onClick={onNew}><Icon.plus /> Nova utakmica</button>
+        <button className="btn primary sm" onClick={() => { onNew(); setFilter('scheduled'); setPage(0) }}><Icon.plus /> Nova utakmica</button>
+        <div className="match-filter">
+          {FILTERS.map(([k, lab]) => (
+            <button key={k} className={eff === k ? 'on' : ''} onClick={() => setF(k)}>{lab}</button>
+          ))}
+        </div>
         <div style={{ flex: 1 }} />
         <div className="view-toggle">
           <button className={view === 'list' ? 'on' : ''} onClick={() => setV('list')} title="Lista">☰</button>
@@ -208,7 +222,7 @@ function MatchList({ matches, activeId, onSelect, onNew }) {
       )}
       {sorted.length > per && <div className="mb-page">prikaz {pg * per + 1}–{Math.min(pg * per + per, sorted.length)} od {sorted.length} · strelice za dalje</div>}
 
-      {allOpen && <AllMatches matches={sorted} activeId={activeId} onClose={() => setAllOpen(false)} onSelect={id => { onSelect(id); setAllOpen(false) }} />}
+      {allOpen && <AllMatches matches={sortMatches(matches, 'all')} activeId={activeId} onClose={() => setAllOpen(false)} onSelect={id => { onSelect(id); setAllOpen(false) }} />}
     </div>
   )
 }

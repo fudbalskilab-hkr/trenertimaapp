@@ -630,6 +630,10 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 /* Spisak utakmica (lista / kartice) */
 .match-browser{margin-bottom:18px}
 .mb-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.match-filter{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.match-filter button{border:0;background:var(--surface);color:var(--grey);font-size:11.5px;font-weight:700;padding:6px 12px;cursor:pointer;border-right:1px solid var(--line)}
+.match-filter button:last-child{border-right:0}
+.match-filter button.on{background:var(--blue-600);color:#fff}
 .view-toggle{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .view-toggle button{border:0;background:var(--surface);color:var(--grey);font-size:15px;line-height:1;padding:5px 10px;cursor:pointer}
 .view-toggle button.on{background:var(--blue-600);color:#fff}
@@ -687,4 +691,30 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 .token:hover .token-x{display:grid}
 .pitch-hint{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:5;background:rgba(0,0,0,.72);
   color:#fff;font-size:11px;padding:5px 12px;border-radius:20px;white-space:nowrap;pointer-events:none}
-@media (max-width:560px){.match-cards{grid-template-columns:repeat(2,1fr)}.mr-comp{display:none}}
+.field-warn{background:var(--bad);color:#fff;font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:9px;margin-bottom:10px}
+
+/* Teren + klupa (stolice) + nisu pozvani */
+.pitch-and-bench{display:flex;gap:12px;align-items:stretch}
+.chairs{flex:0 0 132px;display:flex;flex-direction:column;gap:6px;background:var(--surface);
+  border:1px solid var(--line);border-radius:12px;padding:9px;align-self:flex-start}
+.chairs-h{display:flex;align-items:center;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--grey);padding-bottom:3px}
+.chair{min-height:36px;border-radius:9px;border:2px dashed #E8B10A;background:#FFF7D6;position:relative;
+  display:flex;align-items:center;justify-content:center;cursor:pointer}
+.chair.filled{border-style:solid;background:#FFE99A}
+.chair-empty{font-size:10px;font-weight:700;color:#B8860B;opacity:.75}
+.chair-p{display:flex;align-items:center;gap:6px;width:100%;padding:4px 6px;cursor:grab}
+.chair-p.picked{outline:2px solid var(--blue-500);border-radius:7px}
+.ch-num{width:20px;height:20px;border-radius:5px;color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;flex:0 0 auto}
+.ch-name{font-size:11px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#3a2c00}
+.ch-pos{font-size:9px;color:#7a5c00;font-weight:700}
+.ch-x{position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;border:0;background:rgba(0,0,0,.6);
+  color:#fff;font-size:11px;line-height:1;cursor:pointer;display:none;place-items:center}
+.chair.filled:hover .ch-x{display:grid}
+.pool{margin-top:14px}
+.pool-h{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-weight:800;font-size:13px}
+.pool-search{max-width:240px;margin-left:auto;padding:6px 9px;font-size:12px}
+.bench-list.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-height:none}
+.bench-col{display:flex;flex-direction:column;gap:6px;min-width:0}
+@media (max-width:560px){.match-cards{grid-template-columns:repeat(2,1fr)}.mr-comp{display:none}
+  .pitch-and-bench{flex-direction:column}.chairs{flex:none;flex-direction:row;flex-wrap:wrap}.chair{flex:1 1 30%}
+  .pool-search{max-width:150px}.bench-list.two-col{grid-template-columns:1fr}}
