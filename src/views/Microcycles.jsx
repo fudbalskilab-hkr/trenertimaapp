@@ -102,7 +102,7 @@ export default function Microcycles() {
       </div>
 
       <div className="sec-title mc-toolbar">
-        <h2>Mikrociklus {dispN}{rangeLabel ? ' · ' + rangeLabel : ''}</h2>
+        <h2>MC {dispN}</h2>
         <span className="mc-type-lab">Period:</span>
         <input className="input mc-date" type="date" value={mc.rangeFrom || today} onChange={e => store.updateMicrocycle(mc.id, { rangeFrom: e.target.value })} title="Od (početak)" />
         <span className="mc-dash">–</span>
