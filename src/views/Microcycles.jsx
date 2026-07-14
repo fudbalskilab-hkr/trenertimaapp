@@ -71,16 +71,21 @@ export default function Microcycles() {
         <button className="btn primary sm" style={{ marginLeft: 8 }} onClick={() => setActive(store.addMicrocycle(mc.type))} title={`Napravi nov ${mc.type.toLowerCase()} mikrociklus (isti tip kao trenutni)`}><Icon.plus /> Nov mikrociklus</button>
       </div>
 
-      <div className="sec-title">
+      <div className="sec-title mc-toolbar">
         <h2>Mikrociklus {dispN}{mc.range ? ' · ' + mc.range : ''}</h2>
+        <input className="input" style={{ width: 128, padding: '5px 9px', fontSize: 12 }} placeholder="datum, npr. 06.07 – 13.07"
+          value={mc.range || ''} onChange={e => store.updateMicrocycle(mc.id, { range: e.target.value })} title="Datum / period" />
         <span className="mc-type-lab">Tip:</span>
         <div className="seg-toggle">
           <button className={mc.type !== 'Takmičarski' ? 'on' : ''} onClick={() => store.updateMicrocycle(mc.id, { type: 'Pripremni' })}>Pripremni</button>
           <button className={mc.type === 'Takmičarski' ? 'on comp' : ''} onClick={() => store.updateMicrocycle(mc.id, { type: 'Takmičarski' })}>Takmičarski</button>
         </div>
-        <input className="input" style={{ width: 150, padding: '5px 9px', fontSize: 12 }} placeholder="datum, npr. 06.07 – 13.07"
-          value={mc.range || ''} onChange={e => store.updateMicrocycle(mc.id, { range: e.target.value })} title="Datum / period" />
-        <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={() => setFavOpen(true)} title="Standardne (omiljene) aktivnosti"><Icon.gear /> Standardne</button>
+        <span className="mc-type-lab">Termin:</span>
+        <input className="input" type="time" value={allTime} onChange={e => setAllTime(e.target.value)} style={{ width: 108, padding: '5px 9px', fontSize: 12 }} title="Termin za sve dane" />
+        <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'am', allTime)} title="Upiši kao prepodnevni termin za sve dane">Prep. svima</button>
+        <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'pm', allTime)} title="Upiši kao popodnevni termin za sve dane">Pop. svima</button>
+        <div style={{ flex: 1 }} />
+        <button className="btn sm" onClick={() => setFavOpen(true)} title="Standardne (omiljene) aktivnosti"><Icon.gear /> Standardne</button>
         {linkedWeek
           ? <button className="btn sm on" title={'U kalendaru od ' + linkedWeek.start + ' — klikni da ukloniš'} onClick={() => store.unlinkMcFromWeek(linkedWeek.start)}><Icon.cal /> U kalendaru ✓</button>
           : <button className="btn sm" onClick={() => setCalPick(true)}><Icon.cal /> Ubaci u kalendar</button>}
@@ -90,13 +95,6 @@ export default function Microcycles() {
           <button className="btn ghost sm" title="Obriši mikrociklus"
             onClick={() => { if (confirm(`Obrisati Mikrociklus ${dispN}?`)) { store.removeMicrocycle(mc.id); setActive(microcycles.find(x => x.id !== mc.id)?.id) } }}><Icon.trash /></button>
         )}
-      </div>
-
-      <div className="mc-alltime">
-        <span>⏱ Termin za sve dane:</span>
-        <input className="input" type="time" value={allTime} onChange={e => setAllTime(e.target.value)} style={{ width: 120 }} />
-        <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'am', allTime)}>Prepodne svima</button>
-        <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'pm', allTime)}>Popodne svima</button>
       </div>
 
       <div className="tbl-wrap">
