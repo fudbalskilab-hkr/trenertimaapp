@@ -68,16 +68,16 @@ export default function Microcycles() {
             <button key={m.id} className={'mc-tab comp' + (m.id === active ? ' on' : '')} onClick={() => setActive(m.id)}>MC {i + 1}<small>{m.range || m.type}</small></button>
           ))}
         </>}
-        <button className="btn primary sm" style={{ marginLeft: 8 }} onClick={() => setActive(store.addMicrocycle())}><Icon.plus /> Nov mikrociklus</button>
+        <button className="btn primary sm" style={{ marginLeft: 8 }} onClick={() => setActive(store.addMicrocycle(mc.type))} title={`Napravi nov ${mc.type.toLowerCase()} mikrociklus (isti tip kao trenutni)`}><Icon.plus /> Nov mikrociklus</button>
       </div>
 
       <div className="sec-title">
         <h2>Mikrociklus {dispN}{mc.range ? ' · ' + mc.range : ''}</h2>
         <span className="mc-type-lab">Tip:</span>
-        <select className="input" style={{ width: 'auto', padding: '5px 9px', fontSize: 12 }} value={mc.type}
-          onChange={e => store.updateMicrocycle(mc.id, { type: e.target.value })} title="Da li je mikrociklus pripremni ili takmičarski">
-          <option>Pripremni</option><option>Takmičarski</option>
-        </select>
+        <div className="seg-toggle">
+          <button className={mc.type !== 'Takmičarski' ? 'on' : ''} onClick={() => store.updateMicrocycle(mc.id, { type: 'Pripremni' })}>Pripremni</button>
+          <button className={mc.type === 'Takmičarski' ? 'on comp' : ''} onClick={() => store.updateMicrocycle(mc.id, { type: 'Takmičarski' })}>Takmičarski</button>
+        </div>
         <input className="input" style={{ width: 150, padding: '5px 9px', fontSize: 12 }} placeholder="datum, npr. 06.07 – 13.07"
           value={mc.range || ''} onChange={e => store.updateMicrocycle(mc.id, { range: e.target.value })} title="Datum / period" />
         <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={() => setFavOpen(true)} title="Standardne (omiljene) aktivnosti"><Icon.gear /> Standardne</button>

@@ -315,11 +315,11 @@ export function StoreProvider({ children }) {
     updateMicrocycle: (id, patch) => setState(s => ({
       ...s, microcycles: s.microcycles.map(m => m.id === id ? { ...m, ...patch } : m),
     })),
-    addMicrocycle: () => {
+    addMicrocycle: (type = 'Pripremni') => {
       const id = 'mc' + Date.now()
       setState(s => {
         const nextN = (s.microcycles.reduce((mx, m) => Math.max(mx, m.n || 0), 0)) + 1
-        return { ...s, microcycles: [...s.microcycles, { id, n: nextN, type: 'Pripremni', range: '', sessions: [], dayMeta: {} }] }
+        return { ...s, microcycles: [...s.microcycles, { id, n: nextN, type, range: '', sessions: [], dayMeta: {} }] }
       })
       return id
     },
