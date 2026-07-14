@@ -273,7 +273,10 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 .day-h{padding:6px 9px;background:var(--blue-900);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:6px}
 .day.match .day-h{background:var(--blue-600)}
 .day-h b{font-size:12px}.day-h .dt{font-size:10.5px;color:var(--blue-300)}
-.int-swatch{width:18px;height:18px;border-radius:5px;border:2px solid rgba(255,255,255,.5);cursor:pointer;flex:0 0 auto;padding:0}
+.int-swatch{width:18px;height:18px;border-radius:5px;border:2px solid rgba(255,255,255,.5);flex:0 0 auto;padding:0}
+.day-h.clickable{transition:filter .12s}
+.day-h.clickable:hover{filter:brightness(1.3)}
+.day-h.clickable svg{width:12px;height:12px;opacity:.55;flex:0 0 auto}
 .slot{padding:8px 9px;font-size:11px;flex:1;min-height:82px}
 .slot+.slot{border-top:1px dashed var(--line)}
 .slot .sl-lab{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-2);font-weight:700;margin-bottom:3px}

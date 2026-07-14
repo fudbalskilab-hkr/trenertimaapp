@@ -87,14 +87,15 @@ export default function Calendar({ openMatch }) {
                   onDrop={() => { if (drag.current && !linkedMc) { store.swapCalendarDays(drag.current, { wi, di }); drag.current = null } }}>
                   {isToday && <span className="today-flag">DANAS</span>}
                   <div className="int-stripe" style={{ background: intensityColor(dayInt) }} />
-                  <div className="day-h" draggable={!linkedMc} onDragStart={() => { if (!linkedMc) drag.current = { wi, di } }} title={linkedMc ? '' : 'Prevuci da zameniš dan'} style={{ cursor: linkedMc ? 'default' : 'grab' }}>
+                  <div className={'day-h' + (!linkedMc && !match ? ' clickable' : '')} draggable={!linkedMc}
+                    onDragStart={() => { if (!linkedMc) drag.current = { wi, di } }}
+                    onClick={() => { if (!linkedMc && !match) setDayOpt({ wi, di }) }}
+                    title={linkedMc || match ? '' : 'Klikni za opcije dana — intenzitet / OFF / utakmica'}
+                    style={{ cursor: linkedMc || match ? 'default' : 'pointer' }}>
                     <b>{d.day.toUpperCase()}</b>
                     <span className="dt">{fmtDate(d.date)}</span>
-                    {!match && !mcOv && (
-                      <button className="int-swatch" style={{ background: intensityColor(d.intensity) || 'rgba(255,255,255,.15)' }}
-                        title="Opcije dana — intenzitet / OFF / utakmica"
-                        onClick={() => setDayOpt({ wi, di })} />
-                    )}
+                    {!match && !mcOv && <span className="int-swatch" style={{ background: intensityColor(d.intensity) || 'rgba(255,255,255,.15)' }} />}
+                    {!match && !mcOv && <Icon.gear />}
                   </div>
                   {match ? (
                     <button className="match-cell" style={{ border: 0, background: 'transparent', cursor: 'pointer', width: '100%' }} onClick={() => setPopup(match)}>
@@ -105,7 +106,8 @@ export default function Calendar({ openMatch }) {
                         : <small>{match.home ? 'domaćin' : 'gost'} · {match.time}</small>}
                     </button>
                   ) : isOff ? (
-                    <div className="off-cell">
+                    <div className="off-cell" onClick={linkedMc ? undefined : () => setDayOpt({ wi, di })}
+                      style={{ cursor: linkedMc ? 'default' : 'pointer' }} title={linkedMc ? '' : 'Klikni za opcije dana'}>
                       <span className="off-ico"><Icon.moon /></span>
                       <b>SLOBODNO</b>
                       <small>OFF · odmor</small>
