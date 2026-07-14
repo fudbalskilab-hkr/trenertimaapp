@@ -13,8 +13,8 @@ export const TEAM = {
 // Intenzitet dana (bojenje kalendara i mikrociklusa)
 export const INTENSITY = [
   { key: 'match', label: 'Utakmica / udarni (90–100%)', pct: '90–100%', color: '#D64545' },
-  { key: '80', label: 'Visok intenzitet (80%)', pct: '80%', color: '#E8862B' },
-  { key: '50', label: 'Srednji intenzitet (50%)', pct: '50%', color: '#E4B62B' },
+  { key: '80', label: 'Visok intenzitet (80%)', pct: '80%', color: '#EF7215' },
+  { key: '50', label: 'Srednji intenzitet (50%)', pct: '50%', color: '#F5CE1B' },
   { key: '30', label: 'Nizak intenzitet (30%)', pct: '30%', color: '#2FA36B' },
   { key: 'regen', label: 'Regeneracija', pct: '', color: '#2E74D6' },
   { key: 'free', label: 'Slobodan dan', pct: '', color: '#8FBEEF' },

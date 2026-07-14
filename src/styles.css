@@ -250,6 +250,17 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
   min-height:222px;display:flex;flex-direction:column;position:relative}
 .day .int-stripe{height:8px;flex:0 0 auto}
 .day.match{border-color:var(--bad);box-shadow:0 0 0 2px var(--bad) inset}
+/* današnji dan — osvetljena ćelija */
+.day.today{border-color:var(--blue-500);box-shadow:0 0 0 2px var(--blue-500),0 6px 22px rgba(46,116,214,.38)}
+.day.today .day-h{background:var(--blue-600)}
+.day.today.match{box-shadow:0 0 0 2px var(--bad) inset,0 6px 22px rgba(214,69,69,.38)}
+/* OFF / slobodan dan — poseban izgled */
+.day.off .off-cell{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:14px 8px;text-align:center;color:var(--blue-600);
+  background:repeating-linear-gradient(45deg,transparent,transparent 7px,rgba(46,116,214,.06) 7px,rgba(46,116,214,.06) 14px)}
+.day.off .off-ico svg{width:26px;height:26px;opacity:.75}
+.day.off .off-cell b{font-size:13px;letter-spacing:.1em;font-weight:800}
+.day.off .off-cell small{font-size:10px;color:var(--grey);letter-spacing:.05em}
 .day-h{padding:6px 9px;background:var(--blue-900);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:6px}
 .day.match .day-h{background:var(--blue-600)}
 .day-h b{font-size:12px}.day-h .dt{font-size:10.5px;color:var(--blue-300)}

@@ -79,8 +79,10 @@ export default function Calendar({ openMatch }) {
               const match = byDate[d.date] || (d.matchId ? matches.find(m => m.id === d.matchId) : null)
               const mcOv = linkedMc && !match ? mcDayOverview(linkedMc, di) : null
               const dayInt = match ? 'match' : (mcOv ? mcOv.intensity : d.intensity)
+              const isToday = d.date === today
+              const isOff = !match && dayInt === 'free'
               return (
-                <div className={'day' + (match ? ' match' : '')} key={di} style={{ background: tint(dayInt) }}
+                <div className={'day' + (match ? ' match' : '') + (isToday ? ' today' : '') + (isOff ? ' off' : '')} key={di} style={{ background: tint(dayInt) }}
                   onDragOver={e => e.preventDefault()}
                   onDrop={() => { if (drag.current && !linkedMc) { store.swapCalendarDays(drag.current, { wi, di }); drag.current = null } }}>
                   <div className="int-stripe" style={{ background: intensityColor(dayInt) }} />
@@ -101,6 +103,12 @@ export default function Calendar({ openMatch }) {
                         ? <small><b className="num" style={{ fontSize: 14 }}>{match.gf ?? '–'}:{match.ga ?? '–'}</b></small>
                         : <small>{match.home ? 'domaćin' : 'gost'} · {match.time}</small>}
                     </button>
+                  ) : isOff ? (
+                    <div className="off-cell">
+                      <span className="off-ico"><Icon.moon /></span>
+                      <b>SLOBODNO</b>
+                      <small>OFF · odmor</small>
+                    </div>
                   ) : mcOv ? (
                     mcOv.slots.map((sl, k) => (
                       <div className="slot mc-slot" key={k}>
