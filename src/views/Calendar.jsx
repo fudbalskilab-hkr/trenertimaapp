@@ -6,6 +6,7 @@ import { exportNodeAsImage } from '../utils/exportImage'
 import { mcDayOverview } from '../utils/mcOverview'
 
 const MONTHS_SR = ['januar', 'februar', 'mart', 'april', 'maj', 'jun', 'jul', 'avgust', 'septembar', 'oktobar', 'novembar', 'decembar']
+const CYCLE = [null, 'match', '80', '50', '30', 'regen', 'free']
 const tint = k => { const c = intensityBg(k); return c === 'transparent' ? 'var(--surface)' : `color-mix(in srgb, ${c} 72%, var(--surface))` }
 
 function mondayOf(d) { const x = new Date(d); const dw = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dw); return x.toISOString().slice(0, 10) }
@@ -94,7 +95,11 @@ export default function Calendar({ openMatch }) {
                     style={{ cursor: linkedMc || match ? 'default' : 'pointer' }}>
                     <b>{d.day.toUpperCase()}</b>
                     <span className="dt">{fmtDate(d.date)}</span>
-                    {!match && !mcOv && <span className="int-swatch" style={{ background: intensityColor(d.intensity) || 'rgba(255,255,255,.15)' }} />}
+                    {!match && !mcOv && (
+                      <button className="int-swatch" style={{ background: intensityColor(d.intensity) || 'rgba(255,255,255,.15)' }}
+                        title={'Klik: menjaj intenzitet (' + (INTENSITY.find(x => x.key === d.intensity)?.label || 'bez oznake') + '). Klik na dan = sve opcije.'}
+                        onClick={e => { e.stopPropagation(); const cur = CYCLE.indexOf(d.intensity); store.setDayIntensity(wi, di, CYCLE[(cur + 1) % CYCLE.length]) }} />
+                    )}
                     {!match && !mcOv && <Icon.gear />}
                   </div>
                   {match ? (
