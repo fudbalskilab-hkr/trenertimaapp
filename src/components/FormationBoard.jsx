@@ -48,7 +48,8 @@ const cyOut = v => Math.max(8, Math.min(GK_ZONE, v)) // polje ne ulazi u golmano
 
 export default function FormationBoard({ data, players, onChange, available }) {
   const [picked, setPicked] = useState(null)
-  const [photos, setPhotos] = useState(false)
+  const [disp, setDisp] = useState(() => { try { return localStorage.getItem('trenertima_disp') || 'num' } catch (e) { return 'num' } })
+  const setDispSave = v => { setDisp(v); try { localStorage.setItem('trenertima_disp', v) } catch (e) {} }
   const [q, setQ] = useState('')
   const [warn, setWarn] = useState('')
   const dragId = useRef(null)
@@ -179,7 +180,7 @@ export default function FormationBoard({ data, players, onChange, available }) {
         <div style={{ flex: 1 }} />
         <span className={'pill ' + (total === 11 ? 'good' : 'blue')}>Teren {total}/11</span>
         <span className="pill warn">Klupa {benchIds.length}/{MAX_BENCH}</span>
-        <button className="btn sm" onClick={() => setPhotos(p => !p)} title="Prikaz: dres/broj ili slika">{photos ? 'Prikaz: slike' : 'Prikaz: dres'}</button>
+        <button className="btn sm" onClick={() => setDispSave(disp === 'num' ? 'jersey' : disp === 'jersey' ? 'photo' : 'num')} title="Prikaz igrača: krug/broj → dres → slika">Prikaz: {disp === 'num' ? 'broj' : disp === 'jersey' ? 'dres' : 'slika'}</button>
         <button className="btn sm" onClick={fillField}>Popuni</button>
       </div>
       {warn && <div className="field-warn">{warn}</div>}
@@ -190,13 +191,11 @@ export default function FormationBoard({ data, players, onChange, available }) {
             onDragOver={e => e.preventDefault()} onDrop={onPitchDrop} style={{ cursor: picked ? 'copy' : 'default' }}>
             <FieldLines />
             {/* Golman — fiksno mesto */}
-            <div className="token gk-token" style={{ left: GK_POS.x + '%', top: GK_POS.y + '%' }}
+            <div className={'token gk-token' + (picked === gkId ? ' picked' : '')} style={{ left: GK_POS.x + '%', top: GK_POS.y + '%' }}
               onClick={e => { e.stopPropagation(); clickGk() }}>
               {gkP ? (<>
                 <button className="token-x" title="Skloni golmana" onClick={e => { e.stopPropagation(); toPool(gkId) }}>×</button>
-                <div className={'disc' + (picked === gkId ? ' picked' : '')} style={photos && gkP.photo ? { backgroundImage: `url(${gkP.photo})`, backgroundSize: 'cover', borderColor: POS_COLORS.gk } : { borderColor: POS_COLORS.gk }}>
-                  {!(photos && gkP.photo) && (gkP.number ?? '')}
-                </div>
+                <TokenVisual p={gkP} col={POS_COLORS.gk} disp={disp} />
                 <div className="tname">{shortName(gkP.name)}<span className="tpos" style={{ color: POS_COLORS.gk }}> · GK</span></div>
               </>) : (<div className="slot-empty gk-slot">GK</div>)}
             </div>
@@ -208,9 +207,7 @@ export default function FormationBoard({ data, players, onChange, available }) {
                 <div key={pid} className={'token' + (picked === pid ? ' picked' : '')} style={{ left: c.x + '%', top: c.y + '%' }}
                   draggable onDragStart={() => { dragId.current = pid }} onClick={e => clickOut(e, pid)}>
                   <button className="token-x" title="Skloni sa terena" onClick={e => { e.stopPropagation(); toPool(pid) }}>×</button>
-                  <div className="disc" style={photos && p.photo ? { backgroundImage: `url(${p.photo})`, backgroundSize: 'cover', borderColor: col } : { borderColor: col }}>
-                    {!(photos && p.photo) && (p.number ?? '')}
-                  </div>
+                  <TokenVisual p={p} col={col} disp={disp} />
                   <div className="tname">{shortName(p.name)}{p.pos ? <span className="tpos" style={{ color: col }}> · {p.pos}</span> : null}</div>
                 </div>
               )
@@ -281,6 +278,19 @@ export default function FormationBoard({ data, players, onChange, available }) {
       <p className="mock-note" style={{ marginTop: 10 }}>Golman ima <b>fiksno mesto</b> (dole). Ostalih 10 postavljaš slobodno — <b>prevuci</b> ili <b>klikni pa klikni</b> (radi i na telefonu); igrači iz polja idu najniže do ivice 16m. Klupa = traka ispod terena (do {MAX_BENCH}), „+" prazno mesto. Desno „nisu pozvani". „×" sklanja igrača.</p>
     </div>
   )
+}
+
+function TokenVisual({ p, col, disp }) {
+  if (disp === 'photo' && p.photo) return <div className="disc photo" style={{ backgroundImage: `url(${p.photo})`, backgroundSize: 'cover', borderColor: col }} />
+  if (disp === 'jersey') return (
+    <div className="jersey">
+      <svg viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true">
+        <path fill={col} stroke="#fff" strokeWidth="0.8" strokeLinejoin="round" d="M16 3l5 2-2 5-2-1v11H7V9L5 10 3 5l5-2c0 1.7 1.8 3 4 3s4-1.3 4-3z" />
+      </svg>
+      <span className="jnum">{p.number ?? ''}</span>
+    </div>
+  )
+  return <div className="disc" style={{ borderColor: col }}>{p.number ?? ''}</div>
 }
 
 function FieldLines() {
