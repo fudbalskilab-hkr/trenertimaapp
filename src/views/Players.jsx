@@ -75,7 +75,7 @@ export default function Players({ sub, setSub, addOpen, onCloseAdd }) {
   return (
     <>
       <div className="subtabs mobile-only">
-        {SUBTABS.map(([k, l]) => <button key={k} className={sub === k ? 'on' : ''} onClick={() => setSub(k)}>{l}</button>)}
+        {SUBTABS.map(([k, l]) => <button key={k} className={'subtab' + (sub === k ? ' on' : '')} onClick={() => setSub(k)}>{l}</button>)}
       </div>
       {sub === 'lineup' ? <TeamLineup />
         : sub === 'reg' ? <Registration />
@@ -272,7 +272,7 @@ function Profile({ player, store, matches, onEdit }) {
       </div>
 
       <div className="subtabs prof-tabs">
-        {PROF_TABS.map(([k, l]) => <button key={k} className={ptab === k ? 'on' : ''} onClick={() => setPtab(k)}>{l}</button>)}
+        {PROF_TABS.map(([k, l]) => <button key={k} className={'subtab' + (ptab === k ? ' on' : '')} onClick={() => setPtab(k)}>{l}</button>)}
       </div>
 
       {ptab === 'profil' && <ProfilTab player={player} store={store} />}
