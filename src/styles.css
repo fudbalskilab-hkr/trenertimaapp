@@ -73,10 +73,9 @@ input,textarea,select{font-family:inherit}
 .nav-caret{margin-left:auto;font-size:10px;transition:transform .18s;opacity:.8}
 .nav-caret.open{transform:rotate(180deg)}
 .subnav{display:flex;flex-direction:column;gap:2px;margin:3px 0 4px 0;padding-left:10px}
-.subnav-item{display:block;width:100%;text-align:left;background:transparent;border:0;color:#a7bde0;
-  padding:8px 12px 8px 30px;border-radius:9px;font-size:13px;font-weight:500;position:relative}
-.subnav-item::before{content:"";position:absolute;left:16px;top:50%;width:5px;height:5px;border-radius:50%;
-  background:#5f7bb0;transform:translateY(-50%)}
+.subnav-item{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:transparent;border:0;color:#a7bde0;
+  padding:8px 12px;border-radius:9px;font-size:13px;font-weight:500}
+.subnav-item::before{content:"";width:5px;height:5px;border-radius:50%;background:#5f7bb0;flex:0 0 auto}
 .subnav-item:hover{background:rgba(255,255,255,.06);color:#fff}
 .subnav-item.on{background:rgba(255,255,255,.10);color:#fff;font-weight:600}
 .subnav-item.on::before{background:var(--blue-300)}
@@ -742,7 +741,7 @@ tr.reg-div td{background:var(--surface-2);color:var(--grey-2);font-size:10.5px;f
 .pitch-field .token .disc{border-width:2px}
 .token .tpos{font-size:9px;font-weight:700;opacity:.95}
 .token-x{position:absolute;top:-8px;right:-8px;z-index:4;width:19px;height:19px;border-radius:50%;border:2px solid #fff;
-  background:var(--bad);color:#fff;font-size:12px;line-height:1;cursor:pointer;display:none;place-items:center}
+  background:var(--bad);color:#fff;font-size:13px;line-height:1;cursor:pointer;display:none;place-items:center;padding:0}
 .token.picked .token-x{display:grid}
 .pitch-hint{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:5;background:rgba(0,0,0,.72);
   color:#fff;font-size:11px;padding:5px 12px;border-radius:20px;white-space:nowrap;pointer-events:none}
@@ -766,7 +765,7 @@ tr.reg-div td{background:var(--surface-2);color:var(--grey-2);font-size:10.5px;f
 .bs-name{writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;font-size:11.5px;font-weight:700;
   color:#3a2c00;max-height:118px;overflow:hidden;text-overflow:ellipsis}
 .bs-x{position:absolute;top:-7px;right:-7px;width:18px;height:18px;border-radius:50%;border:2px solid #fff;background:var(--bad);
-  color:#fff;font-size:11px;line-height:1;cursor:pointer;display:none;place-items:center;z-index:2}
+  color:#fff;font-size:12px;line-height:1;cursor:pointer;display:none;place-items:center;z-index:2;padding:0}
 .bslot-p.picked .bs-x{display:grid}
 /* Nisu pozvani — desno */
 .fb-right{min-width:0}
