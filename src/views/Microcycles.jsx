@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useStore } from '../data/store'
+import { useStore, fmtDate } from '../data/store'
 import { SECTIONS, INTENSITY, intensityColor, intensityBg } from '../data/seed'
 import { Icon } from '../components/Icons'
 import TrainingEditor, { trainingOverview } from '../components/TrainingEditor'
@@ -9,7 +9,7 @@ const DAYS = ['Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota', '
 const DAYS_SHORT = ['PON', 'UTO', 'SRE', 'ČET', 'PET', 'SUB', 'NED']
 const CYCLE = [null, 'match', '80', '50', '30', 'regen', 'free']
 // termini treninga 24h (bez AM/PM), na 15 min
-const TIMES = (() => { const a = []; for (let h = 6; h <= 21; h++) for (const m of [0, 15, 30, 45]) a.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`); return a })()
+const TIMES = (() => { const a = []; for (let h = 7; h <= 21; h++) for (const m of [0, 15, 30, 45]) { const t = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`; if (t <= '21:00') a.push(t) } return a })()
 function TimeSelect({ value, onChange, className, style, title }) {
   return (
     <select className={className} value={value || ''} onChange={e => onChange(e.target.value)} style={style} title={title}>
@@ -64,9 +64,14 @@ export default function Microcycles() {
   const sameType = isComp ? comp : prep
   const dispN = sameType.findIndex(x => x.id === mc.id) + 1
   const fav = store.team.mcFavorites || {}
+  const today = new Date().toISOString().slice(0, 10)
+  const rangeLabel = (mc.rangeFrom || mc.rangeTo)
+    ? `${mc.rangeFrom ? fmtDate(mc.rangeFrom) : '…'} – ${mc.rangeTo ? fmtDate(mc.rangeTo) : '…'}`
+    : (mc.range || '')
 
   return (
     <section>
+      <div className="mc-top">
       <div className="mc-tabs">
         <span className="mc-period-lab">Pripremni</span>
         {prep.map((m, i) => (
@@ -88,17 +93,20 @@ export default function Microcycles() {
           ? <button className="btn sm on" title={'U kalendaru od ' + linkedWeek.start + ' — klikni da ukloniš'} onClick={() => store.unlinkMcFromWeek(linkedWeek.start)}><Icon.cal /> U kalendaru ✓</button>
           : <button className="btn sm" onClick={() => setCalPick(true)}><Icon.cal /> Ubaci u kalendar</button>}
         <button className="btn sm" onClick={() => setActive(store.duplicateMicrocycle(mc.id))} title="Napravi kopiju ovog MC"><Icon.plus /> Dupliraj</button>
-        <button className="btn sm" onClick={() => exportNodeAsImage(boardRef.current, `MC${dispN}${mc.range ? '-' + mc.range.replace(/[^\w]+/g, '_') : ''}.png`)}><Icon.download /> Slika</button>
+        <button className="btn sm" onClick={() => exportNodeAsImage(boardRef.current, `MC${dispN}${rangeLabel ? '-' + rangeLabel.replace(/[^\w]+/g, '_') : ''}.png`)}><Icon.download /> Slika</button>
         {microcycles.length > 1 && (
           <button className="btn ghost sm" title="Obriši mikrociklus"
             onClick={() => { if (confirm(`Obrisati Mikrociklus ${dispN}?`)) { store.removeMicrocycle(mc.id); setActive(microcycles.find(x => x.id !== mc.id)?.id) } }}><Icon.trash /></button>
         )}
       </div>
+      </div>
 
       <div className="sec-title mc-toolbar">
-        <h2>Mikrociklus {dispN}{mc.range ? ' · ' + mc.range : ''}</h2>
-        <input className="input" style={{ width: 128, padding: '5px 9px', fontSize: 12 }} placeholder="datum, npr. 06.07 – 13.07"
-          value={mc.range || ''} onChange={e => store.updateMicrocycle(mc.id, { range: e.target.value })} title="Datum / period" />
+        <h2>Mikrociklus {dispN}{rangeLabel ? ' · ' + rangeLabel : ''}</h2>
+        <span className="mc-type-lab">Period:</span>
+        <input className="input mc-date" type="date" value={mc.rangeFrom || today} onChange={e => store.updateMicrocycle(mc.id, { rangeFrom: e.target.value })} title="Od (početak)" />
+        <span className="mc-dash">–</span>
+        <input className="input mc-date" type="date" value={mc.rangeTo || ''} onChange={e => store.updateMicrocycle(mc.id, { rangeTo: e.target.value })} title="Do (kraj)" />
         <span className="mc-type-lab">Tip:</span>
         <div className="seg-toggle">
           <button className={mc.type !== 'Takmičarski' ? 'on' : ''} onClick={() => store.updateMicrocycle(mc.id, { type: 'Pripremni' })}>Pripremni</button>
