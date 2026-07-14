@@ -104,16 +104,16 @@ export default function Microcycles() {
       <div className="sec-title mc-toolbar">
         <h2>MC {dispN}</h2>
         <span className="mc-type-lab">Period:</span>
-        <input className="input mc-date" type="date" value={mc.rangeFrom || today} onChange={e => store.updateMicrocycle(mc.id, { rangeFrom: e.target.value })} title="Od (početak)" />
+        <input className="input" type="date" style={{ width: 120, flex: '0 0 auto', padding: '5px 7px', fontSize: 12 }} value={mc.rangeFrom || today} onChange={e => store.updateMicrocycle(mc.id, { rangeFrom: e.target.value })} title="Period od (početak)" />
         <span className="mc-dash">–</span>
-        <input className="input mc-date" type="date" value={mc.rangeTo || ''} onChange={e => store.updateMicrocycle(mc.id, { rangeTo: e.target.value })} title="Do (kraj)" />
+        <input className="input" type="date" style={{ width: 120, flex: '0 0 auto', padding: '5px 7px', fontSize: 12 }} value={mc.rangeTo || ''} onChange={e => store.updateMicrocycle(mc.id, { rangeTo: e.target.value })} title="Period do (kraj)" />
         <span className="mc-type-lab">Tip:</span>
         <div className="seg-toggle">
           <button className={mc.type !== 'Takmičarski' ? 'on' : ''} onClick={() => store.updateMicrocycle(mc.id, { type: 'Pripremni' })}>Pripremni</button>
           <button className={mc.type === 'Takmičarski' ? 'on comp' : ''} onClick={() => store.updateMicrocycle(mc.id, { type: 'Takmičarski' })}>Takmičarski</button>
         </div>
         <span className="mc-type-lab">Termin:</span>
-        <TimeSelect className="input" value={allTime} onChange={setAllTime} style={{ width: 100, padding: '5px 9px', fontSize: 12 }} title="Termin za sve dane" />
+        <TimeSelect className="input" value={allTime} onChange={setAllTime} style={{ width: 100, flex: '0 0 auto', padding: '5px 7px', fontSize: 12 }} title="Termin (vreme) za sve dane" />
         <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'am', allTime)} title="Upiši kao prepodnevni termin za sve dane">Prep. svima</button>
         <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'pm', allTime)} title="Upiši kao popodnevni termin za sve dane">Pop. svima</button>
       </div>

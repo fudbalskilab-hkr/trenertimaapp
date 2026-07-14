@@ -563,7 +563,7 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 .mc-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:0;flex:0 0 auto}
 .mc-tabs-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .mc-toolbar{flex-wrap:wrap;row-gap:8px}
-.mc-date{flex:0 0 auto;width:140px;padding:5px 8px;font-size:12px}
+.mc-date{flex:0 0 auto;width:118px;padding:5px 7px;font-size:12px}
 .mc-dash{color:var(--grey-2);font-weight:700}
 .mc-toolbar h2{font-size:17px;white-space:nowrap;margin:0}
 .mc-type-lab{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--grey-2)}
