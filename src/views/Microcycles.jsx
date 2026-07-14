@@ -80,18 +80,19 @@ export default function Microcycles() {
           ))}
         </>}
         <button className="btn primary sm" style={{ marginLeft: 8 }} onClick={() => setActive(store.addMicrocycle(mc.type))} title={`Napravi nov ${mc.type.toLowerCase()} mikrociklus (isti tip kao trenutni)`}><Icon.plus /> Nov mikrociklus</button>
-        <span className="mc-tabs-actions">
-          <button className="btn sm" onClick={() => setFavOpen(true)} title="Standardne (omiljene) aktivnosti"><Icon.gear /> Standardne</button>
-          {linkedWeek
-            ? <button className="btn sm on" title={'U kalendaru od ' + linkedWeek.start + ' — klikni da ukloniš'} onClick={() => store.unlinkMcFromWeek(linkedWeek.start)}><Icon.cal /> U kalendaru ✓</button>
-            : <button className="btn sm" onClick={() => setCalPick(true)}><Icon.cal /> Ubaci u kalendar</button>}
-          <button className="btn sm" onClick={() => setActive(store.duplicateMicrocycle(mc.id))} title="Napravi kopiju ovog MC"><Icon.plus /> Dupliraj</button>
-          <button className="btn sm" onClick={() => exportNodeAsImage(boardRef.current, `MC${dispN}${mc.range ? '-' + mc.range.replace(/[^\w]+/g, '_') : ''}.png`)}><Icon.download /> Slika</button>
-          {microcycles.length > 1 && (
-            <button className="btn ghost sm" title="Obriši mikrociklus"
-              onClick={() => { if (confirm(`Obrisati Mikrociklus ${dispN}?`)) { store.removeMicrocycle(mc.id); setActive(microcycles.find(x => x.id !== mc.id)?.id) } }}><Icon.trash /></button>
-          )}
-        </span>
+      </div>
+
+      <div className="mc-actions">
+        <button className="btn sm" onClick={() => setFavOpen(true)} title="Standardne (omiljene) aktivnosti"><Icon.gear /> Standardne</button>
+        {linkedWeek
+          ? <button className="btn sm on" title={'U kalendaru od ' + linkedWeek.start + ' — klikni da ukloniš'} onClick={() => store.unlinkMcFromWeek(linkedWeek.start)}><Icon.cal /> U kalendaru ✓</button>
+          : <button className="btn sm" onClick={() => setCalPick(true)}><Icon.cal /> Ubaci u kalendar</button>}
+        <button className="btn sm" onClick={() => setActive(store.duplicateMicrocycle(mc.id))} title="Napravi kopiju ovog MC"><Icon.plus /> Dupliraj</button>
+        <button className="btn sm" onClick={() => exportNodeAsImage(boardRef.current, `MC${dispN}${mc.range ? '-' + mc.range.replace(/[^\w]+/g, '_') : ''}.png`)}><Icon.download /> Slika</button>
+        {microcycles.length > 1 && (
+          <button className="btn ghost sm" title="Obriši mikrociklus"
+            onClick={() => { if (confirm(`Obrisati Mikrociklus ${dispN}?`)) { store.removeMicrocycle(mc.id); setActive(microcycles.find(x => x.id !== mc.id)?.id) } }}><Icon.trash /></button>
+        )}
       </div>
 
       <div className="sec-title mc-toolbar">
