@@ -107,6 +107,7 @@ export default function Microcycles() {
         <input className="input" type="date" style={{ width: 120, flex: '0 0 auto', padding: '5px 7px', fontSize: 12 }} value={mc.rangeFrom || today} onChange={e => store.updateMicrocycle(mc.id, { rangeFrom: e.target.value })} title="Period od (početak)" />
         <span className="mc-dash">–</span>
         <input className="input" type="date" style={{ width: 120, flex: '0 0 auto', padding: '5px 7px', fontSize: 12 }} value={mc.rangeTo || ''} onChange={e => store.updateMicrocycle(mc.id, { rangeTo: e.target.value })} title="Period do (kraj)" />
+        <div style={{ flex: 1, minWidth: 12 }} />
         <span className="mc-type-lab">Tip:</span>
         <div className="seg-toggle">
           <button className={mc.type !== 'Takmičarski' ? 'on' : ''} onClick={() => store.updateMicrocycle(mc.id, { type: 'Pripremni' })}>Pripremni</button>
