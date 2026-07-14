@@ -73,8 +73,9 @@ export default function Microcycles() {
 
       <div className="sec-title">
         <h2>Mikrociklus {dispN}{mc.range ? ' · ' + mc.range : ''}</h2>
+        <span className="mc-type-lab">Tip:</span>
         <select className="input" style={{ width: 'auto', padding: '5px 9px', fontSize: 12 }} value={mc.type}
-          onChange={e => store.updateMicrocycle(mc.id, { type: e.target.value })} title="Tip mikrociklusa">
+          onChange={e => store.updateMicrocycle(mc.id, { type: e.target.value })} title="Da li je mikrociklus pripremni ili takmičarski">
           <option>Pripremni</option><option>Takmičarski</option>
         </select>
         <input className="input" style={{ width: 150, padding: '5px 9px', fontSize: 12 }} placeholder="datum, npr. 06.07 – 13.07"

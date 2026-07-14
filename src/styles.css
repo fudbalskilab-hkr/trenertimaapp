@@ -553,11 +553,15 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 .arch-card .ac-goal{font-size:12.5px;color:var(--ink-soft)}
 .arch-card .ac-meta{font-size:11.5px;color:var(--grey);margin-top:2px}
 /* MC dan sa treningom */
+.mc-type-lab{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--grey-2)}
 .mc-alltime{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-6px 0 14px;padding:9px 12px;
   background:var(--surface-2);border:1px solid var(--line);border-radius:10px;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
 .mc-has-train{padding:8px 9px;border-top:1px dashed var(--line-soft);cursor:pointer}
 .mc-has-train:hover{background:var(--blue-50)}
-.mc-train-ov{max-height:180px;overflow-y:auto}
+.mc-train-ov{max-height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.mc-train-ov::-webkit-scrollbar{width:4px}
+.mc-train-ov::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.mc-train-ov::-webkit-scrollbar-track{background:transparent}
 /* Standardne (omiljene) aktivnosti */
 .fav-wrap{margin-bottom:12px;padding:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px}
 .fav-chips{display:flex;flex-wrap:wrap;gap:6px}
