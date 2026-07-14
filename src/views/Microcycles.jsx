@@ -112,6 +112,7 @@ export default function Microcycles() {
           <button className={mc.type !== 'Takmičarski' ? 'on' : ''} onClick={() => store.updateMicrocycle(mc.id, { type: 'Pripremni' })}>Pripremni</button>
           <button className={mc.type === 'Takmičarski' ? 'on comp' : ''} onClick={() => store.updateMicrocycle(mc.id, { type: 'Takmičarski' })}>Takmičarski</button>
         </div>
+        <div style={{ flex: 1, minWidth: 12 }} />
         <span className="mc-type-lab">Termin:</span>
         <TimeSelect className="input" value={allTime} onChange={setAllTime} style={{ width: 100, flex: '0 0 auto', padding: '5px 7px', fontSize: 12 }} title="Termin (vreme) za sve dane" />
         <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'am', allTime)} title="Upiši kao prepodnevni termin za sve dane">Prepodne</button>
