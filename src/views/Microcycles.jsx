@@ -114,8 +114,8 @@ export default function Microcycles() {
         </div>
         <span className="mc-type-lab">Termin:</span>
         <TimeSelect className="input" value={allTime} onChange={setAllTime} style={{ width: 100, flex: '0 0 auto', padding: '5px 7px', fontSize: 12 }} title="Termin (vreme) za sve dane" />
-        <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'am', allTime)} title="Upiši kao prepodnevni termin za sve dane">Prep. svima</button>
-        <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'pm', allTime)} title="Upiši kao popodnevni termin za sve dane">Pop. svima</button>
+        <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'am', allTime)} title="Upiši kao prepodnevni termin za sve dane">Prepodne</button>
+        <button className="btn sm" disabled={!allTime} onClick={() => store.setMcAllTimes(mc.id, 'pm', allTime)} title="Upiši kao popodnevni termin za sve dane">Popodne</button>
       </div>
 
       <div className="tbl-wrap">
