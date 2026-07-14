@@ -481,10 +481,10 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
   border-radius:9px;background:var(--surface);cursor:grab;font-size:12.5px;text-align:left}
 .bench-item:hover{border-color:var(--blue-300)}
 .bench-item.picked{outline:2px solid #ffd24a;border-color:transparent}
-.bench-item .bi-num{width:22px;height:22px;border-radius:6px;background:var(--blue-900);color:#fff;
-  display:grid;place-items:center;font-size:11px;font-weight:700;flex:0 0 auto}
+.bench-item .bi-num{min-width:26px;height:22px;padding:0 5px;border-radius:6px;background:var(--blue-900);color:#fff;
+  display:grid;place-items:center;font-size:10px;font-weight:800;letter-spacing:.02em;flex:0 0 auto}
 .bench-item .bi-name{flex:1;font-weight:600}
-.bench-item .bi-pos{font-size:10px;color:var(--grey)}
+.bench-item .bi-pos{font-size:11px;color:var(--grey);font-weight:700}
 
 .lineup-chips{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .pchip{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;
@@ -679,8 +679,9 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 .bench-group .bench-item{margin-bottom:5px}
 .bench-item .bi-num{background:var(--blue-900)}
 .pick-group{margin-bottom:10px}
-.pc-num{width:22px;height:22px;border-radius:6px;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700;flex:0 0 auto}
+.pc-num{min-width:26px;height:22px;padding:0 5px;border-radius:6px;color:#fff;display:grid;place-items:center;font-size:10px;font-weight:800;flex:0 0 auto}
 .pc-name{flex:1}
+.pchip .pc-pos{font-size:11px;font-weight:700;margin-left:auto}
 
 /* Teren — slobodno postavljanje */
 .pitch-field .token{position:absolute;transform:translate(-50%,-50%);cursor:grab;z-index:2}

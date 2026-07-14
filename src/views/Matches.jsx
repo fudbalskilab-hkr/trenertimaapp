@@ -415,8 +415,8 @@ function AddMatchPlayer({ players, onClose, onPick }) {
                       const col = POS_COLORS[posGroup(p.pos) || '_'] || '#868e96'
                       return (
                         <button key={p.id} className="pchip" onClick={() => onPick(p.id)} style={{ borderLeft: `4px solid ${col}` }}>
-                          <span className="pc-num" style={{ background: col }}>{p.number ?? '?'}</span>
-                          <span className="pc-name">{shortName(p.name)}</span>{p.pos && <span className="pc-pos">{p.pos}</span>}
+                          <span className="pc-num" style={{ background: col }}>{p.pos || '–'}</span>
+                          <span className="pc-name">{shortName(p.name)}</span>{p.number != null && p.number !== '' && <span className="pc-pos">#{p.number}</span>}
                         </button>
                       )
                     })}

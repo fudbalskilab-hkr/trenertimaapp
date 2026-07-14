@@ -248,9 +248,9 @@ export default function FormationBoard({ match, players, store }) {
                           <button key={p.id} className={'bench-item' + (picked === p.id ? ' picked' : '')} draggable
                             onDragStart={() => { dragId.current = p.id }} onClick={() => setPicked(picked === p.id ? null : p.id)}
                             style={{ borderLeft: `4px solid ${col}` }}>
-                            <span className="bi-num" style={{ background: col }}>{p.number ?? '?'}</span>
+                            <span className="bi-num" style={{ background: col }}>{p.pos || '–'}</span>
                             <span className="bi-name">{shortName(p.name)}</span>
-                            {p.pos && <span className="bi-pos">{p.pos}</span>}
+                            {p.number != null && p.number !== '' && <span className="bi-pos">#{p.number}</span>}
                           </button>
                         )
                       })}
