@@ -108,6 +108,18 @@ export default function FormationBoard({ match, players, store }) {
     setWarn(''); const nf = { ...field }; delete nf[pid]
     save(gkId === pid ? null : gkId, nf, [...benchIds, pid])
   }
+  // ubaci/premesti igrača na klupu na poziciju `index` (reorder ako je već na klupi)
+  function moveBench(pid, index) {
+    if (benchIds.includes(pid)) { // reorder unutar klupe
+      const without = benchIds.filter(b => b !== pid)
+      const ni = Math.max(0, Math.min(without.length, index)); without.splice(ni, 0, pid)
+      setWarn(''); save(gkId, field, without); return
+    }
+    if (benchIds.length >= MAX_BENCH) { setWarn(BFULL); return }
+    setWarn(''); const nf = { ...field }; delete nf[pid]
+    const nb = benchIds.slice(); const ni = Math.max(0, Math.min(nb.length, index)); nb.splice(ni, 0, pid)
+    save(gkId === pid ? null : gkId, nf, nb)
+  }
   function toPool(pid) { setWarn(''); const nf = { ...field }; delete nf[pid]; save(gkId === pid ? null : gkId, nf, benchIds.filter(b => b !== pid)) }
 
   function pitchXY(e) { const r = fieldRef.current.getBoundingClientRect(); return { x: ((e.clientX || 0) - r.left) / r.width * 100, y: ((e.clientY || 0) - r.top) / r.height * 100 } }
@@ -194,13 +206,13 @@ export default function FormationBoard({ match, players, store }) {
           </div>
 
           {/* Klupa — traka ispod terena */}
-          <div className="bench-strip" onDragOver={e => e.preventDefault()} onDrop={() => { if (dragId.current) { addToBench(dragId.current); dragId.current = null } }}>
+          <div className="bench-strip" onDragOver={e => e.preventDefault()} onDrop={() => { if (dragId.current) { moveBench(dragId.current, benchIds.length); dragId.current = null } }}>
             {Array.from({ length: MAX_BENCH }).map((_, i) => {
               const pid = benchIds[i]; const p = pid && byId(pid)
               return (
                 <div key={i} className={'bslot' + (p ? ' filled' : '')}
-                  onClick={() => { if (picked) { addToBench(picked); setPicked(null) } else if (p) setPicked(p.id) }}
-                  onDragOver={e => e.preventDefault()} onDrop={e => { e.stopPropagation(); if (dragId.current) { addToBench(dragId.current); dragId.current = null } }}>
+                  onClick={() => { if (picked) { moveBench(picked, i); setPicked(null) } else if (p) setPicked(p.id) }}
+                  onDragOver={e => e.preventDefault()} onDrop={e => { e.stopPropagation(); if (dragId.current) { moveBench(dragId.current, i); dragId.current = null } }}>
                   {p ? (
                     <div className={'bslot-p' + (picked === p.id ? ' picked' : '')} draggable onDragStart={() => { dragId.current = p.id }}>
                       <button className="bs-x" title="Nije pozvan" onClick={e => { e.stopPropagation(); toPool(p.id) }}>×</button>
