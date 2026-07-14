@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useStore } from '../data/store'
-import { SECTIONS, INTENSITY, intensityColor } from '../data/seed'
+import { SECTIONS, INTENSITY, intensityColor, intensityBg } from '../data/seed'
 import { Icon } from '../components/Icons'
 import TrainingEditor, { trainingOverview } from '../components/TrainingEditor'
 import { exportNodeAsImage } from '../utils/exportImage'
@@ -8,7 +8,7 @@ import { exportNodeAsImage } from '../utils/exportImage'
 const DAYS = ['Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota', 'Nedelja']
 const DAYS_SHORT = ['PON', 'UTO', 'SRE', 'ČET', 'PET', 'SUB', 'NED']
 const CYCLE = [null, 'match', '80', '50', '30', 'regen', 'free']
-const tint = k => { const c = intensityColor(k); return c === 'transparent' ? 'var(--surface-2)' : `color-mix(in srgb, ${c} 18%, var(--surface))` }
+const tint = k => { const c = intensityBg(k); return c === 'transparent' ? 'var(--surface-2)' : `color-mix(in srgb, ${c} 55%, var(--surface))` }
 
 export default function Microcycles() {
   const store = useStore()

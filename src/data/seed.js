@@ -11,15 +11,17 @@ export const TEAM = {
 }
 
 // Intenzitet dana (bojenje kalendara i mikrociklusa)
+// color = accent (traka/kvadratić/legenda), bg = ispuna ćelije
 export const INTENSITY = [
-  { key: 'match', label: 'Utakmica / udarni (90–100%)', pct: '90–100%', color: '#D64545' },
-  { key: '80', label: 'Visok intenzitet (80%)', pct: '80%', color: '#EF7215' },
-  { key: '50', label: 'Srednji intenzitet (50%)', pct: '50%', color: '#F5CE1B' },
-  { key: '30', label: 'Nizak intenzitet (30%)', pct: '30%', color: '#2FA36B' },
-  { key: 'regen', label: 'Regeneracija', pct: '', color: '#2E74D6' },
-  { key: 'free', label: 'Slobodan dan', pct: '', color: '#8FBEEF' },
+  { key: 'match', label: 'Utakmica / udarni (90–100%)', pct: '90–100%', color: '#C92A2A', bg: '#FF8787' },
+  { key: '80', label: 'Visok intenzitet (80%)', pct: '80%', color: '#E8590C', bg: '#FFB05C' },
+  { key: '50', label: 'Srednji intenzitet (50%)', pct: '50%', color: '#F5C518', bg: '#FFEF85' },
+  { key: '30', label: 'Nizak intenzitet (30%)', pct: '30%', color: '#2F9E44', bg: '#8CE99A' },
+  { key: 'regen', label: 'Regeneracija', pct: '', color: '#1971C2', bg: '#74C0FC' },
+  { key: 'free', label: 'Slobodan dan', pct: '', color: '#868E96', bg: '#DEE2E6' },
 ]
 export const intensityColor = (k) => (INTENSITY.find(i => i.key === k) || {}).color || 'transparent'
+export const intensityBg = (k) => (INTENSITY.find(i => i.key === k) || {}).bg || 'transparent'
 
 // Grupa pozicije (za bojenje): gk / def / mid / att
 const DEF = ['CB', 'LCB', 'RCB', 'CCB', 'LB', 'RB', 'LWB', 'RWB', 'WB', 'DF', 'D']

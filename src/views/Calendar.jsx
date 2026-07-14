@@ -1,12 +1,12 @@
 import { useState, useRef } from 'react'
 import { useStore, fmtDate } from '../data/store'
-import { INTENSITY, intensityColor } from '../data/seed'
+import { INTENSITY, intensityColor, intensityBg } from '../data/seed'
 import { Icon, Crest } from '../components/Icons'
 import { exportNodeAsImage } from '../utils/exportImage'
 import { mcDayOverview } from '../utils/mcOverview'
 
 const MONTHS_SR = ['januar', 'februar', 'mart', 'april', 'maj', 'jun', 'jul', 'avgust', 'septembar', 'oktobar', 'novembar', 'decembar']
-const tint = k => { const c = intensityColor(k); return c === 'transparent' ? 'var(--surface)' : `color-mix(in srgb, ${c} 32%, var(--surface))` }
+const tint = k => { const c = intensityBg(k); return c === 'transparent' ? 'var(--surface)' : `color-mix(in srgb, ${c} 72%, var(--surface))` }
 
 function mondayOf(d) { const x = new Date(d); const dw = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dw); return x.toISOString().slice(0, 10) }
 function addDays(iso, n) { const x = new Date(iso); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10) }
