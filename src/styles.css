@@ -250,12 +250,12 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
   min-height:222px;display:flex;flex-direction:column;position:relative}
 .day .int-stripe{height:8px;flex:0 0 auto}
 .day.match{border-color:var(--bad);box-shadow:0 0 0 2px var(--bad) inset}
-/* današnji dan — osvetljena ćelija + „DANAS" zastavica */
-.day.today{border-color:#FFB300;box-shadow:0 0 0 3px #FFB300,0 8px 26px rgba(255,179,0,.45);transform:translateY(-1px)}
-.day.today .day-h{background:linear-gradient(90deg,#B45309,#0f2f5c)}
-.day.today.match{box-shadow:0 0 0 3px #FFB300,0 8px 26px rgba(255,179,0,.45)}
-.today-flag{position:absolute;top:0;right:0;z-index:4;background:#FFB300;color:#3a2600;
-  font-size:9px;font-weight:900;letter-spacing:.1em;padding:3px 8px;border-bottom-left-radius:9px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+/* današnji dan — magenta ram + „DANAS" zastavica (boje nema u paleti intenziteta) */
+.day.today{border-color:#E5178A;box-shadow:0 0 0 3px #E5178A,0 8px 26px rgba(229,23,138,.42);transform:translateY(-1px)}
+.day.today .day-h{background:linear-gradient(90deg,#a30f61,#0f2f5c)}
+.day.today.match{box-shadow:0 0 0 3px #E5178A,0 8px 26px rgba(229,23,138,.42)}
+.today-flag{position:absolute;top:0;right:0;z-index:4;background:#E5178A;color:#fff;
+  font-size:9px;font-weight:900;letter-spacing:.1em;padding:3px 8px;border-bottom-left-radius:9px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 /* popup „opcije dana" */
 .int-choose{display:flex;flex-direction:column;gap:5px}
 .int-opt{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;
