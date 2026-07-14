@@ -69,7 +69,7 @@ function cellValue(key, p, fees) {
   }
 }
 
-const SUBTABS = [['roster', 'Igrači'], ['lineup', 'Prva postava'], ['reg', 'Registracija']]
+const SUBTABS = [['roster', 'Igrači'], ['lineup', 'Prva postava'], ['reg', 'Licenciranje']]
 
 export default function Players({ sub, setSub, addOpen, onCloseAdd }) {
   return (
@@ -113,10 +113,10 @@ function Registration() {
   }
   return (
     <section>
-      <div className="sec-title"><h2>Registracija igrača</h2><span className="eyebrow">{draft.size} od {players.length} registrovano</span>
+      <div className="sec-title"><h2>Licenciranje igrača</h2><span className="eyebrow">{draft.size} od {players.length} licencirano</span>
         <button className="btn primary sm" style={{ marginLeft: 'auto' }} onClick={save}>✓ Sačuvaj</button></div>
       <div className="card"><div className="card-b">
-        <p className="mock-note" style={{ marginTop: 0 }}>Štikliraj registrovane pa „Sačuvaj". Na <b>prvenstvenim</b> utakmicama nude se samo registrovani; na <b>pripremnim</b> svi.</p>
+        <p className="mock-note" style={{ marginTop: 0 }}>Štikliraj licencirane pa „Sačuvaj". Na <b>prvenstvenim</b> utakmicama nude se samo licencirani; na <b>pripremnim</b> svi.</p>
         <div className="reg-list">
           {sorted.map(p => {
             const col = POS_COLORS[posGroup(p.pos) || '_'] || '#868e96'
@@ -210,11 +210,11 @@ function Roster({ addOpen, onCloseAdd }) {
                 const showDiv = i > 0 && rows[i - 1].registered && !p.registered
                 return (
                   <Fragment key={p.id}>
-                    {showDiv && <tr className="reg-div"><td colSpan={2 + visible.length}>— Neregistrovani —</td></tr>}
+                    {showDiv && <tr className="reg-div"><td colSpan={2 + visible.length}>— Nelicencirani —</td></tr>}
                     <tr className={(p.id === sel?.id ? 'sel ' : '') + (g ? 'pg-' + g : '')}
                       style={g ? { '--pgc': POS_COLORS[g] } : undefined} onClick={() => setSelId(p.id)}>
                       <td className="rownum">{i + 1}</td>
-                      <td><b>{p.name}</b>{p.registered && <span className="reg-chk" title="Registrovan">✓</span>}</td>
+                      <td><b>{p.name}</b>{p.registered && <span className="reg-chk" title="Licenciran">✓</span>}</td>
                       {visible.map(c => <td key={c.key} className={numCol(c.key) ? 'num' : ''}>{cellValue(c.key, p, fees)}</td>)}
                     </tr>
                   </Fragment>
@@ -236,7 +236,7 @@ function Roster({ addOpen, onCloseAdd }) {
   )
 }
 
-const PROF_TABS = [['profil', 'Profil'], ['stat', 'Statistika'], ['dolazci', 'Dolazci'], ['med', 'Med. karton'], ['fee', 'Članarine']]
+const PROF_TABS = [['profil', 'Profil'], ['stat', 'Statistika'], ['dolazci', 'Dolasci'], ['med', 'Med. karton'], ['fee', 'Članarine']]
 
 function Profile({ player, store, matches, onEdit }) {
   const [ptab, setPtab] = useState('profil')
@@ -255,7 +255,7 @@ function Profile({ player, store, matches, onEdit }) {
         </button>
         <input ref={photoRef} type="file" accept="image/*" hidden onChange={uploadPhoto} />
         <div>
-          <h3>{player.name}{player.registered && <span className="reg-chk" title="Registrovan">✓</span>}</h3>
+          <h3>{player.name}{player.registered && <span className="reg-chk" title="Licenciran">✓</span>}</h3>
           <div className="meta">{[player.pos, player.alt].filter(Boolean).join(' / ') || 'bez pozicije'} · {isoToDisp(player.dob) || 'nepoznat datum'}{age != null ? ` (${age})` : ''}</div>
           <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {player.foot && <span className="tag" style={{ textTransform: 'capitalize' }}>{player.foot} noga</span>}
@@ -297,9 +297,9 @@ function ProfilTab({ player, store }) {
         <div><div className="kk">Visina/težina</div><div className="vv">{player.hw || '—'}</div></div>
       </div>
       <div className="prof-sec">
-        <div className="prof-sec-h">Registracija</div>
+        <div className="prof-sec-h">Licenca</div>
         <button className={'pill ' + (player.registered ? 'good' : 'bad')} style={{ cursor: 'pointer', border: 0 }}
-          onClick={() => setC('registered', !player.registered)}>{player.registered ? 'Registrovan ✓' : 'Nije registrovan'}</button>
+          onClick={() => setC('registered', !player.registered)}>{player.registered ? 'Licenciran ✓' : 'Nije licenciran'}</button>
       </div>
       <div className="prof-sec">
         <div className="prof-sec-h">Kontakt</div>
@@ -314,8 +314,33 @@ function ProfilTab({ player, store }) {
   )
 }
 
+function matchLog(playerId, matches) {
+  const rows = []
+  for (const m of matches) {
+    const finished = m.played || m.gf !== null || m.ga !== null
+    if (!finished) continue
+    const events = m.events || []
+    const inLineup = (m.lineup || []).includes(playerId)
+    const subIn = events.some(e => e.type === 'sub' && e.inId === playerId)
+    const hasMin = (m.minutes || {})[playerId] != null && (m.minutes || {})[playerId] !== ''
+    const rated = !!(m.ratings || {})[playerId]
+    const extra = (m.extra || []).includes(playerId)
+    if (!(inLineup || subIn || hasMin || rated || extra)) continue
+    let g = 0, a = 0, y = 0, r = 0
+    for (const e of events) { if (e.playerId !== playerId) continue; if (e.type === 'goal') g++; else if (e.type === 'assist') a++; else if (e.type === 'yellow') y++; else if (e.type === 'red') r++ }
+    const rt = (m.ratings || {})[playerId] || {}
+    const score = rt.score != null && rt.score !== '' && !isNaN(Number(rt.score)) ? Number(rt.score) : null
+    const res = (m.gf != null && m.ga != null) ? (m.gf > m.ga ? 'W' : m.gf === m.ga ? 'D' : 'L') : null
+    rows.push({ id: m.id, opp: m.opp, crest: m.crest, date: m.date, gf: m.gf, ga: m.ga, res, g, a, y, r, score })
+  }
+  rows.sort((x, z) => (x.date < z.date ? 1 : x.date > z.date ? -1 : 0)) // najnovije gore
+  return rows
+}
+
 function StatTab({ player, matches }) {
   const st = computeStats(player.id, matches, player)
+  const { avg, count } = computeRatings(player.id, matches)
+  const log = matchLog(player.id, matches)
   return (
     <>
       <div className="statgrid">
@@ -327,7 +352,29 @@ function StatTab({ player, matches }) {
         <Stat n={st.red} l="Crveni" />
         <Stat n={st.cs} l="Clean sheet" />
       </div>
-      <RatingsBlock player={player} matches={matches} />
+      <div style={{ display: 'flex', alignItems: 'center', padding: '14px 18px 6px', gap: 8 }}>
+        <span className="eyebrow">Odigrane utakmice</span>
+        {avg != null && <span className="rate-badge" style={{ marginLeft: 'auto', background: ratingColor(avg) }}>{fmtScore(avg)}</span>}
+        <span className="foot-l" style={avg != null ? {} : { marginLeft: 'auto' }}>{count ? `prosek ocena · ${count}` : 'nema ocena'}</span>
+      </div>
+      <div className="mlog">
+        {log.length === 0 && <div className="empty" style={{ margin: '0 18px 18px', padding: 16 }}>Još nema odigranih utakmica.</div>}
+        {log.map(r => (
+          <div key={r.id} className="mlog-row">
+            <span className="mlog-crest">{r.crest ? <img src={r.crest} alt="" /> : <span className="mr-nocrest">?</span>}</span>
+            <span className="mlog-opp">vs {r.opp}</span>
+            <span className="mlog-res num">{r.gf ?? '–'}:{r.ga ?? '–'}</span>
+            {r.res && <span className={'mlog-wdl ' + r.res}>{r.res}</span>}
+            <span className="mlog-ev">
+              {r.g > 0 && <span>⚽{r.g > 1 ? r.g : ''}</span>}
+              {r.a > 0 && <span>🅰{r.a > 1 ? r.a : ''}</span>}
+              {r.y > 0 && <span>🟨{r.y > 1 ? r.y : ''}</span>}
+              {r.r > 0 && <span>🟥{r.r > 1 ? r.r : ''}</span>}
+            </span>
+            {r.score != null ? <span className="rate-badge rb-sm" style={{ background: ratingColor(r.score) }}>{fmtScore(r.score)}</span> : <span className="mlog-nr">–</span>}
+          </div>
+        ))}
+      </div>
     </>
   )
 }

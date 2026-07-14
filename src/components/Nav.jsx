@@ -8,7 +8,7 @@ export const NAV = [
   { id: 'players', label: 'Moj tim', icon: Icon.players, short: 'Moj tim', children: [
     { key: 'roster', label: 'Igrači' },
     { key: 'lineup', label: 'Prva postava' },
-    { key: 'reg', label: 'Registracija' },
+    { key: 'reg', label: 'Licenciranje' },
   ] },
   { id: 'cal', label: 'Kalendar aktivnosti', icon: Icon.cal, short: 'Kalendar' },
   { id: 'mc', label: 'Mikrociklusi', icon: Icon.mc, short: 'MC' },
