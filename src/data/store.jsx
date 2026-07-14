@@ -275,6 +275,23 @@ export function StoreProvider({ children }) {
       return { ...s, calendar: [...s.calendar, { start: startISO, days }].sort((a, b) => (a.start < b.start ? -1 : 1)) }
     }),
     removeCalendarWeek: (startISO) => setState(s => ({ ...s, calendar: s.calendar.filter(w => w.start !== startISO) })),
+    // veži mikrociklus za nedelju kalendara (živa veza, kalendar prikazuje sažetak MC-a)
+    linkMcToWeek: (startISO, mcId) => setState(s => {
+      let cal = s.calendar
+      if (!cal.some(w => w.start === startISO)) {
+        const D = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned']
+        const days = D.map((d, i) => {
+          const dt = new Date(startISO); dt.setDate(dt.getDate() + i)
+          return { day: d, date: dt.toISOString().slice(0, 10), am: '/', pm: '/', matchId: null, intensity: null }
+        })
+        cal = [...cal, { start: startISO, days }].sort((a, b) => (a.start < b.start ? -1 : 1))
+      }
+      // jedan MC može biti vezan za najviše jednu nedelju — očisti staru vezu
+      cal = cal.map(w => w.mcId === mcId ? { ...w, mcId: null } : w)
+      cal = cal.map(w => w.start === startISO ? { ...w, mcId } : w)
+      return { ...s, calendar: cal }
+    }),
+    unlinkMcFromWeek: (startISO) => setState(s => ({ ...s, calendar: s.calendar.map(w => w.start === startISO ? { ...w, mcId: null } : w) })),
     // zameni sadržaj dva dana (drag&drop pri promeni termina); čuva datum/naziv dana na mestu
     swapCalendarDays: (a, b) => setState(s => {
       const cal = s.calendar.map(w => ({ ...w, days: w.days.slice() }))

@@ -3,6 +3,7 @@ import { useStore, fmtDate } from '../data/store'
 import { INTENSITY, intensityColor } from '../data/seed'
 import { Icon, Crest } from '../components/Icons'
 import { exportNodeAsImage } from '../utils/exportImage'
+import { mcDayOverview } from '../utils/mcOverview'
 
 const MONTHS_SR = ['januar', 'februar', 'mart', 'april', 'maj', 'jun', 'jul', 'avgust', 'septembar', 'oktobar', 'novembar', 'decembar']
 const CYCLE = [null, 'match', '80', '50', '30', 'regen', 'free']
@@ -18,7 +19,7 @@ function weekLabel(w, i) {
 
 export default function Calendar({ openMatch }) {
   const store = useStore()
-  const { calendar, matches } = store
+  const { calendar, matches, microcycles } = store
   const [edit, setEdit] = useState(null)
   const [popup, setPopup] = useState(null)      // utakmica za popup
   const [newMatch, setNewMatch] = useState(null) // {date}
@@ -58,24 +59,35 @@ export default function Calendar({ openMatch }) {
         </div></div>
       )}
 
-      {calendar.map((w, wi) => (
-        <div className="cal-week" key={w.start}>
+      {calendar.map((w, wi) => {
+        const linkedMc = w.mcId ? microcycles.find(m => m.id === w.mcId) : null
+        return (
+        <div className={'cal-week' + (linkedMc ? ' mc-linked' : '')} key={w.start}>
           <div className="wk-lab">{weekLabel(w, wi)}
+            {linkedMc && (
+              <span className="mc-link-badge" title="Nedelja je vezana za mikrociklus — prikaz je sažetak, uređuješ u Mikrociklusima">
+                <Icon.mc /> MC {linkedMc.n} · pregled
+                <button className="mc-link-off" title="Isključi (vrati na uređivanje u kalendaru)"
+                  onClick={() => store.unlinkMcFromWeek(w.start)}>isključi</button>
+              </span>
+            )}
             <button className="btn ghost sm wk-del" title="Ukloni nedelju"
               onClick={() => { if (confirm('Ukloniti ovu nedelju iz kalendara?')) store.removeCalendarWeek(w.start) }}><Icon.trash /></button>
           </div>
           <div className="days">
             {w.days.map((d, di) => {
               const match = byDate[d.date] || (d.matchId ? matches.find(m => m.id === d.matchId) : null)
+              const mcOv = linkedMc && !match ? mcDayOverview(linkedMc, di) : null
+              const dayInt = match ? 'match' : (mcOv ? mcOv.intensity : d.intensity)
               return (
-                <div className={'day' + (match ? ' match' : '')} key={di} style={{ background: tint(match ? 'match' : d.intensity) }}
+                <div className={'day' + (match ? ' match' : '')} key={di} style={{ background: tint(dayInt) }}
                   onDragOver={e => e.preventDefault()}
-                  onDrop={() => { if (drag.current) { store.swapCalendarDays(drag.current, { wi, di }); drag.current = null } }}>
-                  <div className="int-stripe" style={{ background: intensityColor(match ? 'match' : d.intensity) }} />
-                  <div className="day-h" draggable onDragStart={() => { drag.current = { wi, di } }} title="Prevuci da zameniš dan" style={{ cursor: 'grab' }}>
+                  onDrop={() => { if (drag.current && !linkedMc) { store.swapCalendarDays(drag.current, { wi, di }); drag.current = null } }}>
+                  <div className="int-stripe" style={{ background: intensityColor(dayInt) }} />
+                  <div className="day-h" draggable={!linkedMc} onDragStart={() => { if (!linkedMc) drag.current = { wi, di } }} title={linkedMc ? '' : 'Prevuci da zameniš dan'} style={{ cursor: linkedMc ? 'default' : 'grab' }}>
                     <b>{d.day.toUpperCase()}</b>
                     <span className="dt">{fmtDate(d.date)}</span>
-                    {!match && (
+                    {!match && !mcOv && (
                       <button className="int-swatch" style={{ background: intensityColor(d.intensity) || 'rgba(255,255,255,.15)' }}
                         title={'Intenzitet: ' + (INTENSITY.find(x => x.key === d.intensity)?.label || 'nije označen')}
                         onClick={() => { const cur = CYCLE.indexOf(d.intensity); store.setDayIntensity(wi, di, CYCLE[(cur + 1) % CYCLE.length]) }} />
@@ -89,6 +101,13 @@ export default function Calendar({ openMatch }) {
                         ? <small><b className="num" style={{ fontSize: 14 }}>{match.gf ?? '–'}:{match.ga ?? '–'}</b></small>
                         : <small>{match.home ? 'domaćin' : 'gost'} · {match.time}</small>}
                     </button>
+                  ) : mcOv ? (
+                    mcOv.slots.map((sl, k) => (
+                      <div className="slot mc-slot" key={k}>
+                        <div className="sl-lab">{sl.label}{sl.time ? ' · ' + sl.time : ''}</div>
+                        {sl.text ? <div className="mc-slot-txt">{sl.text}</div> : <span className="free-mark">/</span>}
+                      </div>
+                    ))
                   ) : (
                     <>
                       <Slot label="Prepodne" value={d.am} onClick={() => setEdit({ wi, di, part: 'am', value: d.am, day: d.day })} />
@@ -100,7 +119,8 @@ export default function Calendar({ openMatch }) {
             })}
           </div>
         </div>
-      ))}
+        )
+      })}
       </div>
 
       {edit && <EditSlot data={edit} onClose={() => setEdit(null)}

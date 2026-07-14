@@ -12,10 +12,11 @@ const tint = k => { const c = intensityColor(k); return c === 'transparent' ? 'v
 
 export default function Microcycles() {
   const store = useStore()
-  const { microcycles } = store
+  const { microcycles, calendar } = store
   const [active, setActive] = useState(microcycles[0]?.id)
   const [edit, setEdit] = useState(null)
   const [trDetail, setTrDetail] = useState(null) // {day, part}
+  const [calPick, setCalPick] = useState(false) // modal „ubaci u kalendar"
   const boardRef = useRef()
 
   const mc = microcycles.find(m => m.id === active) || microcycles[0]
@@ -44,6 +45,7 @@ export default function Microcycles() {
   }
   const isComp = mc.type === 'Takmičarski'
   const locked = !!mc.locked
+  const linkedWeek = calendar.find(w => w.mcId === mc.id)
 
   return (
     <section>
@@ -70,7 +72,10 @@ export default function Microcycles() {
         </select>
         <input className="input" style={{ width: 150, padding: '5px 9px', fontSize: 12 }} placeholder="datum, npr. 06.07 – 13.07"
           value={mc.range || ''} disabled={locked} onChange={e => store.updateMicrocycle(mc.id, { range: e.target.value })} title="Datum / period" />
-        <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={() => exportNodeAsImage(boardRef.current, `MC${mc.n}${mc.range ? '-' + mc.range.replace(/[^\w]+/g, '_') : ''}.png`)}><Icon.download /> Slika</button>
+        {linkedWeek
+          ? <button className="btn sm on" style={{ marginLeft: 'auto' }} title={'U kalendaru od ' + linkedWeek.start + ' — klikni da ukloniš'} onClick={() => store.unlinkMcFromWeek(linkedWeek.start)}><Icon.cal /> U kalendaru ✓</button>
+          : <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={() => setCalPick(true)}><Icon.cal /> Ubaci u kalendar</button>}
+        <button className="btn sm" onClick={() => exportNodeAsImage(boardRef.current, `MC${mc.n}${mc.range ? '-' + mc.range.replace(/[^\w]+/g, '_') : ''}.png`)}><Icon.download /> Slika</button>
         {locked
           ? <button className="btn" onClick={() => store.updateMicrocycle(mc.id, { locked: false })}><Icon.edit /> Izmeni</button>
           : <button className="btn primary" onClick={() => store.updateMicrocycle(mc.id, { locked: true })}>✓ Snimi MC</button>}
@@ -157,7 +162,32 @@ export default function Microcycles() {
           onChange={(patch, applyAll) => store.updateMcTraining(mc.id, trDetail.day, trDetail.part, patch, applyAll)}
           onRemove={() => { store.removeMcTraining(mc.id, trDetail.day, trDetail.part); setTrDetail(null) }} />
       })()}
+
+      {calPick && <CalPickModal mcN={mc.n} range={mc.range} onClose={() => setCalPick(false)}
+        onPick={mondayISO => { store.linkMcToWeek(mondayISO, mc.id); setCalPick(false) }} />}
     </section>
+  )
+}
+
+function mondayOf(iso) { const x = new Date(iso); const dw = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dw); return x.toISOString().slice(0, 10) }
+
+function CalPickModal({ mcN, range, onClose, onPick }) {
+  const [date, setDate] = useState('')
+  const monday = date ? mondayOf(date) : ''
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+        <div className="modal-h"><h3>Ubaci MC {mcN} u kalendar</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-b">
+          <div className="field"><label>Prvi dan nedelje (bilo koji datum te nedelje)</label>
+            <input className="input" type="date" value={date} autoFocus onChange={e => setDate(e.target.value)} /></div>
+          {monday && <p className="mock-note">Ponedeljak → Nedelja te nedelje ({monday}). Ako nedelja ne postoji u kalendaru, napraviću je. Kalendar prikazuje SAŽETAK (uređuješ ovde u Mikrociklusima).</p>}
+          {range && <p className="mock-note" style={{ opacity: .8 }}>Period MC-a: {range}</p>}
+        </div>
+        <div className="modal-f"><button className="btn ghost" onClick={onClose}>Otkaži</button>
+          <button className="btn primary" disabled={!monday} onClick={() => onPick(monday)}>Ubaci</button></div>
+      </div>
+    </div>
   )
 }
 
