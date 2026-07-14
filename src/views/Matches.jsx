@@ -34,6 +34,9 @@ export default function Matches({ focusId, onFocusHandled }) {
 
   const m = matches.find(x => x.id === activeId) || matches[0]
   const pName = id => { const p = players.find(x => x.id === id); return p ? shortName(p.name) : '—' }
+  // Za prvenstvene mečeve nude se samo registrovani; pripremne i „niko nije registrovan" → svi
+  const anyReg = players.some(p => p.registered)
+  const matchAvail = (m && m.kind !== 'friendly' && anyReg) ? players.filter(p => p.registered) : players
 
   function setScore(field, val) {
     store.updateMatch(m.id, { [field]: val === '' ? null : Math.max(0, parseInt(val) || 0) })
@@ -107,7 +110,7 @@ export default function Matches({ focusId, onFocusHandled }) {
       {/* Postava i formacija */}
       <div className="card" style={{ marginBottom: 18 }}>
         <div className="card-h"><h3>Postava i formacija</h3></div>
-        <div className="card-b"><FormationBoard match={m} players={players} store={store} /></div>
+        <div className="card-b"><FormationBoard data={m} players={players} available={matchAvail} onChange={patch => store.updateMatch(m.id, patch)} /></div>
       </div>
 
       {/* Igrači na meču — minuti, učinak, ocena, beleška (sve na jednom mestu) */}

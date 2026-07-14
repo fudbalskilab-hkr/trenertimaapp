@@ -5,7 +5,11 @@ import { shrinkImage } from '../utils/img'
 
 export const NAV = [
   { id: 'dash', label: 'Pregled', icon: Icon.dash, short: 'Pregled' },
-  { id: 'players', label: 'Igrači', icon: Icon.players, short: 'Igrači' },
+  { id: 'players', label: 'Moj tim', icon: Icon.players, short: 'Moj tim', children: [
+    { key: 'roster', label: 'Igrači' },
+    { key: 'lineup', label: 'Prva postava' },
+    { key: 'reg', label: 'Registracija' },
+  ] },
   { id: 'cal', label: 'Kalendar aktivnosti', icon: Icon.cal, short: 'Kalendar' },
   { id: 'mc', label: 'Mikrociklusi', icon: Icon.mc, short: 'MC' },
   { id: 'base', label: 'Trening baza', icon: Icon.train, short: 'Trening', children: [

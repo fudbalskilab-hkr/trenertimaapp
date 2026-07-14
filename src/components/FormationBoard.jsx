@@ -46,7 +46,7 @@ const GROUPS = [
 const cx = v => Math.max(5, Math.min(95, v))
 const cyOut = v => Math.max(8, Math.min(GK_ZONE, v)) // polje ne ulazi u golmanovu zonu
 
-export default function FormationBoard({ match, players, store }) {
+export default function FormationBoard({ data, players, onChange, available }) {
   const [picked, setPicked] = useState(null)
   const [photos, setPhotos] = useState(false)
   const [q, setQ] = useState('')
@@ -55,13 +55,13 @@ export default function FormationBoard({ match, players, store }) {
   const fieldRef = useRef(null)
 
   const byId = id => players.find(p => p.id === id)
-  const formation = match.formation || '4-3-3'
-  const benchIds = match.benchIds || []
+  const formation = data.formation || '4-3-3'
+  const benchIds = data.benchIds || []
 
   // Normalizacija: gkId (fiksni golman) + field (igrači u polju, bez golmana).
   const { gkId, field } = useMemo(() => {
     // stara verzija: positions={slotId:pid}
-    if (!match.field && match.positions) {
+    if (!data.field && data.positions) {
       const SLOTS = FORMATIONS[formation]
       const OLD = {
         '4-3-3': ['gk', 'lb', 'lcb', 'rcb', 'rb', 'lcm', 'cm', 'rcm', 'lw', 'st', 'rw'],
@@ -69,12 +69,12 @@ export default function FormationBoard({ match, players, store }) {
         '4-2-3-1': ['gk', 'lb', 'lcb', 'rcb', 'rb', 'ldm', 'rdm', 'lam', 'cam', 'ram', 'st'],
         '3-5-2': ['gk', 'lcb', 'ccb', 'rcb', 'lwb', 'lcm', 'cm', 'rcm', 'rwb', 'lst', 'rst'],
       }[formation] || []
-      const pos = match.positions || {}; const f = {}; let gk = null
+      const pos = data.positions || {}; const f = {}; let gk = null
       OLD.forEach((slotId, i) => { const pid = pos[slotId]; if (!pid || !SLOTS[i]) return; if (slotId === 'gk') gk = pid; else f[pid] = { x: SLOTS[i].x, y: SLOTS[i].y } })
       return { gkId: gk, field: f }
     }
-    const raw = { ...(match.field || {}) }
-    let gk = match.gkId
+    const raw = { ...(data.field || {}) }
+    let gk = data.gkId
     if (gk === undefined) { // izvuci golmana iz field-a (gk-pozicija ili najniži)
       const ids = Object.keys(raw)
       const low = arr => arr.reduce((b, id) => (!b || raw[id].y > raw[b].y ? id : b), null)
@@ -83,13 +83,14 @@ export default function FormationBoard({ match, players, store }) {
     }
     if (gk && raw[gk]) delete raw[gk]
     return { gkId: gk || null, field: raw }
-  }, [match.field, match.gkId, match.positions, formation])
+  }, [data.field, data.gkId, data.positions, formation])
 
   const outIds = Object.keys(field)
   const total = (gkId ? 1 : 0) + outIds.length
-  const pool = players.filter(p => p.id !== gkId && !field[p.id] && !benchIds.includes(p.id)).sort(sortByPos)
+  // pool = dostupni igrači (npr. samo registrovani), bez golmana/postavljenih/klupe
+  const pool = (available || players).filter(p => p.id !== gkId && !field[p.id] && !benchIds.includes(p.id)).sort(sortByPos)
 
-  const save = (gk, f, b) => store.updateMatch(match.id, { gkId: gk, field: f, lineup: [gk, ...Object.keys(f)].filter(Boolean), benchIds: b })
+  const save = (gk, f, b) => onChange({ gkId: gk, field: f, lineup: [gk, ...Object.keys(f)].filter(Boolean), benchIds: b })
 
   const OUT_FULL = `U polju može najviše ${MAX_OUT} (+ golman = 11).`
   const BFULL = `Klupa je puna (${MAX_BENCH}).`
@@ -141,7 +142,7 @@ export default function FormationBoard({ match, players, store }) {
     const outs = outIds.map(byId).filter(Boolean).sort(sortByPos)
     const nf = {}
     outs.slice(0, coords.length - 1).forEach((p, i) => { nf[p.id] = { x: coords[i + 1].x, y: coords[i + 1].y } })
-    store.updateMatch(match.id, { formation: f, gkId, field: nf, lineup: [gkId, ...Object.keys(nf)].filter(Boolean), benchIds })
+    onChange({ formation: f, gkId, field: nf, lineup: [gkId, ...Object.keys(nf)].filter(Boolean), benchIds })
     setPicked(null); setWarn('')
   }
   function fillField() {

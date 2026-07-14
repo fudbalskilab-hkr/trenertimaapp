@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { useStore, ageFrom, initials, computeStats, computeRatings, fmtDate } from '../data/store'
 import { FEE_MONTHS, posGroup, POS_COLORS } from '../data/seed'
 import { Icon } from '../components/Icons'
 import { shrinkImage } from '../utils/img'
 import { ratingColor } from '../components/RatingSlider'
+import FormationBoard from '../components/FormationBoard'
 
 const SORTS = [
   { key: 'pos', label: 'Po pozicijama (GK→ATT)' },
@@ -68,7 +69,74 @@ function cellValue(key, p, fees) {
   }
 }
 
-export default function Players({ addOpen, onCloseAdd }) {
+const SUBTABS = [['roster', 'Igrači'], ['lineup', 'Prva postava'], ['reg', 'Registracija']]
+
+export default function Players({ sub, setSub, addOpen, onCloseAdd }) {
+  return (
+    <>
+      <div className="subtabs mobile-only">
+        {SUBTABS.map(([k, l]) => <button key={k} className={sub === k ? 'on' : ''} onClick={() => setSub(k)}>{l}</button>)}
+      </div>
+      {sub === 'lineup' ? <TeamLineup />
+        : sub === 'reg' ? <Registration />
+          : <Roster addOpen={addOpen} onCloseAdd={onCloseAdd} />}
+    </>
+  )
+}
+
+function TeamLineup() {
+  const store = useStore()
+  const { team, players } = store
+  const anyReg = players.some(p => p.registered)
+  const avail = anyReg ? players.filter(p => p.registered) : players
+  return (
+    <section>
+      <div className="sec-title"><h2>Prva postava</h2><span className="eyebrow">podrazumevana — kopira se u svaku novu utakmicu</span></div>
+      <div className="card"><div className="card-b">
+        <FormationBoard data={team.lineup || {}} players={players} available={avail} onChange={patch => store.updateTeamLineup(patch)} />
+      </div></div>
+      <p className="mock-note">Ovo je tvoja podrazumevana postava. Kad napraviš novu utakmicu, automatski se prekopira, pa je tamo menjaš za taj meč. {anyReg ? 'Nude se samo registrovani igrači.' : 'Trenutno se nude svi (još niko nije registrovan).'}</p>
+    </section>
+  )
+}
+
+function Registration() {
+  const store = useStore()
+  const { players } = store
+  const [draft, setDraft] = useState(() => new Set(players.filter(p => p.registered).map(p => p.id)))
+  const [saved, setSaved] = useState(false)
+  const sorted = [...players].sort((a, b) => posRank(a) - posRank(b) || (a.number ?? 99) - (b.number ?? 99) || a.name.localeCompare(b.name, 'sr'))
+  const toggle = id => { setSaved(false); setDraft(d => { const n = new Set(d); n.has(id) ? n.delete(id) : n.add(id); return n }) }
+  function save() {
+    players.forEach(p => { const reg = draft.has(p.id); if (!!p.registered !== reg) store.updatePlayer(p.id, { registered: reg }) })
+    setSaved(true)
+  }
+  return (
+    <section>
+      <div className="sec-title"><h2>Registracija igrača</h2><span className="eyebrow">{draft.size} od {players.length} registrovano</span>
+        <button className="btn primary sm" style={{ marginLeft: 'auto' }} onClick={save}>✓ Sačuvaj</button></div>
+      <div className="card"><div className="card-b">
+        <p className="mock-note" style={{ marginTop: 0 }}>Štikliraj registrovane pa „Sačuvaj". Na <b>prvenstvenim</b> utakmicama nude se samo registrovani; na <b>pripremnim</b> svi.</p>
+        <div className="reg-list">
+          {sorted.map(p => {
+            const col = POS_COLORS[posGroup(p.pos) || '_'] || '#868e96'
+            return (
+              <label key={p.id} className={'reg-item' + (draft.has(p.id) ? ' on' : '')}>
+                <input type="checkbox" checked={draft.has(p.id)} onChange={() => toggle(p.id)} />
+                <span className="reg-pos" style={{ background: col }}>{p.pos || '–'}</span>
+                <span className="reg-name">{p.name}</span>
+                {p.number != null && p.number !== '' && <span className="reg-num">#{p.number}</span>}
+              </label>
+            )
+          })}
+        </div>
+        {saved && <p className="mock-note" style={{ color: 'var(--good)', marginBottom: 0 }}>✓ Sačuvano.</p>}
+      </div></div>
+    </section>
+  )
+}
+
+function Roster({ addOpen, onCloseAdd }) {
   const store = useStore()
   const { players, matches, fees } = store
   const [selId, setSelId] = useState(players[0]?.id)
@@ -95,6 +163,8 @@ export default function Players({ addOpen, onCloseAdd }) {
     else if (sort === 'minutes') arr.sort((a, b) => b._st.minutes - a._st.minutes)
     else if (sort === 'apps') arr.sort((a, b) => b._st.apps - a._st.apps)
     else if (sort === 'name') arr.sort((a, b) => a.name.localeCompare(b.name, 'sr'))
+    // registrovani gore, neregistrovani dole (stabilno — čuva prethodni poredak unutar grupe)
+    if (players.some(p => p.registered)) arr.sort((a, b) => (b.registered ? 1 : 0) - (a.registered ? 1 : 0))
     return arr
   }, [players, matches, sort])
 
@@ -137,13 +207,17 @@ export default function Players({ addOpen, onCloseAdd }) {
             <tbody>
               {rows.map((p, i) => {
                 const g = posGroup(p.pos)
+                const showDiv = i > 0 && rows[i - 1].registered && !p.registered
                 return (
-                  <tr key={p.id} className={(p.id === sel?.id ? 'sel ' : '') + (g ? 'pg-' + g : '')}
-                    style={g ? { '--pgc': POS_COLORS[g] } : undefined} onClick={() => setSelId(p.id)}>
-                    <td className="rownum">{i + 1}</td>
-                    <td><b>{p.name}</b></td>
-                    {visible.map(c => <td key={c.key} className={numCol(c.key) ? 'num' : ''}>{cellValue(c.key, p, fees)}</td>)}
-                  </tr>
+                  <Fragment key={p.id}>
+                    {showDiv && <tr className="reg-div"><td colSpan={2 + visible.length}>— Neregistrovani —</td></tr>}
+                    <tr className={(p.id === sel?.id ? 'sel ' : '') + (g ? 'pg-' + g : '')}
+                      style={g ? { '--pgc': POS_COLORS[g] } : undefined} onClick={() => setSelId(p.id)}>
+                      <td className="rownum">{i + 1}</td>
+                      <td><b>{p.name}</b>{p.registered && <span className="reg-chk" title="Registrovan">✓</span>}</td>
+                      {visible.map(c => <td key={c.key} className={numCol(c.key) ? 'num' : ''}>{cellValue(c.key, p, fees)}</td>)}
+                    </tr>
+                  </Fragment>
                 )
               })}
             </tbody>

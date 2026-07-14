@@ -173,6 +173,8 @@ export function StoreProvider({ children }) {
 
     // Tim (ime trenera, grb kluba) i liga
     updateTeam: (patch) => setState(s => ({ ...s, team: { ...s.team, ...patch } })),
+    // „Prva postava" na nivou tima (kopira se u svaku novu utakmicu)
+    updateTeamLineup: (patch) => setState(s => ({ ...s, team: { ...s.team, lineup: { ...(s.team.lineup || {}), ...patch } } })),
     updateLeague: (patch) => setState(s => ({ ...s, league: { ...s.league, ...patch } })),
 
     // GPS (Catapult) — unos/izmena metrika za igrača na meču
@@ -208,10 +210,16 @@ export function StoreProvider({ children }) {
     // Utakmice
     addMatch: () => {
       const id = 'm' + Date.now()
-      setState(s => ({ ...s, matches: [...s.matches, {
-        id, date: '', time: '17:00', opp: 'Novi protivnik', home: true, comp: 'Prijateljska',
-        kind: 'friendly', crest: '', gf: null, ga: null, events: [], lineup: [], formation: '4-3-3', positions: {}, minutes: {},
-      }] }))
+      setState(s => {
+        const L = s.team.lineup || {} // podrazumevana „Prva postava" iz Moj tim
+        const field = L.field ? JSON.parse(JSON.stringify(L.field)) : {}
+        return { ...s, matches: [...s.matches, {
+          id, date: '', time: '17:00', opp: 'Novi protivnik', home: true, comp: 'Prijateljska',
+          kind: 'friendly', crest: '', gf: null, ga: null, events: [], minutes: {},
+          formation: L.formation || '4-3-3', gkId: L.gkId || null, field, benchIds: L.benchIds ? [...L.benchIds] : [],
+          lineup: [L.gkId, ...Object.keys(field)].filter(Boolean),
+        }] }
+      })
       return id
     },
     removeMatch: (id) => setState(s => ({ ...s, matches: s.matches.filter(m => m.id !== id) })),

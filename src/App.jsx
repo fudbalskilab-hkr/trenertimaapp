@@ -14,7 +14,7 @@ import GPS from './views/GPS'
 
 const TITLES = {
   dash: ['Pregled', s => `Sezona ${s.team.season} · ${s.team.period}`],
-  players: ['Igrači', s => `${s.players.length} igrača · profili, statistika i članarina`],
+  players: ['Moj tim', s => `${s.players.length} igrača · postava, profili i statistika`],
   cal: ['Kalendar aktivnosti', () => 'Plan po danima'],
   mc: ['Mikrociklusi', () => 'Nedeljni plan'],
   base: ['Trening baza', () => 'Vežbe · koncept treninga · arhiva'],
@@ -25,7 +25,9 @@ const TITLES = {
 export default function App() {
   const store = useStore()
   const [view, _setView] = useState('dash')
-  const [sub, setSub] = useState('ex')            // podtab za „Trening baza"
+  const [subs, setSubs] = useState({ base: 'ex', players: 'roster' }) // podtab po tabu
+  const sub = subs[view]
+  const setSub = (k) => setSubs(s => ({ ...s, [view]: k }))
   const [adding, setAdding] = useState(false)
   const [dataMenu, setDataMenu] = useState(false)
   const [matchFocus, setMatchFocus] = useState(null) // koju utakmicu otvoriti u tabu
@@ -48,11 +50,11 @@ export default function App() {
   }, [])
   useEffect(() => { window.scrollTo(0, 0) }, [view])
 
-  const canAdd = view === 'players'
+  const canAdd = view === 'players' && subs.players === 'roster'
 
   const views = {
     dash: <Dashboard setView={setView} openMatch={openMatch} />,
-    players: <Players addOpen={adding} onCloseAdd={() => setAdding(false)} />,
+    players: <Players sub={subs.players} setSub={k => setSubs(s => ({ ...s, players: k }))} addOpen={adding} onCloseAdd={() => setAdding(false)} />,
     cal: <Calendar openMatch={openMatch} />,
     mc: <Microcycles />,
     base: <TrainingBase sub={sub} setSub={setSub} />,
