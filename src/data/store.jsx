@@ -315,11 +315,25 @@ export function StoreProvider({ children }) {
     updateMicrocycle: (id, patch) => setState(s => ({
       ...s, microcycles: s.microcycles.map(m => m.id === id ? { ...m, ...patch } : m),
     })),
-    addMicrocycle: () => setState(s => {
-      const nextN = (s.microcycles.reduce((mx, m) => Math.max(mx, m.n || 0), 0)) + 1
-      const mc = { id: 'mc' + Date.now(), n: nextN, type: 'Pripremni', range: '', sessions: [], dayMeta: {} }
-      return { ...s, microcycles: [...s.microcycles, mc] }
-    }),
+    addMicrocycle: () => {
+      const id = 'mc' + Date.now()
+      setState(s => {
+        const nextN = (s.microcycles.reduce((mx, m) => Math.max(mx, m.n || 0), 0)) + 1
+        return { ...s, microcycles: [...s.microcycles, { id, n: nextN, type: 'Pripremni', range: '', sessions: [], dayMeta: {} }] }
+      })
+      return id
+    },
+    // kopiraj MC (nezavisna kopija, novi id) — za „dupliraj pa izmeni"
+    duplicateMicrocycle: (srcId) => {
+      const id = 'mc' + Date.now()
+      setState(s => {
+        const src = s.microcycles.find(m => m.id === srcId); if (!src) return s
+        const nextN = (s.microcycles.reduce((mx, m) => Math.max(mx, m.n || 0), 0)) + 1
+        const copy = { ...JSON.parse(JSON.stringify(src)), id, n: nextN, locked: false, range: src.range ? src.range + ' (kopija)' : '' }
+        return { ...s, microcycles: [...s.microcycles, copy] }
+      })
+      return id
+    },
     removeMicrocycle: (id) => setState(s => ({ ...s, microcycles: s.microcycles.filter(m => m.id !== id) })),
     // po danu: intenzitet i „samo jedan trening"
     setMcDay: (mcId, day, patch) => setState(s => ({
@@ -327,6 +341,17 @@ export function StoreProvider({ children }) {
         ...m, dayMeta: { ...(m.dayMeta || {}), [day]: { ...((m.dayMeta || {})[day] || {}), ...patch } },
       }),
     })),
+    // upiši isti termin za sve dane (part = 'am' | 'pm')
+    setMcAllTimes: (mcId, part, time) => setState(s => ({
+      ...s, microcycles: s.microcycles.map(m => {
+        if (m.id !== mcId) return m
+        const dm = { ...(m.dayMeta || {}) }
+        ;['Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota', 'Nedelja'].forEach(d => { dm[d] = { ...(dm[d] || {}), [part + 'Time']: time } })
+        return { ...m, dayMeta: dm }
+      }),
+    })),
+    // Standardne (omiljene) aktivnosti po segmentu treninga (Settings)
+    setMcFavorites: (section, arr) => setState(s => ({ ...s, team: { ...s.team, mcFavorites: { ...(s.team.mcFavorites || {}), [section]: arr } } })),
 
     // Treninzi (imenovana arhiva)
     addTraining: (name) => {

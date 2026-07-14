@@ -336,9 +336,9 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 .mc-tab.comp.on{background:#B23B3B;border-color:#B23B3B;box-shadow:0 4px 14px rgba(178,59,59,.5)}
 .mc-tab.comp.on small{color:#f3cdcd}
 .mc-board{display:grid;grid-template-columns:repeat(7,minmax(158px,1fr));gap:8px;min-width:1080px}
-.mc-day{display:flex;flex-direction:column;gap:8px}
-.mc-day-h{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:9px;
-  padding:7px 10px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:700;font-size:12.5px}
+.mc-day{display:flex;flex-direction:column;gap:8px;padding:8px;border:1px solid var(--line);border-radius:12px;transition:background .15s}
+.mc-day-h{color:var(--ink);border:1px solid rgba(0,0,0,.08);border-radius:9px;
+  padding:8px 10px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:900;font-size:13px;letter-spacing:.04em}
 .mc-day-h .int-swatch{border-color:var(--line)}
 .mc-day-ctrl{display:flex;align-items:center;gap:6px}
 .mc-day-ctrl input{width:100%;padding:5px 8px;font-size:11.5px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink)}
@@ -346,7 +346,7 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 .mc-part{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:1}
 .mc-part-h{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--blue-600);
   padding:5px 9px;background:var(--surface-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px}
-.mc-time{width:52px;flex:0 0 auto;padding:3px 5px;font-size:11px;border:1px solid var(--line);border-radius:6px;
+.mc-time{width:76px;flex:0 0 auto;padding:3px 5px;font-size:11px;border:1px solid var(--line);border-radius:6px;
   background:var(--surface);color:var(--ink);text-align:center;font-variant-numeric:tabular-nums}
 .comp-theme .mc-part-h{color:#B23B3B}
 .comp-theme .mc-part-h{color:#B23B3B}
@@ -553,7 +553,24 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 .arch-card .ac-goal{font-size:12.5px;color:var(--ink-soft)}
 .arch-card .ac-meta{font-size:11.5px;color:var(--grey);margin-top:2px}
 /* MC dan sa treningom */
-.mc-has-train{padding:8px 9px;border-top:1px dashed var(--line-soft)}
+.mc-alltime{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-6px 0 14px;padding:9px 12px;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:10px;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+.mc-has-train{padding:8px 9px;border-top:1px dashed var(--line-soft);cursor:pointer}
+.mc-has-train:hover{background:var(--blue-50)}
+.mc-train-ov{max-height:180px;overflow-y:auto}
+/* Standardne (omiljene) aktivnosti */
+.fav-wrap{margin-bottom:12px;padding:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px}
+.fav-chips{display:flex;flex-wrap:wrap;gap:6px}
+.fav-chip{display:inline-flex;align-items:center;border:1px solid var(--blue-300);border-radius:20px;overflow:hidden;background:var(--surface)}
+.fav-use{border:0;background:transparent;color:var(--blue-600);font-size:12px;font-weight:600;padding:4px 4px 4px 11px;cursor:pointer;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fav-use:hover{background:var(--blue-50)}
+.fav-del{border:0;background:transparent;color:var(--grey-2);font-size:14px;line-height:1;padding:4px 8px 4px 4px;cursor:pointer}
+.fav-del:hover{color:var(--bad)}
+.fav-editlist{display:flex;flex-direction:column;gap:7px;margin-bottom:12px;max-height:44vh;overflow-y:auto}
+.fav-editrow{display:flex;gap:7px;align-items:center}
+.fav-editrow .input{flex:1}
+.fav-add{display:flex;gap:7px}
+.fav-add .input{flex:1}
 .mc-has-train .mht-goal{font-size:11.5px;font-weight:700;color:var(--blue-600);margin-bottom:4px}
 .mc-has-train .mht-line{font-size:10.5px;color:var(--ink-soft);line-height:1.45}
 .mc-has-train .mht-line b{color:var(--ink)}
