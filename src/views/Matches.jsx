@@ -113,40 +113,37 @@ export default function Matches({ focusId, onFocusHandled }) {
         <div className="card-b"><FormationBoard data={m} players={players} available={matchAvail} onChange={patch => store.updateMatch(m.id, patch)} /></div>
       </div>
 
-      {/* Igrači na meču — minuti, učinak, ocena, beleška (sve na jednom mestu) */}
-      <PlayersCard m={m} players={players} store={store} />
-
-
-      <div>
-        {/* Tok meča */}
-        <div className="card">
-          <div className="card-h"><h3>Tok meča</h3><span className="pill blue" style={{ marginLeft: 'auto' }}>{events.length} događaja</span></div>
-          <div className="card-b">
-            <div className="addbar">
-              <span className="lab">Dodaj:</span>
-              {EVENT_TYPES.map(t => (
-                <button key={t.type} className="btn sm" onClick={() => setAddEv(t.type)}><EvIcon type={t.type} /> {t.label}</button>
-              ))}
-            </div>
-            <div className="timeline">
-              {events.length === 0 && <div className="empty">Nema događaja. Dodaj gol, asistenciju, karton ili izmenu ↑</div>}
-              {events.map(e => (
-                <div className="tl" key={e.id}>
-                  <span className="min">{e.minute ? e.minute + "'" : '—'}</span>
-                  <span className={'ic ' + evCls(e.type)}><EvIcon type={e.type} /></span>
-                  <span className="desc">
-                    {e.type === 'sub'
-                      ? <><b>{pName(e.inId)}</b><small>ulazi za {pName(e.outId)}</small></>
-                      : <><b>{pName(e.playerId)}</b><small>{evName(e.type)}</small></>}
-                  </span>
-                  <button className="btn ghost sm" onClick={() => removeEvent(e.id)} title="Ukloni"><Icon.trash /></button>
-                </div>
-              ))}
-            </div>
-            <p className="mock-note" style={{ marginTop: 12 }}>Golovi, asistencije i kartoni se automatski sabiraju u statistiku igrača. Clean sheet ide postavi kad je primljeno 0 golova.</p>
+      {/* Tok meča — događaji: gol/asist/karton/izmena (ko ušao sa klupe, ko izašao, u kom minutu) */}
+      <div className="card" style={{ marginBottom: 18 }}>
+        <div className="card-h"><h3>Tok meča</h3><span className="pill blue" style={{ marginLeft: 'auto' }}>{events.length} događaja</span></div>
+        <div className="card-b">
+          <div className="addbar">
+            <span className="lab">Dodaj:</span>
+            {EVENT_TYPES.map(t => (
+              <button key={t.type} className="btn sm" onClick={() => setAddEv(t.type)}><EvIcon type={t.type} /> {t.label}</button>
+            ))}
           </div>
+          <div className="timeline">
+            {events.length === 0 && <div className="empty">Nema događaja. Dodaj gol, asistenciju, karton ili izmenu ↑</div>}
+            {events.map(e => (
+              <div className="tl" key={e.id}>
+                <span className="min">{e.minute ? e.minute + "'" : '—'}</span>
+                <span className={'ic ' + evCls(e.type)}><EvIcon type={e.type} /></span>
+                <span className="desc">
+                  {e.type === 'sub'
+                    ? <><b>▲ {pName(e.inId)}</b><small>ušao za ▼ {pName(e.outId)}</small></>
+                    : <><b>{pName(e.playerId)}</b><small>{evName(e.type)}</small></>}
+                </span>
+                <button className="btn ghost sm" onClick={() => removeEvent(e.id)} title="Ukloni"><Icon.trash /></button>
+              </div>
+            ))}
+          </div>
+          <p className="mock-note" style={{ marginTop: 12 }}>„Izmena" = ko je ušao sa klupe (▲), ko je izašao (▼) i u kom minutu. Golovi, asistencije i kartoni se sami sabiraju u statistiku.</p>
         </div>
       </div>
+
+      {/* Igrači na meču — minuti, učinak, ocena, beleška (sve na jednom mestu) */}
+      <PlayersCard m={m} players={players} store={store} />
 
       {/* Izveštaj sa utakmice */}
       <div className="card" style={{ marginTop: 18 }}>
@@ -157,7 +154,7 @@ export default function Matches({ focusId, onFocusHandled }) {
         </div>
       </div>
 
-      {addEv && <AddEvent type={addEv} players={players} lineup={lineup} onClose={() => setAddEv(null)} onSave={addEvent} />}
+      {addEv && <AddEvent type={addEv} players={players} lineup={lineup} bench={m.benchIds || []} onClose={() => setAddEv(null)} onSave={addEvent} />}
       {editMeta && <EditMatchMeta m={m} onClose={() => setEditMeta(false)}
         onSave={patch => { store.updateMatch(m.id, patch); setEditMeta(false) }}
         onDelete={() => { if (confirm(`Obrisati utakmicu vs ${m.opp}?`)) { store.removeMatch(m.id); setEditMeta(false); setActiveId(matches.find(x => x.id !== m.id)?.id) } }} />}
@@ -474,7 +471,7 @@ function EvIcon({ type }) {
   return <span>🔄</span>
 }
 
-function AddEvent({ type, players, lineup, onClose, onSave }) {
+function AddEvent({ type, players, lineup, bench, onClose, onSave }) {
   const [pid, setPid] = useState('')
   const [inId, setInId] = useState('')
   const [outId, setOutId] = useState('')
@@ -484,6 +481,8 @@ function AddEvent({ type, players, lineup, onClose, onSave }) {
   const ok = isSub ? (inId && outId) : pid
   const onField = players.filter(p => lineup.includes(p.id))
   const offField = players.filter(p => !lineup.includes(p.id))
+  // „ulazi" = igrači sa klupe (benchIds); ako klupa nije popunjena, svi van postave
+  const benchP = (bench && bench.length) ? players.filter(p => bench.includes(p.id)) : offField
   const save = () => isSub ? onSave({ type, inId, outId, minute: Number(minute) || null }) : onSave({ type, playerId: pid, minute: Number(minute) || null })
 
   return (
@@ -493,13 +492,13 @@ function AddEvent({ type, players, lineup, onClose, onSave }) {
         <div className="modal-b">
           {isSub ? (
             <div className="row2">
-              <div className="field"><label>Ulazi</label>
+              <div className="field"><label>Ulazi (sa klupe) ▲</label>
                 <select className="input" value={inId} onChange={e => setInId(e.target.value)}>
-                  <option value="">— izaberi —</option>{offField.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  <option value="">— izaberi —</option>{benchP.map(p => <option key={p.id} value={p.id}>{p.name}{p.pos ? ' · ' + p.pos : ''}</option>)}
                 </select></div>
-              <div className="field"><label>Izlazi</label>
+              <div className="field"><label>Izlazi (iz postave) ▼</label>
                 <select className="input" value={outId} onChange={e => setOutId(e.target.value)}>
-                  <option value="">— izaberi —</option>{onField.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  <option value="">— izaberi —</option>{onField.map(p => <option key={p.id} value={p.id}>{p.name}{p.pos ? ' · ' + p.pos : ''}</option>)}
                 </select></div>
             </div>
           ) : (
