@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useStore, fmtDate } from '../data/store'
-import { INTENSITY, intensityColor, intensityBg, matchColor } from '../data/seed'
+import { INTENSITY, intensityColor, intensityBg, matchColor, compCrest } from '../data/seed'
 import { Icon, Crest } from '../components/Icons'
 import { exportNodeAsImage } from '../utils/exportImage'
 import { mcDayOverview } from '../utils/mcOverview'
@@ -19,7 +19,7 @@ function weekLabel(w, i) {
 
 export default function Calendar({ openMatch }) {
   const store = useStore()
-  const { calendar, matches, microcycles } = store
+  const { calendar, matches, microcycles, league } = store
   const [edit, setEdit] = useState(null)
   const [popup, setPopup] = useState(null)      // utakmica za popup
   const [newMatch, setNewMatch] = useState(null) // {date}
@@ -108,6 +108,7 @@ export default function Calendar({ openMatch }) {
                   </div>
                   {match ? (
                     <button className="match-cell" style={{ border: 0, background: 'transparent', cursor: 'pointer', width: '100%' }} onClick={() => setPopup(match)}>
+                      {compCrest(match, league) && <img className="comp-corner" src={compCrest(match, league)} alt="" />}
                       <span className="ha-badge" style={{ background: mc_.color }} title={mc_.label}>{mc_.short}</span>
                       <div className="match-crest">{match.crest ? <img src={match.crest} alt="grb" /> : <span>grb</span>}</div>
                       {match.played

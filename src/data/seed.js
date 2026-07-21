@@ -92,7 +92,21 @@ PLAYERS.forEach((p, i) => { p.number = i + 1; p.photo = '' })
 export const FEE_MONTHS = ['jul', 'avg', 'sep', 'okt', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'maj', 'jun']
 
 // Liga (prvenstvo)
-export const LEAGUE = { name: 'Omladinska liga Srbije', logo: '' }
+export const LEAGUE = { name: 'Omladinska liga Srbije', logo: '', cupName: '', cupLogo: '' }
+
+// Grb i naziv TAKMIČENJA za dati meč (liga / kup / prijateljska)
+export const compCrest = (m, league) => {
+  if (!m || !league) return ''
+  if (m.kind === 'league') return league.logo || ''
+  if (m.kind === 'cup') return league.cupLogo || ''
+  return ''
+}
+export const compName = (m, league) => {
+  if (!m) return ''
+  if (m.kind === 'league') return league?.name || 'Liga'
+  if (m.kind === 'cup') return league?.cupName || 'Kup'
+  return 'Prijateljska'
+}
 
 const squad = PLAYERS.slice(0, 14).map(p => p.id)
 

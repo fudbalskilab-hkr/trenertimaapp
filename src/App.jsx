@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { Sidebar, MobileNav } from './components/Nav'
-import { Icon } from './components/Icons'
+import { Icon, Crest } from './components/Icons'
 import { useStore } from './data/store'
 import { useAuth } from './auth'
+import { shrinkImage, urlToCrest } from './utils/img'
 
 import Dashboard from './views/Dashboard'
 import Players from './views/Players'
@@ -124,6 +125,7 @@ function DataMenu({ store, onClose }) {
   const fileRef = useRef()
   const authCtx = useAuth()
   const [hist, setHist] = useState(null) // null=zatvoreno; niz=otvorena istorija
+  const [comp, setComp] = useState(false) // modal „Takmičenja"
   function exportBackup() {
     const blob = new Blob([store.exportData()], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -145,6 +147,7 @@ function DataMenu({ store, onClose }) {
           <button className="btn primary" onClick={exportBackup} style={{ justifyContent: 'center' }}><Icon.download /> Izvoz (skini backup fajl)</button>
           <button className="btn" onClick={() => fileRef.current.click()} style={{ justifyContent: 'center' }}><Icon.upload /> Uvoz (učitaj backup)</button>
           <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={importBackup} />
+          <button className="btn" onClick={() => setComp(true)} style={{ justifyContent: 'center' }}><Icon.match /> Takmičenja (grb lige / kupa)</button>
           <button className="btn" onClick={() => setHist(store.getHistory())} style={{ justifyContent: 'center' }}>↩ Istorija (vrati verziju)</button>
           <p className="mock-note" style={{ margin: '4px 0 0' }}>Podaci se čuvaju u cloud-u i automatski se pravi backup pri svakoj izmeni. „Istorija" vraća neko od ranijih stanja. „Izvoz" pravi fajl na tvom uređaju.</p>
           {authCtx && (
@@ -156,6 +159,79 @@ function DataMenu({ store, onClose }) {
         </div>
       </div>
       {hist && <HistoryModal store={store} local={hist} onClose={() => setHist(null)} onDone={onClose} />}
+      {comp && <CompetitionsModal store={store} onClose={() => setComp(false)} />}
+    </div>
+  )
+}
+
+// Uređivanje jednog grba (pretpregled + link + upload + ukloni)
+function CrestEditor({ crest, onCrest }) {
+  const fileRef = useRef()
+  const [url, setUrl] = useState('')
+  const [busy, setBusy] = useState(false)
+  function upload(e) {
+    const f = e.target.files[0]; if (!f) return
+    setBusy(true); shrinkImage(f, 256, true).then(u => { onCrest(u); setBusy(false) })
+  }
+  function fromUrl() {
+    if (!url.trim()) return
+    setBusy(true); urlToCrest(url).then(u => { onCrest(u); setBusy(false); setUrl('') })
+  }
+  return (
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+      <div style={{ flexShrink: 0 }}>{crest ? <Crest size={56} url={crest} /> : <div className="badge-lg" style={{ width: 56, height: 56 }}>grb</div>}</div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <input className="input" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…/grb.png" style={{ flex: 1 }} />
+          <button className="btn sm" disabled={busy || !url.trim()} onClick={fromUrl}>{busy ? '…' : 'Dodaj'}</button>
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className="btn sm" onClick={() => fileRef.current.click()}><Icon.upload /> Sa uređaja</button>
+          {crest && <button className="btn ghost sm" style={{ color: 'var(--bad)' }} onClick={() => onCrest('')}>Ukloni</button>}
+          <input ref={fileRef} type="file" accept="image/*" hidden onChange={upload} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CompetitionsModal({ store, onClose }) {
+  const { league } = store
+  const [hasCup, setHasCup] = useState(!!(league.cupName || league.cupLogo))
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 460 }}>
+        <div className="modal-h"><h3>Takmičenja</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-b" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>Liga (prvenstvo)</div>
+            <div className="field" style={{ marginBottom: 10 }}>
+              <label>Naziv lige</label>
+              <input className="input" value={league.name || ''} onChange={e => store.updateLeague({ name: e.target.value })} placeholder="npr. Omladinska liga Srbije" />
+            </div>
+            <label style={{ fontSize: 12, color: 'var(--grey)', display: 'block', marginBottom: 6 }}>Grb lige</label>
+            <CrestEditor crest={league.logo} onCrest={u => store.updateLeague({ logo: u })} />
+          </div>
+
+          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14 }}>
+            {!hasCup ? (
+              <button className="btn" style={{ justifyContent: 'center', width: '100%' }} onClick={() => setHasCup(true)}><Icon.plus /> Dodaj kup (opciono)</button>
+            ) : (
+              <>
+                <div className="eyebrow" style={{ marginBottom: 8 }}>Kup <span style={{ fontWeight: 400, textTransform: 'none' }}>(ako tim igra)</span></div>
+                <div className="field" style={{ marginBottom: 10 }}>
+                  <label>Naziv kupa</label>
+                  <input className="input" value={league.cupName || ''} onChange={e => store.updateLeague({ cupName: e.target.value })} placeholder="npr. Kup Beograda" />
+                </div>
+                <label style={{ fontSize: 12, color: 'var(--grey)', display: 'block', marginBottom: 6 }}>Grb kupa</label>
+                <CrestEditor crest={league.cupLogo} onCrest={u => store.updateLeague({ cupLogo: u })} />
+                <button className="btn ghost sm" style={{ color: 'var(--bad)', marginTop: 10 }} onClick={() => { store.updateLeague({ cupName: '', cupLogo: '' }); setHasCup(false) }}>Ukloni kup</button>
+              </>
+            )}
+          </div>
+          <p className="mock-note" style={{ margin: 0 }}>Grb takmičenja se prikazuje u kalendaru (ćošak dana sa mečom) i u izveštaju utakmice. Meč postaje ligaški/kupovni preko „Tip" u izmeni utakmice.</p>
+        </div>
+      </div>
     </div>
   )
 }

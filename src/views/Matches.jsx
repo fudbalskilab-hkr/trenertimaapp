@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
-import { posGroup, POS_COLORS, matchColor } from '../data/seed'
+import { posGroup, POS_COLORS, matchColor, compCrest, compName } from '../data/seed'
 import { Icon, Crest } from '../components/Icons'
 import FormationBoard from '../components/FormationBoard'
 import RatingSlider from '../components/RatingSlider'
@@ -24,7 +24,7 @@ const EVENT_TYPES = [
 
 export default function Matches({ focusId, onFocusHandled }) {
   const store = useStore()
-  const { matches, players, team } = store
+  const { matches, players, team, league } = store
   const [activeId, setActiveId] = useState(matches[0]?.id)
   const [addEv, setAddEv] = useState(null)
   const [editMeta, setEditMeta] = useState(false)
@@ -84,7 +84,10 @@ export default function Matches({ focusId, onFocusHandled }) {
             <button className={m.home ? 'on' : ''} onClick={() => store.updateMatch(m.id, { home: true })}>Domaćin</button>
             <button className={!m.home ? 'on' : ''} onClick={() => store.updateMatch(m.id, { home: false })}>Gost</button>
           </div>
-          <div className="rm-meta">{fmtDate(m.date)}{m.date?.slice(0, 4)} · {m.time}<br />{m.comp}</div>
+          <div className="rm-meta" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            {compCrest(m, league) && <img src={compCrest(m, league)} alt={compName(m, league)} title={compName(m, league)} style={{ width: 30, height: 30, objectFit: 'contain' }} />}
+            <span>{fmtDate(m.date)}{m.date?.slice(0, 4)} · {m.time}<br />{m.comp}</span>
+          </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button className="btn sm" style={{ background: 'rgba(255,255,255,.16)', border: 0, color: '#fff' }} onClick={() => setEditMeta(true)}>Izmeni</button>
             <button className="btn sm" style={{ background: m.played ? 'rgba(255,255,255,.16)' : '#1E9E6A', border: 0, color: '#fff' }}
@@ -448,7 +451,7 @@ function EditMatchMeta({ m, onClose, onSave, onDelete }) {
           <div className="field"><label>Takmičenje</label><input className="input" value={f.comp} onChange={e => set('comp', e.target.value)} placeholder="Prijateljska / Omladinska liga · 1. kolo" /></div>
           <div className="row2">
             <div className="field"><label>Mesto</label><select className="input" value={f.home ? '1' : '0'} onChange={e => set('home', e.target.value === '1')}><option value="1">Domaćin</option><option value="0">Gost</option></select></div>
-            <div className="field"><label>Tip</label><select className="input" value={f.kind} onChange={e => set('kind', e.target.value)}><option value="friendly">Prijateljska</option><option value="league">Prvenstvena</option></select></div>
+            <div className="field"><label>Tip</label><select className="input" value={f.kind} onChange={e => set('kind', e.target.value)}><option value="friendly">Prijateljska</option><option value="league">Prvenstvena</option><option value="cup">Kup</option></select></div>
           </div>
         </div>
         <div className="modal-f">
