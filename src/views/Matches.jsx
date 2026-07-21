@@ -31,6 +31,23 @@ export default function Matches({ focusId, onFocusHandled }) {
   useEffect(() => { if (focusId) { setActiveId(focusId); onFocusHandled && onFocusHandled() } }, [focusId])
 
   const m = matches.find(x => x.id === activeId) || matches[0]
+
+  // Ako utakmica još nema svoju postavu — preslikaj „Prvu postavu" iz Moj tim (samo dok nije odigrana; jednom).
+  useEffect(() => {
+    if (!m || m.lineupInit || isPlayed(m)) return
+    const hasSetup = (m.field && Object.keys(m.field).length) || m.gkId || (m.benchIds && m.benchIds.length) || (m.lineup && m.lineup.length)
+    if (hasSetup) return
+    const L = team.lineup || {}
+    if (!L.field || !Object.keys(L.field).length) return // nema definisane prve postave
+    const field = JSON.parse(JSON.stringify(L.field))
+    store.updateMatch(m.id, {
+      field, gkId: L.gkId || null, benchIds: L.benchIds ? [...L.benchIds] : [],
+      formation: L.formation || m.formation || '4-3-3',
+      lineup: [L.gkId, ...Object.keys(field)].filter(Boolean),
+      lineupInit: true,
+    })
+  }, [m?.id])
+
   const pName = id => { const p = players.find(x => x.id === id); return p ? shortName(p.name) : '—' }
   // Za prvenstvene mečeve nude se samo registrovani; pripremne i „niko nije registrovan" → svi
   const anyReg = players.some(p => p.registered)
