@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useStore, fmtDate } from '../data/store'
-import { INTENSITY, intensityColor, intensityBg, matchColor, compCrest } from '../data/seed'
+import { INTENSITY, intensityColor, intensityBg, matchColor, compCrest, isPlayed } from '../data/seed'
 import { Icon, Crest } from '../components/Icons'
 import { exportNodeAsImage } from '../utils/exportImage'
 import { mcDayOverview } from '../utils/mcOverview'
@@ -111,7 +111,7 @@ export default function Calendar({ openMatch }) {
                       {compCrest(match, league) && <img className="comp-corner" src={compCrest(match, league)} alt="" />}
                       <span className="ha-badge" style={{ background: mc_.color }} title={mc_.label}>{mc_.short}</span>
                       <div className="match-crest">{match.crest ? <img src={match.crest} alt="grb" /> : <span>grb</span>}</div>
-                      {match.played
+                      {isPlayed(match)
                         ? <b className="num" style={{ fontSize: 18 }}>{match.gf ?? '–'}:{match.ga ?? '–'}</b>
                         : <small>{match.time}</small>}
                     </button>
@@ -175,11 +175,11 @@ function MatchPopup({ m, onClose, onOpen }) {
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 380 }}>
-        <div className="modal-h"><h3>{m.played ? 'Odigrana utakmica' : 'Zakazana utakmica'}</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
+        <div className="modal-h"><h3>{isPlayed(m) ? 'Odigrana utakmica' : 'Zakazana utakmica'}</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
         <div className="modal-b" style={{ textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 10 }}>
             <Crest size={44} />
-            {m.played ? <div className="num" style={{ fontSize: 26, fontWeight: 800 }}>{m.gf ?? '–'}:{m.ga ?? '–'}</div> : <span style={{ fontWeight: 800, color: 'var(--grey)' }}>VS</span>}
+            {isPlayed(m) ? <div className="num" style={{ fontSize: 26, fontWeight: 800 }}>{m.gf ?? '–'}:{m.ga ?? '–'}</div> : <span style={{ fontWeight: 800, color: 'var(--grey)' }}>VS</span>}
             {m.crest ? <Crest size={44} url={m.crest} /> : <div className="badge-lg" style={{ width: 44, height: 44 }}>grb</div>}
           </div>
           <div style={{ fontWeight: 700 }}>{m.home ? 'Brodarac' : m.opp} — {m.home ? m.opp : 'Brodarac'}</div>

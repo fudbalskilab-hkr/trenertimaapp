@@ -1,6 +1,6 @@
 import { useStore, initials, fmtDate, shortName } from '../data/store'
 import { Icon, Crest } from '../components/Icons'
-import { FEE_MONTHS } from '../data/seed'
+import { FEE_MONTHS, isPlayed } from '../data/seed'
 import { needsFilling } from './Matches'
 
 export default function Dashboard({ setView, openMatch }) {
@@ -9,7 +9,7 @@ export default function Dashboard({ setView, openMatch }) {
   const curMonth = 'jul'
   const dueNames = players.filter(p => !p.exempt && !(fees[p.id] && fees[p.id][curMonth]))
 
-  const upcoming = matches.filter(m => !m.played && m.gf === null && m.ga === null && !needsFilling(m))
+  const upcoming = matches.filter(m => !isPlayed(m) && m.gf === null && m.ga === null)
     .sort((a, b) => (a.date < b.date ? -1 : 1))
   const next = upcoming.find(m => m.kind === 'league') || upcoming[0]
   const isLeague = next?.kind === 'league'
@@ -18,7 +18,7 @@ export default function Dashboard({ setView, openMatch }) {
   // odigrane po datumu a nezaključane → „za popunjavanje/zatvaranje"
   const toClose = matches.filter(needsFilling).sort((a, b) => (a.date < b.date ? 1 : -1))
   // poslednje zaključane (rezultati)
-  const recent = matches.filter(m => m.played).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 4)
+  const recent = matches.filter(m => isPlayed(m) && (m.gf !== null || m.ga !== null)).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 4)
   const go = m => openMatch ? openMatch(m.id) : setView('match')
 
   return (

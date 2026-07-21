@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { useStore, ageFrom, initials, computeStats, computeRatings, fmtDate } from '../data/store'
-import { FEE_MONTHS, posGroup, POS_COLORS } from '../data/seed'
+import { FEE_MONTHS, posGroup, POS_COLORS, isPlayed } from '../data/seed'
 import { Icon } from '../components/Icons'
 import { shrinkImage } from '../utils/img'
 import { ratingColor } from '../components/RatingSlider'
@@ -317,7 +317,7 @@ function ProfilTab({ player, store }) {
 function matchLog(playerId, matches) {
   const rows = []
   for (const m of matches) {
-    const finished = m.played || m.gf !== null || m.ga !== null
+    const finished = isPlayed(m) || m.gf !== null || m.ga !== null
     if (!finished) continue
     const events = m.events || []
     const inLineup = (m.lineup || []).includes(playerId)

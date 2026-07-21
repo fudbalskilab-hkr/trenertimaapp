@@ -94,6 +94,14 @@ export const FEE_MONTHS = ['jul', 'avg', 'sep', 'okt', 'nov', 'dec', 'jan', 'feb
 // Liga (prvenstvo)
 export const LEAGUE = { name: 'Omladinska liga Srbije', logo: '', cupName: '', cupLogo: '' }
 
+// Status meča: „Odigrana" = prošao datum ILI je ručno zaključana; inače „Zakazana"
+export function datePassed(m) {
+  if (!m || !m.date) return false
+  const d = new Date(m.date + 'T23:59:59')
+  return !isNaN(d) && d.getTime() < Date.now()
+}
+export const isPlayed = (m) => !!(m && (m.played || datePassed(m)))
+
 // Grb i naziv TAKMIČENJA za dati meč (liga / kup / prijateljska)
 export const compCrest = (m, league) => {
   if (!m || !league) return ''

@@ -1,17 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
-import { posGroup, POS_COLORS, matchColor, compCrest, compName } from '../data/seed'
+import { posGroup, POS_COLORS, matchColor, compCrest, compName, isPlayed, datePassed } from '../data/seed'
 import { Icon, Crest } from '../components/Icons'
 import FormationBoard from '../components/FormationBoard'
 import RatingSlider from '../components/RatingSlider'
 import { shrinkImage, urlToCrest } from '../utils/img'
 
-// da li je utakmica prošla po datumu a još nije zaključana (treba popuniti)
+// „Treba popuniti" = odigrana po datumu (prošla) ali još bez unetog rezultata
 export function needsFilling(m) {
-  if (m.played) return false
-  if (!m.date) return false
-  const d = new Date(m.date + 'T23:59:59')
-  return !isNaN(d) && d.getTime() < Date.now()
+  if (!datePassed(m)) return false
+  return m.gf === null || m.gf === undefined || m.ga === null || m.ga === undefined
 }
 
 const EVENT_TYPES = [
@@ -79,7 +77,7 @@ export default function Matches({ focusId, onFocusHandled }) {
             <span style={{ opacity: .55 }}>:</span>
             <input className="sc-box num" value={m.ga ?? ''} onChange={e => setScore('ga', e.target.value)} inputMode="numeric" placeholder="–" aria-label="Golovi gosti" />
           </div>
-          <span className="status">{m.played ? '⚫ Odigrana' : '🔵 Zakazana'}</span>
+          <span className="status">{isPlayed(m) ? '⚫ Odigrana' : '🔵 Zakazana'}</span>
           <div className="ha-toggle">
             <button className={m.home ? 'on' : ''} onClick={() => store.updateMatch(m.id, { home: true })}>Domaćin</button>
             <button className={!m.home ? 'on' : ''} onClick={() => store.updateMatch(m.id, { home: false })}>Gost</button>
@@ -90,10 +88,13 @@ export default function Matches({ focusId, onFocusHandled }) {
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button className="btn sm" style={{ background: 'rgba(255,255,255,.16)', border: 0, color: '#fff' }} onClick={() => setEditMeta(true)}>Izmeni</button>
-            <button className="btn sm" style={{ background: m.played ? 'rgba(255,255,255,.16)' : '#1E9E6A', border: 0, color: '#fff' }}
-              onClick={() => store.updateMatch(m.id, { played: !m.played })}>
-              {m.played ? 'Otključaj' : '✓ Zaključi'}
-            </button>
+            {datePassed(m)
+              ? <span style={{ fontSize: 11, color: 'rgba(255,255,255,.7)', alignSelf: 'center' }} title="Datum je prošao — status je automatski Odigrana">datum prošao</span>
+              : <button className="btn sm" style={{ background: m.played ? 'rgba(255,255,255,.16)' : '#1E9E6A', border: 0, color: '#fff' }}
+                  onClick={() => store.updateMatch(m.id, { played: !m.played })}
+                  title={m.played ? 'Vrati meč u „Zakazane"' : 'Označi kao odigranu (npr. odigrana ranije)'}>
+                  {m.played ? 'Vrati u zakazane' : '✓ Odigrana'}
+                </button>}
           </div>
         </div>
 
@@ -182,10 +183,10 @@ function MatchList({ matches, activeId, onSelect, onNew }) {
   const [filter, setFilter] = useState('played') // played | scheduled | all
   const [page, setPage] = useState(0)
   const [allOpen, setAllOpen] = useState(false)
-  const played = matches.filter(m => m.played)
+  const played = matches.filter(isPlayed)
   // ako nema odigranih, ne prikazuj prazno — padni na „sve"
   const eff = filter === 'played' && played.length === 0 ? 'all' : filter
-  const base = eff === 'played' ? played : eff === 'scheduled' ? matches.filter(m => !m.played) : matches
+  const base = eff === 'played' ? played : eff === 'scheduled' ? matches.filter(m => !isPlayed(m)) : matches
   const sorted = sortMatches(base, eff)
   const per = 5
   const maxPage = Math.max(0, Math.ceil(sorted.length / per) - 1)
@@ -239,7 +240,7 @@ function MatchRow({ m, active, onClick }) {
       <span className="mr-crest">{m.crest ? <img src={m.crest} alt="" /> : <span className="mr-nocrest">?</span>}</span>
       <span className="mr-opp">{m.opp}</span>
       <span className="mr-ha" style={{ background: c.color }} title={c.label}>{c.short}</span>
-      <span className="mr-res num">{m.played ? `${m.gf ?? '–'}:${m.ga ?? '–'}` : (m.time || '')}</span>
+      <span className="mr-res num">{isPlayed(m) ? `${m.gf ?? '–'}:${m.ga ?? '–'}` : (m.time || '')}</span>
       <span className="mr-comp">{m.comp}</span>
     </button>
   )
@@ -251,7 +252,7 @@ function MatchCard({ m, active, onClick }) {
     <button className={'match-card' + (active ? ' active' : '')} onClick={onClick} style={{ borderTopColor: c.color }}>
       {needsFilling(m) && <span className="match-flag" title="Treba popuniti">!</span>}
       <div className="mcard-crest">{m.crest ? <img src={m.crest} alt="" /> : <span className="mr-nocrest">?</span>}</div>
-      <div className="mcard-res num">{m.played ? `${m.gf ?? '–'}:${m.ga ?? '–'}` : 'VS'}</div>
+      <div className="mcard-res num">{isPlayed(m) ? `${m.gf ?? '–'}:${m.ga ?? '–'}` : 'VS'}</div>
       <div className="mcard-opp">{m.opp}</div>
       <div className="mcard-meta"><span className="mr-ha" style={{ background: c.color }}>{c.short}</span> {m.date ? fmtDate(m.date) : '—'}</div>
       <div className="mcard-comp">{m.comp}</div>

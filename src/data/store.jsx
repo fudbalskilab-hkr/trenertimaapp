@@ -475,7 +475,7 @@ export function computeStats(playerId, matches, player) {
   const grp = seed.posGroup(player?.pos)
   const isDefender = grp === 'gk' || grp === 'def'
   for (const m of matches) {
-    const finished = m.played || m.gf !== null || m.ga !== null
+    const finished = seed.isPlayed(m) || m.gf !== null || m.ga !== null
     if (!finished) continue
     const inLineup = (m.lineup || []).includes(playerId)
     const events = m.events || []
@@ -509,7 +509,7 @@ export const DEFAULT_RATING = 6.5
 export function computeRatings(playerId, matches) {
   const perMatch = []
   for (const m of matches) {
-    const finished = m.played || m.gf !== null || m.ga !== null
+    const finished = seed.isPlayed(m) || m.gf !== null || m.ga !== null
     if (!finished) continue
     if (!playedInMatch(m, playerId)) continue
     const r = (m.ratings || {})[playerId] || {}
