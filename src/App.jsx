@@ -1,9 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Sidebar, MobileNav } from './components/Nav'
-import { Icon, Crest } from './components/Icons'
+import { Icon } from './components/Icons'
 import { useStore } from './data/store'
-import { useAuth } from './auth'
-import { shrinkImage, urlToCrest } from './utils/img'
 
 import Dashboard from './views/Dashboard'
 import Players from './views/Players'
@@ -12,6 +10,7 @@ import Microcycles from './views/Microcycles'
 import TrainingBase from './views/TrainingBase'
 import Matches from './views/Matches'
 import GPS from './views/GPS'
+import Settings from './views/Settings'
 
 const TITLES = {
   dash: ['Pregled', s => `Sezona ${s.team.season} · ${s.team.period}`],
@@ -21,16 +20,16 @@ const TITLES = {
   base: ['Trening baza', () => 'Vežbe · koncept treninga · arhiva'],
   match: ['Utakmice', () => 'Unos, formacija i statistika mečeva'],
   gps: ['Catapult GPS', () => 'Fizičke performanse i poređenje igrača'],
+  settings: ['Podešavanja', () => 'Klub, prikaz, podaci i nalog'],
 }
 
 export default function App() {
   const store = useStore()
   const [view, _setView] = useState('dash')
-  const [subs, setSubs] = useState({ base: 'ex', players: 'roster' }) // podtab po tabu
+  const [subs, setSubs] = useState({ base: 'ex', players: 'roster', settings: 'team' }) // podtab po tabu
   const sub = subs[view]
   const setSub = (k) => setSubs(s => ({ ...s, [view]: k }))
   const [adding, setAdding] = useState(false)
-  const [dataMenu, setDataMenu] = useState(false)
   const [matchFocus, setMatchFocus] = useState(null) // koju utakmicu otvoriti u tabu
   const setView = (v) => { setAdding(false); _setView(v) }
   const openMatch = (id) => { setMatchFocus(id); setAdding(false); _setView('match') }
@@ -38,13 +37,6 @@ export default function App() {
   const [title, subFn] = TITLES[view]
   const subtitle = subFn(store)
 
-  function toggleTheme() {
-    const root = document.documentElement
-    const isDark = root.getAttribute('data-theme') === 'dark' ||
-      (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme:dark)').matches)
-    root.setAttribute('data-theme', isDark ? 'light' : 'dark')
-    try { localStorage.setItem('trenertima_theme', isDark ? 'light' : 'dark') } catch (e) {}
-  }
   useEffect(() => {
     const t = localStorage.getItem('trenertima_theme')
     if (t) document.documentElement.setAttribute('data-theme', t)
@@ -61,6 +53,7 @@ export default function App() {
     base: <TrainingBase sub={sub} setSub={setSub} />,
     match: <Matches focusId={matchFocus} onFocusHandled={() => setMatchFocus(null)} />,
     gps: <GPS />,
+    settings: <Settings sub={subs.settings} setSub={k => setSubs(s => ({ ...s, settings: k }))} />,
   }
 
   return (
@@ -73,21 +66,15 @@ export default function App() {
             <div className="sub">{subtitle}</div>
           </div>
           <div className="spacer" />
-          <span className="cloud-dot" title={store.cloud === 'online' ? 'Podaci se čuvaju u cloud-u' : store.cloud === 'offline' ? 'Nema veze — čuva se lokalno' : 'Povezivanje…'}>
-            <span className="d" style={{ background: store.cloud === 'online' ? 'var(--good)' : store.cloud === 'offline' ? 'var(--bad)' : 'var(--warn)' }} />
-            {store.cloud === 'online' ? 'Cloud' : store.cloud === 'offline' ? 'Offline' : '…'}
-          </span>
           {canAdd && (
             <button className="btn primary" onClick={() => setAdding(true)}>
               <Icon.plus /> Dodaj
             </button>
           )}
-          <button className="btn themebtn" onClick={() => setDataMenu(true)} title="Podaci / backup" aria-label="Podaci">
-            <Icon.gear />
-          </button>
-          <button className="btn themebtn" onClick={toggleTheme} title="Promeni temu" aria-label="Promeni temu">
-            <Icon.moon />
-          </button>
+          <span className="cloud-dot" title={store.cloud === 'online' ? 'Podaci se čuvaju u cloud-u' : store.cloud === 'offline' ? 'Nema veze — čuva se lokalno' : 'Povezivanje…'}>
+            <span className="d" style={{ background: store.cloud === 'online' ? 'var(--good)' : store.cloud === 'offline' ? 'var(--bad)' : 'var(--warn)' }} />
+            {store.cloud === 'online' ? 'Cloud' : store.cloud === 'offline' ? 'Offline' : '…'}
+          </span>
         </header>
         <div className="content">
           {store.recovery && <RecoveryBanner store={store} />}
@@ -95,7 +82,6 @@ export default function App() {
         </div>
       </div>
       <MobileNav view={view} setView={setView} />
-      {dataMenu && <DataMenu store={store} onClose={() => setDataMenu(false)} />}
     </div>
   )
 }
@@ -117,163 +103,6 @@ function RecoveryBanner({ store }) {
         Ako su tvoji podaci tu — klikni dugme da ih sačuvaš u fajl.
       </div>
       <button className="btn primary" onClick={exportBackup}><Icon.download /> Sačuvaj podatke (Izvoz)</button>
-    </div>
-  )
-}
-
-function DataMenu({ store, onClose }) {
-  const fileRef = useRef()
-  const authCtx = useAuth()
-  const [hist, setHist] = useState(null) // null=zatvoreno; niz=otvorena istorija
-  const [comp, setComp] = useState(false) // modal „Takmičenja"
-  function exportBackup() {
-    const blob = new Blob([store.exportData()], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = 'trenertima-backup.json'; a.click()
-    URL.revokeObjectURL(url)
-  }
-  function importBackup(e) {
-    const file = e.target.files[0]; if (!file) return
-    const r = new FileReader()
-    r.onload = () => { try { store.importData(String(r.result)); alert('Podaci su uvezeni.'); onClose() } catch (err) { alert('Greška: fajl nije ispravan backup.') } }
-    r.readAsText(file)
-  }
-  return (
-    <div className="overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
-        <div className="modal-h"><h3>Podaci i backup</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
-        <div className="modal-b" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button className="btn primary" onClick={exportBackup} style={{ justifyContent: 'center' }}><Icon.download /> Izvoz (skini backup fajl)</button>
-          <button className="btn" onClick={() => fileRef.current.click()} style={{ justifyContent: 'center' }}><Icon.upload /> Uvoz (učitaj backup)</button>
-          <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={importBackup} />
-          <button className="btn" onClick={() => setComp(true)} style={{ justifyContent: 'center' }}><Icon.match /> Takmičenja (grb lige / kupa)</button>
-          <button className="btn" onClick={() => setHist(store.getHistory())} style={{ justifyContent: 'center' }}>↩ Istorija (vrati verziju)</button>
-          <p className="mock-note" style={{ margin: '4px 0 0' }}>Podaci se čuvaju u cloud-u i automatski se pravi backup pri svakoj izmeni. „Istorija" vraća neko od ranijih stanja. „Izvoz" pravi fajl na tvom uređaju.</p>
-          {authCtx && (
-            <div style={{ marginTop: 8, paddingTop: 12, borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ flex: 1, fontSize: 12, color: 'var(--grey)' }}>Prijavljen: <b style={{ color: 'var(--ink)' }}>{authCtx.user.email}</b></div>
-              <button className="btn sm" onClick={() => { authCtx.logout(); onClose() }}>Odjavi se</button>
-            </div>
-          )}
-        </div>
-      </div>
-      {hist && <HistoryModal store={store} local={hist} onClose={() => setHist(null)} onDone={onClose} />}
-      {comp && <CompetitionsModal store={store} onClose={() => setComp(false)} />}
-    </div>
-  )
-}
-
-// Uređivanje jednog grba (pretpregled + link + upload + ukloni)
-function CrestEditor({ crest, onCrest }) {
-  const fileRef = useRef()
-  const [url, setUrl] = useState('')
-  const [busy, setBusy] = useState(false)
-  function upload(e) {
-    const f = e.target.files[0]; if (!f) return
-    setBusy(true); shrinkImage(f, 256, true).then(u => { onCrest(u); setBusy(false) })
-  }
-  function fromUrl() {
-    if (!url.trim()) return
-    setBusy(true); urlToCrest(url).then(u => { onCrest(u); setBusy(false); setUrl('') })
-  }
-  return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-      <div style={{ flexShrink: 0 }}>{crest ? <Crest size={56} url={crest} /> : <div className="badge-lg" style={{ width: 56, height: 56 }}>grb</div>}</div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <input className="input" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…/grb.png" style={{ flex: 1 }} />
-          <button className="btn sm" disabled={busy || !url.trim()} onClick={fromUrl}>{busy ? '…' : 'Dodaj'}</button>
-        </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button className="btn sm" onClick={() => fileRef.current.click()}><Icon.upload /> Sa uređaja</button>
-          {crest && <button className="btn ghost sm" style={{ color: 'var(--bad)' }} onClick={() => onCrest('')}>Ukloni</button>}
-          <input ref={fileRef} type="file" accept="image/*" hidden onChange={upload} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function CompetitionsModal({ store, onClose }) {
-  const { league } = store
-  const [hasCup, setHasCup] = useState(!!(league.cupName || league.cupLogo))
-  return (
-    <div className="overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 460 }}>
-        <div className="modal-h"><h3>Takmičenja</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
-        <div className="modal-b" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div>
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Liga (prvenstvo)</div>
-            <div className="field" style={{ marginBottom: 10 }}>
-              <label>Naziv lige</label>
-              <input className="input" value={league.name || ''} onChange={e => store.updateLeague({ name: e.target.value })} placeholder="npr. Omladinska liga Srbije" />
-            </div>
-            <label style={{ fontSize: 12, color: 'var(--grey)', display: 'block', marginBottom: 6 }}>Grb lige</label>
-            <CrestEditor crest={league.logo} onCrest={u => store.updateLeague({ logo: u })} />
-          </div>
-
-          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14 }}>
-            {!hasCup ? (
-              <button className="btn" style={{ justifyContent: 'center', width: '100%' }} onClick={() => setHasCup(true)}><Icon.plus /> Dodaj kup (opciono)</button>
-            ) : (
-              <>
-                <div className="eyebrow" style={{ marginBottom: 8 }}>Kup <span style={{ fontWeight: 400, textTransform: 'none' }}>(ako tim igra)</span></div>
-                <div className="field" style={{ marginBottom: 10 }}>
-                  <label>Naziv kupa</label>
-                  <input className="input" value={league.cupName || ''} onChange={e => store.updateLeague({ cupName: e.target.value })} placeholder="npr. Kup Beograda" />
-                </div>
-                <label style={{ fontSize: 12, color: 'var(--grey)', display: 'block', marginBottom: 6 }}>Grb kupa</label>
-                <CrestEditor crest={league.cupLogo} onCrest={u => store.updateLeague({ cupLogo: u })} />
-                <button className="btn ghost sm" style={{ color: 'var(--bad)', marginTop: 10 }} onClick={() => { store.updateLeague({ cupName: '', cupLogo: '' }); setHasCup(false) }}>Ukloni kup</button>
-              </>
-            )}
-          </div>
-          <p className="mock-note" style={{ margin: 0 }}>Grb takmičenja se prikazuje u kalendaru (ćošak dana sa mečom) i u izveštaju utakmice. Meč postaje ligaški/kupovni preko „Tip" u izmeni utakmice.</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function HistoryModal({ store, local, onClose, onDone }) {
-  const [cloud, setCloud] = useState(null)
-  useEffect(() => { store.getCloudVersions().then(setCloud) }, [])
-  function fmtAt(at) {
-    if (!at) return '—'
-    const d = new Date(at)
-    const p = n => String(n).padStart(2, '0')
-    return `${p(d.getDate())}.${p(d.getMonth() + 1)}. ${p(d.getHours())}:${p(d.getMinutes())}`
-  }
-  function count(json) { try { const o = JSON.parse(json); return (o.players || []).length } catch (e) { return '?' } }
-  function restore(json) {
-    if (!confirm('Vratiti podatke na ovu verziju? Trenutno stanje se zamenjuje (ali i ono ide u istoriju).')) return
-    store.restoreSnapshot(json); onDone()
-  }
-  const cloudOnly = (cloud || []).filter(c => !local.some(l => l.json === c.json))
-  return (
-    <div className="overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 460 }}>
-        <div className="modal-h"><h3>Istorija verzija</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
-        <div className="modal-b" style={{ maxHeight: '60vh', overflow: 'auto' }}>
-          <div className="eyebrow" style={{ marginBottom: 8 }}>Na ovom uređaju</div>
-          {local.length === 0 && <div className="empty" style={{ padding: 14 }}>Nema sačuvanih verzija još.</div>}
-          {local.map((h, i) => (
-            <div key={i} className="ge" style={{ marginBottom: 6 }}>
-              <span style={{ flex: 1 }}>{fmtAt(h.at)} · <b>{count(h.json)}</b> igrača</span>
-              <button className="btn sm" onClick={() => restore(h.json)}>Vrati</button>
-            </div>
-          ))}
-          <div className="eyebrow" style={{ margin: '14px 0 8px' }}>U cloud-u {cloud === null ? '(učitavanje…)' : ''}</div>
-          {cloud !== null && cloudOnly.length === 0 && <div className="empty" style={{ padding: 14 }}>Nema dodatnih cloud verzija.</div>}
-          {cloudOnly.map((h, i) => (
-            <div key={i} className="ge" style={{ marginBottom: 6 }}>
-              <span style={{ flex: 1 }}>{fmtAt(h.at)} · <b>{count(h.json)}</b> igrača</span>
-              <button className="btn sm" onClick={() => restore(h.json)}>Vrati</button>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }

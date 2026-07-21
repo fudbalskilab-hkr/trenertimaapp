@@ -8,7 +8,19 @@ export const TEAM = {
   period: 'Pripremni period',
   coach: 'Aleksa Bojković',
   logo: '', // grb kluba (upload) — dok je prazno, koristi se placeholder
+  prefs: {
+    resultLang: 'en',  // 'en' = W/D/L, 'sr' = P/N/I
+    matchCount: 10,     // koliko poslednjih utakmica u listi/Dashboard-u (9999 = sve)
+    formCount: 5,       // koliko utakmica u „formi" na Dashboard-u
+  },
 }
+
+// Oznake ishoda po jeziku
+export const WDL_LABELS = {
+  en: { W: 'W', D: 'D', L: 'L' },
+  sr: { W: 'P', D: 'N', L: 'I' },
+}
+export const wdlLabel = (key, lang) => (WDL_LABELS[lang] || WDL_LABELS.en)[key] || key
 
 // Intenzitet dana (bojenje kalendara i mikrociklusa)
 // color = accent (traka/kvadratić/legenda), bg = ispuna ćelije

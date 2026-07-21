@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
-import { posGroup, POS_COLORS, matchColor, compCrest, compName, isPlayed, datePassed, ourResult, WDL } from '../data/seed'
+import { posGroup, POS_COLORS, matchColor, compCrest, compName, isPlayed, datePassed, ourResult, WDL, wdlLabel } from '../data/seed'
 import { Icon, Crest } from '../components/Icons'
 import FormationBoard from '../components/FormationBoard'
 import RatingSlider from '../components/RatingSlider'
@@ -71,7 +71,7 @@ export default function Matches({ focusId, onFocusHandled }) {
 
   return (
     <section>
-      <MatchList matches={matches} activeId={activeId} onSelect={setActiveId} onNew={() => setActiveId(store.addMatch())} />
+      <MatchList matches={matches} activeId={activeId} onSelect={setActiveId} onNew={() => setActiveId(store.addMatch())} count={team.prefs?.matchCount ?? 10} lang={team.prefs?.resultLang || 'en'} />
 
       {matches.length === 0 && <div className="card"><div className="empty">Nema utakmica. Klikni „+ Nova utakmica".</div></div>}
       {m && <>
@@ -196,7 +196,7 @@ function sortMatches(matches, mode) {
   return arr.sort((a, b) => { const da = a.date || '9999-99-99', db = b.date || '9999-99-99'; return da < db ? 1 : da > db ? -1 : 0 })
 }
 
-function MatchList({ matches, activeId, onSelect, onNew }) {
+function MatchList({ matches, activeId, onSelect, onNew, count = 10, lang = 'en' }) {
   const [view, setView] = useState(() => localStorage.getItem('trenertima_matchview') || 'list')
   const [filter, setFilter] = useState('played') // played | scheduled | all
   const [page, setPage] = useState(0)
@@ -206,8 +206,7 @@ function MatchList({ matches, activeId, onSelect, onNew }) {
   const eff = filter === 'played' && played.length === 0 ? 'all' : filter
   const base = eff === 'played' ? played : eff === 'scheduled' ? matches.filter(m => !isPlayed(m)) : matches
   const sorted = sortMatches(base, eff)
-  const [per, setPer] = useState(() => Number(localStorage.getItem('trenertima_matchper')) || 10)
-  const setPerN = n => { setPer(n); setPage(0); localStorage.setItem('trenertima_matchper', String(n)) }
+  const per = count || 10
   const maxPage = Math.max(0, Math.ceil(sorted.length / per) - 1)
   const pg = Math.min(page, maxPage)
   const items = sorted.slice(pg * per, pg * per + per)
@@ -225,15 +224,6 @@ function MatchList({ matches, activeId, onSelect, onNew }) {
           ))}
         </div>
         <div style={{ flex: 1 }} />
-        <label className="mb-per" title="Koliko utakmica da prikažem">
-          Prikaži:
-          <select value={per} onChange={e => setPerN(Number(e.target.value))}>
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={9999}>Sve</option>
-          </select>
-        </label>
         <div className="view-toggle">
           <button className={view === 'list' ? 'on' : ''} onClick={() => setV('list')} title="Lista">☰</button>
           <button className={view === 'cards' ? 'on' : ''} onClick={() => setV('cards')} title="Kartice">▦</button>
@@ -246,7 +236,7 @@ function MatchList({ matches, activeId, onSelect, onNew }) {
           <button className="mb-arrow" disabled={pg >= maxPage} onClick={() => setPage(pg + 1)} title="Starije">‹</button>
           <div className={view === 'cards' ? 'match-cards' : 'match-rows'}>
             {items.map(m => view === 'cards'
-              ? <MatchCard key={m.id} m={m} active={m.id === activeId} onClick={() => onSelect(m.id)} />
+              ? <MatchCard key={m.id} m={m} active={m.id === activeId} onClick={() => onSelect(m.id)} lang={lang} />
               : <MatchRow key={m.id} m={m} active={m.id === activeId} onClick={() => onSelect(m.id)} />)}
           </div>
           <button className="mb-arrow" disabled={pg <= 0} onClick={() => setPage(pg - 1)} title="Novije">›</button>
@@ -278,13 +268,13 @@ function MatchRow({ m, active, onClick }) {
   )
 }
 
-function MatchCard({ m, active, onClick }) {
+function MatchCard({ m, active, onClick, lang = 'en' }) {
   const c = matchColor(m)
   const r = ourResult(m); const w = r ? WDL[r.wdl] : null
   return (
     <button className={'match-card' + (active ? ' active' : '')} onClick={onClick} style={{ borderTopColor: c.color }}>
       {needsFilling(m) && <span className="match-flag" title="Treba popuniti">!</span>}
-      {w && <span className="mcard-wdl" style={{ background: w.color }} title={w.full}>{w.label}</span>}
+      {w && <span className="mcard-wdl" style={{ background: w.color }} title={w.full}>{wdlLabel(r.wdl, lang)}</span>}
       <div className="mcard-crest">{m.crest ? <img src={m.crest} alt="" /> : <span className="mr-nocrest">?</span>}</div>
       <div className="mcard-res num" style={w ? { color: w.color } : undefined}>{isPlayed(m) ? (r ? `${r.our}:${r.opp}` : '–:–') : 'VS'}</div>
       <div className="mcard-opp">{m.opp}</div>

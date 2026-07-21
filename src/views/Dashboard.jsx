@@ -1,6 +1,6 @@
 import { useStore, initials, fmtDate, shortName } from '../data/store'
 import { Icon, Crest } from '../components/Icons'
-import { FEE_MONTHS, isPlayed, ourResult, WDL } from '../data/seed'
+import { FEE_MONTHS, isPlayed, ourResult, WDL, wdlLabel } from '../data/seed'
 import { needsFilling } from './Matches'
 
 export default function Dashboard({ setView, openMatch }) {
@@ -17,11 +17,16 @@ export default function Dashboard({ setView, openMatch }) {
 
   // odigrane po datumu a nezaključane → „za popunjavanje/zatvaranje"
   const toClose = matches.filter(needsFilling).sort((a, b) => (a.date < b.date ? 1 : -1))
-  // poslednje zaključane (rezultati)
-  const recent = matches.filter(m => isPlayed(m) && (m.gf !== null || m.ga !== null)).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 4)
+  // preferencije prikaza
+  const lang = team.prefs?.resultLang || 'en'
+  const matchCount = team.prefs?.matchCount ?? 10
+  const formCount = team.prefs?.formCount ?? 5
+  // poslednje zaključane (rezultati) — pun niz pa slice po preferenci
+  const playedDesc = matches.filter(m => isPlayed(m) && (m.gf !== null || m.ga !== null)).sort((a, b) => (a.date < b.date ? 1 : -1))
+  const recent = playedDesc.slice(0, matchCount)
   const go = m => openMatch ? openMatch(m.id) : setView('match')
 
-  const form5 = recent.slice(0, 5).reverse()
+  const form5 = playedDesc.slice(0, formCount).reverse()
 
   return (
     <section>
@@ -32,7 +37,7 @@ export default function Dashboard({ setView, openMatch }) {
             {form5.map(m => {
               const r = ourResult(m); const w = r ? WDL[r.wdl] : null
               return <span key={m.id} className="form-dot" style={{ background: w ? w.color : 'var(--line)' }}
-                title={`${w ? w.full : '—'} · vs ${m.opp} ${r ? r.our + ':' + r.opp : ''}`}>{w ? w.label : '·'}</span>
+                title={`${w ? w.full : '—'} · vs ${m.opp} ${r ? r.our + ':' + r.opp : ''}`}>{w ? wdlLabel(r.wdl, lang) : '·'}</span>
             })}
           </div>
         </div>
@@ -113,7 +118,7 @@ export default function Dashboard({ setView, openMatch }) {
               const r = ourResult(m); const w = r ? WDL[r.wdl] : null
               return (
                 <button key={m.id} className="list-row" style={{ width: '100%', background: 'transparent', border: 0, cursor: 'pointer', textAlign: 'left' }} onClick={() => go(m)}>
-                  <span className="res-badge" style={{ background: w ? w.color : 'var(--grey)' }}>{w ? w.label : '?'}</span>
+                  <span className="res-badge" style={{ background: w ? w.color : 'var(--grey)' }}>{w ? wdlLabel(r.wdl, lang) : '?'}</span>
                   <div className="nm">vs {m.opp}<small>{fmtDate(m.date)}{m.date?.slice(0, 4)} · {m.home ? 'dom' : 'gost'} · {m.comp}</small></div>
                   <b className="num" style={{ fontSize: 17, color: w ? w.color : 'inherit' }}>{r ? `${r.our}:${r.opp}` : '–:–'}</b>
                 </button>

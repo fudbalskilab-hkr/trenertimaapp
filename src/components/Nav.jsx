@@ -64,6 +64,9 @@ export function Sidebar({ view, setView, sub, setSub }) {
         })}
       </nav>
       <div className="side-foot">
+        <button className={'settings-link' + (view === 'settings' ? ' on' : '')} onClick={() => { setView('settings'); setOpenId(null) }}>
+          <Icon.gear /> Podešavanja
+        </button>
         <div className="coach">
           <div className="av">{initials(team.coach || 'Trener')}</div>
           <div><b>{team.coach || 'Trener'}</b><small>Trener · {team.name}</small></div>
@@ -84,6 +87,9 @@ export function MobileNav({ view, setView }) {
           </button>
         )
       })}
+      <button className={view === 'settings' ? 'on' : ''} onClick={() => setView('settings')}>
+        <Icon.gear /> Podešav.
+      </button>
     </nav>
   )
 }

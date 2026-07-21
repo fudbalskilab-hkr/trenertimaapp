@@ -173,6 +173,7 @@ export function StoreProvider({ children }) {
 
     // Tim (ime trenera, grb kluba) i liga
     updateTeam: (patch) => setState(s => ({ ...s, team: { ...s.team, ...patch } })),
+    setPref: (patch) => setState(s => ({ ...s, team: { ...s.team, prefs: { ...(s.team.prefs || {}), ...patch } } })),
     // „Prva postava" na nivou tima (kopira se u svaku novu utakmicu)
     updateTeamLineup: (patch) => setState(s => ({ ...s, team: { ...s.team, lineup: { ...(s.team.lineup || {}), ...patch } } })),
     updateLeague: (patch) => setState(s => ({ ...s, league: { ...s.league, ...patch } })),
