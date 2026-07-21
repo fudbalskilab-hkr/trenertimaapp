@@ -12,6 +12,15 @@ export function needsFilling(m) {
   return m.gf === null || m.gf === undefined || m.ga === null || m.ga === undefined
 }
 
+// Zatvori modal SAMO kad su i pritisak i otpuštanje miša na pozadini (ne pri povlačenju selekcije iz polja)
+function useBgClose(onClose) {
+  const down = useRef(false)
+  return {
+    onMouseDown: e => { down.current = e.target === e.currentTarget },
+    onClick: e => { if (e.target === e.currentTarget && down.current) onClose() },
+  }
+}
+
 const EVENT_TYPES = [
   { type: 'goal', label: 'Gol' },
   { type: 'assist', label: 'Asistencija' },
@@ -184,7 +193,7 @@ export default function Matches({ focusId, onFocusHandled }) {
       </div>
 
       {addEv && <AddEvent type={addEv} players={players} lineup={lineup} bench={m.benchIds || []} onClose={() => setAddEv(null)} onSave={addEvent} />}
-      {editMeta && <EditMatchMeta m={m} onClose={() => setEditMeta(false)}
+      {editMeta && <EditMatchMeta m={m} league={league} onClose={() => setEditMeta(false)}
         onSave={patch => { store.updateMatch(m.id, patch); setEditMeta(false) }}
         onDelete={() => { setEditMeta(false); delMatch() }} />}
       {crestOpen && <CrestPicker current={m.crest} onClose={() => setCrestOpen(false)}
@@ -296,7 +305,7 @@ function AllMatches({ matches, activeId, onClose, onSelect }) {
   const ql = q.trim().toLowerCase()
   const list = ql ? matches.filter(m => (m.opp || '').toLowerCase().includes(ql) || (m.comp || '').toLowerCase().includes(ql)) : matches
   return (
-    <div className="overlay" onClick={onClose}>
+    <div className="overlay" {...useBgClose(onClose)}>
       <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 560 }}>
         <div className="modal-h"><h3>Sve utakmice ({matches.length})</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
         <div className="modal-b" style={{ maxHeight: '72vh', overflow: 'auto' }}>
@@ -324,7 +333,7 @@ function CrestPicker({ current, onClose, onSave }) {
     setBusy(true); urlToCrest(url).then(u => onSave(u))
   }
   return (
-    <div className="overlay" onClick={onClose}>
+    <div className="overlay" {...useBgClose(onClose)}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-h"><h3>Grb protivnika</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
         <div className="modal-b">
@@ -433,7 +442,7 @@ function AddMatchPlayer({ players, onClose, onPick }) {
   const ql = q.trim().toLowerCase()
   const list = ql ? players.filter(p => p.name.toLowerCase().includes(ql) || (p.pos || '').toLowerCase().includes(ql)) : players
   return (
-    <div className="overlay" onClick={onClose}>
+    <div className="overlay" {...useBgClose(onClose)}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-h"><h3>Dodaj igrača (ušao kao izmena)</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
         <div className="modal-b" style={{ maxHeight: '62vh', overflow: 'auto' }}>
@@ -467,11 +476,14 @@ function AddMatchPlayer({ players, onClose, onPick }) {
   )
 }
 
-function EditMatchMeta({ m, onClose, onSave, onDelete }) {
+function EditMatchMeta({ m, league, onClose, onSave, onDelete }) {
   const [f, setF] = useState({ opp: m.opp, date: m.date, time: m.time, comp: m.comp, home: m.home, kind: m.kind || 'friendly' })
   const set = (k, v) => setF(s => ({ ...s, [k]: v }))
+  const downOnBg = useRef(false) // zatvori samo ako su i pritisak i otpuštanje na pozadini
   return (
-    <div className="overlay" onClick={onClose}>
+    <div className="overlay"
+      onMouseDown={e => { downOnBg.current = e.target === e.currentTarget }}
+      onClick={e => { if (e.target === e.currentTarget && downOnBg.current) onClose() }}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-h"><h3>Izmeni podatke utakmice</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
         <div className="modal-b">
@@ -480,7 +492,15 @@ function EditMatchMeta({ m, onClose, onSave, onDelete }) {
             <div className="field"><label>Datum</label><input className="input" type="date" value={f.date} onChange={e => set('date', e.target.value)} /></div>
             <div className="field"><label>Vreme</label><input className="input" value={f.time} onChange={e => set('time', e.target.value)} placeholder="17:00" /></div>
           </div>
-          <div className="field"><label>Takmičenje</label><input className="input" value={f.comp} onChange={e => set('comp', e.target.value)} placeholder="Prijateljska / Omladinska liga · 1. kolo" /></div>
+          <div className="field"><label>Takmičenje</label>
+            <input className="input" list="comp-opts" value={f.comp} onChange={e => set('comp', e.target.value)} placeholder="Prijateljska / Omladinska liga · 1. kolo" />
+            <datalist id="comp-opts">
+              <option value="Prijateljska" />
+              {league?.name && <option value={league.name} />}
+              {league?.cupName && <option value={league.cupName} />}
+            </datalist>
+            <p className="mock-note" style={{ marginTop: 6 }}>Izaberi iz liste ili upiši svoje (npr. „{league?.name || 'Omladinska liga'} · 1. kolo").</p>
+          </div>
           <div className="row2">
             <div className="field"><label>Mesto</label><select className="input" value={f.home ? '1' : '0'} onChange={e => set('home', e.target.value === '1')}><option value="1">Domaćin</option><option value="0">Gost</option></select></div>
             <div className="field"><label>Tip</label><select className="input" value={f.kind} onChange={e => set('kind', e.target.value)}><option value="friendly">Prijateljska</option><option value="league">Prvenstvena</option><option value="cup">Kup</option></select></div>
@@ -521,7 +541,7 @@ function AddEvent({ type, players, lineup, bench, onClose, onSave }) {
   const save = () => isSub ? onSave({ type, inId, outId, minute: Number(minute) || null }) : onSave({ type, playerId: pid, minute: Number(minute) || null })
 
   return (
-    <div className="overlay" onClick={onClose}>
+    <div className="overlay" {...useBgClose(onClose)}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-h"><h3>{title}</h3><button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={onClose}><Icon.close /></button></div>
         <div className="modal-b">
