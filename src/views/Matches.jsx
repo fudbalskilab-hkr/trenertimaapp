@@ -50,6 +50,12 @@ export default function Matches({ focusId, onFocusHandled }) {
   }, [m?.id])
 
   const pName = id => { const p = players.find(x => x.id === id); return p ? shortName(p.name) : '—' }
+  const delMatch = () => {
+    if (!m) return
+    if (!confirm(`Obrisati utakmicu vs ${m.opp}? Ova radnja se ne može opozvati.`)) return
+    store.removeMatch(m.id)
+    setActiveId(matches.find(x => x.id !== m.id)?.id)
+  }
   // Za prvenstvene mečeve nude se samo registrovani; pripremne i „niko nije registrovan" → svi
   const anyReg = players.some(p => p.registered)
   const matchAvail = (m && m.kind !== 'friendly' && anyReg) ? players.filter(p => p.registered) : players
@@ -113,6 +119,7 @@ export default function Matches({ focusId, onFocusHandled }) {
                   title={m.played ? 'Vrati meč u „Zakazane"' : 'Označi kao odigranu (npr. odigrana ranije)'}>
                   {m.played ? 'Vrati u zakazane' : '✓ Odigrana'}
                 </button>}
+            <button className="btn sm" style={{ background: 'rgba(255,120,120,.22)', border: 0, color: '#fff' }} onClick={delMatch} title="Obriši ovu utakmicu"><Icon.trash /> Obriši</button>
           </div>
         </div>
 
@@ -179,7 +186,7 @@ export default function Matches({ focusId, onFocusHandled }) {
       {addEv && <AddEvent type={addEv} players={players} lineup={lineup} bench={m.benchIds || []} onClose={() => setAddEv(null)} onSave={addEvent} />}
       {editMeta && <EditMatchMeta m={m} onClose={() => setEditMeta(false)}
         onSave={patch => { store.updateMatch(m.id, patch); setEditMeta(false) }}
-        onDelete={() => { if (confirm(`Obrisati utakmicu vs ${m.opp}?`)) { store.removeMatch(m.id); setEditMeta(false); setActiveId(matches.find(x => x.id !== m.id)?.id) } }} />}
+        onDelete={() => { setEditMeta(false); delMatch() }} />}
       {crestOpen && <CrestPicker current={m.crest} onClose={() => setCrestOpen(false)}
         onSave={url => { store.updateMatch(m.id, { crest: url }); setCrestOpen(false) }} />}
       </>}
