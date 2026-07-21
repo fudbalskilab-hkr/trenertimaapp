@@ -247,14 +247,14 @@ function MatchRow({ m, active, onClick }) {
   return (
     <button className={'match-row' + (active ? ' active' : '')} onClick={onClick} style={{ borderLeftColor: c.color }}>
       {needsFilling(m) && <span className="match-flag" title="Treba popuniti">!</span>}
-      <span className="mr-date">{m.date ? fmtDate(m.date) : '—'}</span>
+      <span className="mr-date">{m.date ? fmtDate(m.date) : '—'}{!isPlayed(m) && m.time ? ' ' + m.time : ''}</span>
       <span className="mr-crest">{m.crest ? <img src={m.crest} alt="" /> : <span className="mr-nocrest">?</span>}</span>
       <span className="mr-opp">{m.opp}</span>
       <span className="mr-ha" style={{ background: c.color }} title={c.label}>{c.short}</span>
       {isPlayed(m)
         ? (w ? <span className="mr-res num wdl" style={{ background: w.color }} title={w.full}>{r.our}:{r.opp}</span>
              : <span className="mr-res num">–:–</span>)
-        : <span className="mr-res num mr-time">{m.time || ''}</span>}
+        : <span className="mr-res num mr-time" />}
       <span className="mr-comp">{m.comp}</span>
     </button>
   )

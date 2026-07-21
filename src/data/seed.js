@@ -111,9 +111,9 @@ export function ourResult(m) {
   return { our, opp, wdl: our > opp ? 'W' : our < opp ? 'L' : 'D' }
 }
 export const WDL = {
-  W: { label: 'P', full: 'Pobeda', color: '#2F9E44' },
-  D: { label: 'N', full: 'Nerešeno', color: '#868E96' },
-  L: { label: 'I', full: 'Poraz', color: '#C92A2A' },
+  W: { label: 'W', full: 'Pobeda', color: '#2F9E44' },
+  D: { label: 'D', full: 'Nerešeno', color: '#868E96' },
+  L: { label: 'L', full: 'Poraz', color: '#C92A2A' },
 }
 
 // Grb i naziv TAKMIČENJA za dati meč (liga / kup / prijateljska)

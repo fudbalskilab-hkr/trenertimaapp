@@ -741,7 +741,7 @@ tr.reg-div td{background:var(--surface-2);color:var(--grey-2);font-size:10.5px;f
   border-left:4px solid var(--blue-500);border-radius:10px;background:var(--surface);cursor:pointer;text-align:left;width:100%}
 .match-row:hover{border-color:var(--blue-300);background:var(--blue-50)}
 .match-row.active{box-shadow:0 0 0 2px var(--blue-500);border-color:var(--blue-500)}
-.mr-date{font-size:11px;color:var(--grey);width:52px;flex:0 0 auto;font-weight:600}
+.mr-date{font-size:11px;color:var(--grey);width:92px;flex:0 0 auto;font-weight:600;white-space:nowrap}
 .mr-crest{width:26px;height:26px;flex:0 0 auto;display:grid;place-items:center}
 .mr-crest img{width:100%;height:100%;object-fit:contain}
 .mr-nocrest{width:22px;height:22px;border-radius:6px;background:var(--surface-2);color:var(--grey-2);display:grid;place-items:center;font-size:11px;font-weight:700}
@@ -766,7 +766,11 @@ tr.reg-div td{background:var(--surface-2);color:var(--grey-2);font-size:10.5px;f
 .mcard-wdl{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:6px;color:#fff;
   font-size:11px;font-weight:900;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 /* forma — poslednjih 5 */
+.form-top{display:flex;flex-direction:column;align-items:center;gap:8px;margin:2px 0 16px;text-align:center}
+.form-top-lab{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--grey)}
 .form-strip{display:inline-flex;gap:4px}
+.form-strip-lg{gap:8px}
+.form-strip-lg .form-dot{width:34px;height:34px;font-size:15px}
 .form-dot{width:22px;height:22px;border-radius:50%;color:#fff;font-size:11px;font-weight:900;display:grid;place-items:center;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
 /* selektor broja utakmica */

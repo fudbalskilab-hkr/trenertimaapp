@@ -21,8 +21,22 @@ export default function Dashboard({ setView, openMatch }) {
   const recent = matches.filter(m => isPlayed(m) && (m.gf !== null || m.ga !== null)).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 4)
   const go = m => openMatch ? openMatch(m.id) : setView('match')
 
+  const form5 = recent.slice(0, 5).reverse()
+
   return (
     <section>
+      {form5.length > 0 && (
+        <div className="form-top">
+          <span className="form-top-lab">FORMA · poslednjih {form5.length}</span>
+          <div className="form-strip form-strip-lg">
+            {form5.map(m => {
+              const r = ourResult(m); const w = r ? WDL[r.wdl] : null
+              return <span key={m.id} className="form-dot" style={{ background: w ? w.color : 'var(--line)' }}
+                title={`${w ? w.full : '—'} · vs ${m.opp} ${r ? r.our + ':' + r.opp : ''}`}>{w ? w.label : '·'}</span>
+            })}
+          </div>
+        </div>
+      )}
       {toClose.length > 0 && (
         <div className="season-box" style={{ background: 'color-mix(in srgb,#E8862B 12%,var(--surface))', borderColor: 'color-mix(in srgb,#E8862B 34%,var(--line))' }}>
           <span className="sb-ic">📝</span>
@@ -93,16 +107,7 @@ export default function Dashboard({ setView, openMatch }) {
 
       {recent.length > 0 && (
         <div className="card" style={{ marginTop: 18 }}>
-          <div className="card-h">
-            <h3>Poslednji rezultati</h3>
-            <div className="form-strip" style={{ marginLeft: 'auto' }} title="Forma — poslednjih 5 (najstarija levo)">
-              {recent.slice(0, 5).reverse().map(m => {
-                const r = ourResult(m); const w = r ? WDL[r.wdl] : null
-                return <span key={m.id} className="form-dot" style={{ background: w ? w.color : 'var(--line)' }}
-                  title={`${w ? w.full : '—'} · vs ${m.opp} ${r ? r.our + ':' + r.opp : ''}`}>{w ? w.label : '·'}</span>
-              })}
-            </div>
-          </div>
+          <div className="card-h"><h3>Poslednji rezultati</h3></div>
           <div className="card-b" style={{ paddingTop: 6 }}>
             {recent.map(m => {
               const r = ourResult(m); const w = r ? WDL[r.wdl] : null
