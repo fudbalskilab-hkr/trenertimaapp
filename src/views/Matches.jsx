@@ -32,11 +32,12 @@ export default function Matches({ focusId, onFocusHandled }) {
 
   const m = matches.find(x => x.id === activeId) || matches[0]
 
-  // Ako utakmica još nema svoju postavu — preslikaj „Prvu postavu" iz Moj tim (samo dok nije odigrana; jednom).
+  // Ako utakmica još nema svoju postavu i nema unet rezultat — preslikaj „Prvu postavu" iz Moj tim (jednom).
   useEffect(() => {
-    if (!m || m.lineupInit || isPlayed(m)) return
+    if (!m || m.lineupInit) return
     const hasSetup = (m.field && Object.keys(m.field).length) || m.gkId || (m.benchIds && m.benchIds.length) || (m.lineup && m.lineup.length)
-    if (hasSetup) return
+    const hasResult = m.gf != null || m.ga != null
+    if (hasSetup || hasResult) return
     const L = team.lineup || {}
     if (!L.field || !Object.keys(L.field).length) return // nema definisane prve postave
     const field = JSON.parse(JSON.stringify(L.field))
