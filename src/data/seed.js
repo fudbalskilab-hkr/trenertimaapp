@@ -102,6 +102,20 @@ export function datePassed(m) {
 }
 export const isPlayed = (m) => !!(m && (m.played || datePassed(m)))
 
+// Rezultat iz ugla NAŠEG tima (gf/ga su domaći:gost sa semafora)
+// vraća { our, opp, wdl:'W'|'D'|'L' } ili null ako nema unetog rezultata
+export function ourResult(m) {
+  if (!m || !isPlayed(m) || m.gf == null || m.ga == null) return null
+  const our = m.home ? m.gf : m.ga
+  const opp = m.home ? m.ga : m.gf
+  return { our, opp, wdl: our > opp ? 'W' : our < opp ? 'L' : 'D' }
+}
+export const WDL = {
+  W: { label: 'P', full: 'Pobeda', color: '#2F9E44' },
+  D: { label: 'N', full: 'Nerešeno', color: '#868E96' },
+  L: { label: 'I', full: 'Poraz', color: '#C92A2A' },
+}
+
 // Grb i naziv TAKMIČENJA za dati meč (liga / kup / prijateljska)
 export const compCrest = (m, league) => {
   if (!m || !league) return ''

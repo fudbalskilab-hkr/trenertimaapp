@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useStore, fmtDate } from '../data/store'
-import { INTENSITY, intensityColor, intensityBg, matchColor, compCrest, isPlayed } from '../data/seed'
+import { INTENSITY, intensityColor, intensityBg, matchColor, compCrest, isPlayed, ourResult, WDL } from '../data/seed'
 import { Icon, Crest } from '../components/Icons'
 import { exportNodeAsImage } from '../utils/exportImage'
 import { mcDayOverview } from '../utils/mcOverview'
@@ -112,7 +112,8 @@ export default function Calendar({ openMatch }) {
                       <span className="ha-badge" style={{ background: mc_.color }} title={mc_.label}>{mc_.short}</span>
                       <div className="match-crest">{match.crest ? <img src={match.crest} alt="grb" /> : <span>grb</span>}</div>
                       {isPlayed(match)
-                        ? <b className="num" style={{ fontSize: 18 }}>{match.gf ?? '–'}:{match.ga ?? '–'}</b>
+                        ? (() => { const r = ourResult(match); const w = r ? WDL[r.wdl] : null
+                            return <b className="num" style={{ fontSize: 18, color: w ? w.color : 'inherit' }}>{r ? `${r.our}:${r.opp}` : '–:–'}</b> })()
                         : <small>{match.time}</small>}
                     </button>
                   ) : isOff ? (
@@ -179,7 +180,8 @@ function MatchPopup({ m, onClose, onOpen }) {
         <div className="modal-b" style={{ textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 10 }}>
             <Crest size={44} />
-            {isPlayed(m) ? <div className="num" style={{ fontSize: 26, fontWeight: 800 }}>{m.gf ?? '–'}:{m.ga ?? '–'}</div> : <span style={{ fontWeight: 800, color: 'var(--grey)' }}>VS</span>}
+            {isPlayed(m) ? (() => { const r = ourResult(m); const w = r ? WDL[r.wdl] : null
+              return <div className="num" style={{ fontSize: 26, fontWeight: 800, color: w ? w.color : 'inherit' }}>{r ? `${r.our}:${r.opp}` : '–:–'}</div> })() : <span style={{ fontWeight: 800, color: 'var(--grey)' }}>VS</span>}
             {m.crest ? <Crest size={44} url={m.crest} /> : <div className="badge-lg" style={{ width: 44, height: 44 }}>grb</div>}
           </div>
           <div style={{ fontWeight: 700 }}>{m.home ? 'Brodarac' : m.opp} — {m.home ? m.opp : 'Brodarac'}</div>

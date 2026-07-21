@@ -760,6 +760,18 @@ tr.reg-div td{background:var(--surface-2);color:var(--grey-2);font-size:10.5px;f
 .mcard-opp{font-weight:700;font-size:12px;text-align:center;line-height:1.15;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .mcard-meta{font-size:10px;color:var(--grey);display:flex;align-items:center;gap:5px}
 .mcard-comp{font-size:9.5px;color:var(--grey-2);text-align:center;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+/* rezultat obojen po ishodu (W/D/L) */
+.mr-res.wdl{color:#fff;border-radius:6px;padding:3px 0;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.mr-time{color:var(--grey);font-weight:700}
+.mcard-wdl{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:6px;color:#fff;
+  font-size:11px;font-weight:900;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+/* forma — poslednjih 5 */
+.form-strip{display:inline-flex;gap:4px}
+.form-dot{width:22px;height:22px;border-radius:50%;color:#fff;font-size:11px;font-weight:900;display:grid;place-items:center;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+/* selektor broja utakmica */
+.mb-per{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--grey)}
+.mb-per select{border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-size:11.5px;font-weight:700;padding:5px 6px;cursor:pointer}
 .mb-page{font-size:10.5px;color:var(--grey-2);text-align:center;margin-top:7px}
 
 /* Izbor igrača — grupe/boje/broj (klupa + dodavanje) */

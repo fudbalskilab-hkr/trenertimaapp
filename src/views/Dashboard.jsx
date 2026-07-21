@@ -1,6 +1,6 @@
 import { useStore, initials, fmtDate, shortName } from '../data/store'
 import { Icon, Crest } from '../components/Icons'
-import { FEE_MONTHS, isPlayed } from '../data/seed'
+import { FEE_MONTHS, isPlayed, ourResult, WDL } from '../data/seed'
 import { needsFilling } from './Matches'
 
 export default function Dashboard({ setView, openMatch }) {
@@ -64,7 +64,7 @@ export default function Dashboard({ setView, openMatch }) {
             </div>
             <div className="vs">
               <TeamBadge brodarac={next.home} team={team} opp={next.opp} crest={next.crest} side={next.home ? 'domaćin' : 'gost'} big />
-              <div className="mid"><span className="vs-x">{fmtDate(next.date)}{next.date?.slice(0, 4)}</span><br />{next.time}<br /><span style={{ fontSize: 22, color: '#fff', fontWeight: 800 }}>VS</span></div>
+              <div className="mid"><span className="vs-x">{fmtDate(next.date)}{next.date?.slice(0, 4)}{next.time ? ' · ' + next.time : ''}</span><br /><span style={{ fontSize: 22, color: '#fff', fontWeight: 800 }}>VS</span></div>
               <TeamBadge brodarac={!next.home} team={team} opp={next.opp} crest={next.crest} side={next.home ? 'gost' : 'domaćin'} big />
             </div>
             <div className="nm-meta">
@@ -93,15 +93,24 @@ export default function Dashboard({ setView, openMatch }) {
 
       {recent.length > 0 && (
         <div className="card" style={{ marginTop: 18 }}>
-          <div className="card-h"><h3>Poslednji rezultati</h3></div>
+          <div className="card-h">
+            <h3>Poslednji rezultati</h3>
+            <div className="form-strip" style={{ marginLeft: 'auto' }} title="Forma — poslednjih 5 (najstarija levo)">
+              {recent.slice(0, 5).reverse().map(m => {
+                const r = ourResult(m); const w = r ? WDL[r.wdl] : null
+                return <span key={m.id} className="form-dot" style={{ background: w ? w.color : 'var(--line)' }}
+                  title={`${w ? w.full : '—'} · vs ${m.opp} ${r ? r.our + ':' + r.opp : ''}`}>{w ? w.label : '·'}</span>
+              })}
+            </div>
+          </div>
           <div className="card-b" style={{ paddingTop: 6 }}>
             {recent.map(m => {
-              const won = m.gf > m.ga, draw = m.gf === m.ga
+              const r = ourResult(m); const w = r ? WDL[r.wdl] : null
               return (
                 <button key={m.id} className="list-row" style={{ width: '100%', background: 'transparent', border: 0, cursor: 'pointer', textAlign: 'left' }} onClick={() => go(m)}>
-                  <span className="res-badge" style={{ background: draw ? 'var(--grey)' : won ? 'var(--good)' : 'var(--bad)' }}>{draw ? 'N' : won ? 'P' : 'I'}</span>
+                  <span className="res-badge" style={{ background: w ? w.color : 'var(--grey)' }}>{w ? w.label : '?'}</span>
                   <div className="nm">vs {m.opp}<small>{fmtDate(m.date)}{m.date?.slice(0, 4)} · {m.home ? 'dom' : 'gost'} · {m.comp}</small></div>
-                  <b className="num" style={{ fontSize: 16 }}>{m.gf ?? '–'}:{m.ga ?? '–'}</b>
+                  <b className="num" style={{ fontSize: 17, color: w ? w.color : 'inherit' }}>{r ? `${r.our}:${r.opp}` : '–:–'}</b>
                 </button>
               )
             })}

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useStore, fmtDate, shortName } from '../data/store'
-import { posGroup, POS_COLORS, matchColor, compCrest, compName, isPlayed, datePassed } from '../data/seed'
+import { posGroup, POS_COLORS, matchColor, compCrest, compName, isPlayed, datePassed, ourResult, WDL } from '../data/seed'
 import { Icon, Crest } from '../components/Icons'
 import FormationBoard from '../components/FormationBoard'
 import RatingSlider from '../components/RatingSlider'
@@ -188,7 +188,8 @@ function MatchList({ matches, activeId, onSelect, onNew }) {
   const eff = filter === 'played' && played.length === 0 ? 'all' : filter
   const base = eff === 'played' ? played : eff === 'scheduled' ? matches.filter(m => !isPlayed(m)) : matches
   const sorted = sortMatches(base, eff)
-  const per = 5
+  const [per, setPer] = useState(() => Number(localStorage.getItem('trenertima_matchper')) || 10)
+  const setPerN = n => { setPer(n); setPage(0); localStorage.setItem('trenertima_matchper', String(n)) }
   const maxPage = Math.max(0, Math.ceil(sorted.length / per) - 1)
   const pg = Math.min(page, maxPage)
   const items = sorted.slice(pg * per, pg * per + per)
@@ -206,6 +207,15 @@ function MatchList({ matches, activeId, onSelect, onNew }) {
           ))}
         </div>
         <div style={{ flex: 1 }} />
+        <label className="mb-per" title="Koliko utakmica da prikažem">
+          Prikaži:
+          <select value={per} onChange={e => setPerN(Number(e.target.value))}>
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={9999}>Sve</option>
+          </select>
+        </label>
         <div className="view-toggle">
           <button className={view === 'list' ? 'on' : ''} onClick={() => setV('list')} title="Lista">☰</button>
           <button className={view === 'cards' ? 'on' : ''} onClick={() => setV('cards')} title="Kartice">▦</button>
@@ -233,6 +243,7 @@ function MatchList({ matches, activeId, onSelect, onNew }) {
 
 function MatchRow({ m, active, onClick }) {
   const c = matchColor(m)
+  const r = ourResult(m); const w = r ? WDL[r.wdl] : null
   return (
     <button className={'match-row' + (active ? ' active' : '')} onClick={onClick} style={{ borderLeftColor: c.color }}>
       {needsFilling(m) && <span className="match-flag" title="Treba popuniti">!</span>}
@@ -240,7 +251,10 @@ function MatchRow({ m, active, onClick }) {
       <span className="mr-crest">{m.crest ? <img src={m.crest} alt="" /> : <span className="mr-nocrest">?</span>}</span>
       <span className="mr-opp">{m.opp}</span>
       <span className="mr-ha" style={{ background: c.color }} title={c.label}>{c.short}</span>
-      <span className="mr-res num">{isPlayed(m) ? `${m.gf ?? '–'}:${m.ga ?? '–'}` : (m.time || '')}</span>
+      {isPlayed(m)
+        ? (w ? <span className="mr-res num wdl" style={{ background: w.color }} title={w.full}>{r.our}:{r.opp}</span>
+             : <span className="mr-res num">–:–</span>)
+        : <span className="mr-res num mr-time">{m.time || ''}</span>}
       <span className="mr-comp">{m.comp}</span>
     </button>
   )
@@ -248,13 +262,15 @@ function MatchRow({ m, active, onClick }) {
 
 function MatchCard({ m, active, onClick }) {
   const c = matchColor(m)
+  const r = ourResult(m); const w = r ? WDL[r.wdl] : null
   return (
     <button className={'match-card' + (active ? ' active' : '')} onClick={onClick} style={{ borderTopColor: c.color }}>
       {needsFilling(m) && <span className="match-flag" title="Treba popuniti">!</span>}
+      {w && <span className="mcard-wdl" style={{ background: w.color }} title={w.full}>{w.label}</span>}
       <div className="mcard-crest">{m.crest ? <img src={m.crest} alt="" /> : <span className="mr-nocrest">?</span>}</div>
-      <div className="mcard-res num">{isPlayed(m) ? `${m.gf ?? '–'}:${m.ga ?? '–'}` : 'VS'}</div>
+      <div className="mcard-res num" style={w ? { color: w.color } : undefined}>{isPlayed(m) ? (r ? `${r.our}:${r.opp}` : '–:–') : 'VS'}</div>
       <div className="mcard-opp">{m.opp}</div>
-      <div className="mcard-meta"><span className="mr-ha" style={{ background: c.color }}>{c.short}</span> {m.date ? fmtDate(m.date) : '—'}</div>
+      <div className="mcard-meta"><span className="mr-ha" style={{ background: c.color }}>{c.short}</span> {m.date ? fmtDate(m.date) : '—'}{!isPlayed(m) && m.time ? ' · ' + m.time : ''}</div>
       <div className="mcard-comp">{m.comp}</div>
     </button>
   )
