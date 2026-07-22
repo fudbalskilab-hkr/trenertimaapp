@@ -95,7 +95,7 @@ export default function Matches({ focusId, onFocusHandled }) {
       {/* Izveštaj / rezultat */}
       <div className="report">
         <div className="report-side">
-          {m.home ? <Crest size={54} /> : (m.crest ? <button style={{ border: 0, background: 'transparent', cursor: 'pointer' }} onClick={() => setCrestOpen(true)}><Crest size={54} url={m.crest} /></button> : <button className="report-badge" onClick={() => setCrestOpen(true)}>grb +</button>)}
+          {m.home ? <Crest size={76} /> : (m.crest ? <button style={{ border: 0, background: 'transparent', cursor: 'pointer' }} onClick={() => setCrestOpen(true)}><Crest size={76} url={m.crest} /></button> : <button className="report-badge" onClick={() => setCrestOpen(true)}>grb +</button>)}
           <b>{m.home ? team.name.replace('FK ', '') : m.opp}</b>
           <div className="scorers">
             {m.home
@@ -105,6 +105,12 @@ export default function Matches({ focusId, onFocusHandled }) {
         </div>
 
         <div className="report-mid">
+          <div className="rm-comp">
+            {compCrest(m, league) && <img src={compCrest(m, league)} alt={compName(m, league)} title={compName(m, league)} />}
+            {m.comp && <span>{m.comp}</span>}
+          </div>
+          <div className="rm-time">{m.time || '—'}</div>
+          <div className="rm-date">{fmtDate(m.date)}{m.date?.slice(0, 4)}</div>
           <div className="sc">
             <input className="sc-box num" value={m.gf ?? ''} onChange={e => setScore('gf', e.target.value)} inputMode="numeric" placeholder="–" aria-label="Golovi domaći" />
             <span style={{ opacity: .55 }}>:</span>
@@ -115,11 +121,7 @@ export default function Matches({ focusId, onFocusHandled }) {
             <button className={m.home ? 'on' : ''} onClick={() => store.updateMatch(m.id, { home: true })}>Domaćin</button>
             <button className={!m.home ? 'on' : ''} onClick={() => store.updateMatch(m.id, { home: false })}>Gost</button>
           </div>
-          <div className="rm-meta" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-            {compCrest(m, league) && <img src={compCrest(m, league)} alt={compName(m, league)} title={compName(m, league)} style={{ width: 30, height: 30, objectFit: 'contain' }} />}
-            <span>{fmtDate(m.date)}{m.date?.slice(0, 4)} · {m.time}<br />{m.comp}</span>
-          </div>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
             <button className="btn sm" style={{ background: 'rgba(255,255,255,.16)', border: 0, color: '#fff' }} onClick={() => setEditMeta(true)}>Izmeni</button>
             {datePassed(m)
               ? <span style={{ fontSize: 11, color: 'rgba(255,255,255,.7)', alignSelf: 'center' }} title="Datum je prošao — status je automatski Odigrana">datum prošao</span>
@@ -134,8 +136,8 @@ export default function Matches({ focusId, onFocusHandled }) {
 
         <div className="report-side">
           {m.home
-            ? (m.crest ? <button style={{ border: 0, background: 'transparent', cursor: 'pointer' }} onClick={() => setCrestOpen(true)}><Crest size={54} url={m.crest} /></button> : <button className="report-badge" onClick={() => setCrestOpen(true)}>grb +</button>)
-            : <Crest size={54} />}
+            ? (m.crest ? <button style={{ border: 0, background: 'transparent', cursor: 'pointer' }} onClick={() => setCrestOpen(true)}><Crest size={76} url={m.crest} /></button> : <button className="report-badge" onClick={() => setCrestOpen(true)}>grb +</button>)
+            : <Crest size={76} />}
           <b>{m.home ? m.opp : team.name.replace('FK ', '')}</b>
           <div className="scorers">
             {!m.home
