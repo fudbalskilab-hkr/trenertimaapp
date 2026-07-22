@@ -109,8 +109,10 @@ export default function Matches({ focusId, onFocusHandled }) {
             {compCrest(m, league) && <img src={compCrest(m, league)} alt={compName(m, league)} title={compName(m, league)} />}
             {m.comp && <span>{m.comp}</span>}
           </div>
-          <div className="rm-time">{m.time || '—'}</div>
-          <div className="rm-date">{fmtDate(m.date)}{m.date?.slice(0, 4)}</div>
+          {!isPlayed(m) && <>
+            <div className="rm-time">{m.time || '—'}</div>
+            <div className="rm-date">{fmtDate(m.date)}{m.date?.slice(0, 4)}</div>
+          </>}
           <div className="sc">
             <input className="sc-box num" value={m.gf ?? ''} onChange={e => setScore('gf', e.target.value)} inputMode="numeric" placeholder="–" aria-label="Golovi domaći" />
             <span style={{ opacity: .55 }}>:</span>
@@ -132,6 +134,7 @@ export default function Matches({ focusId, onFocusHandled }) {
                 </button>}
             <button className="btn sm" style={{ background: 'rgba(255,120,120,.22)', border: 0, color: '#fff' }} onClick={delMatch} title="Obriši ovu utakmicu"><Icon.trash /> Obriši</button>
           </div>
+          {isPlayed(m) && <div className="rm-foot">{fmtDate(m.date)}{m.date?.slice(0, 4)}{m.time ? ' · ' + m.time : ''}</div>}
         </div>
 
         <div className="report-side">

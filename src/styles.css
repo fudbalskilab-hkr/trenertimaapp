@@ -412,6 +412,7 @@ tbody tr[class*="pg-"] td:first-child{box-shadow:inset 3px 0 0 var(--pgc)}
 .sc-box{width:52px;height:58px;background:rgba(255,255,255,.14);border-radius:11px;display:grid;place-items:center;
   border:0;color:#fff;text-align:center}
 .report-mid .status{background:rgba(255,255,255,.16);padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.report-mid .rm-foot{font-size:10.5px;color:#9db6dc;margin-top:4px;opacity:.85}
 
 .match-cols{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start}
 .addbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
